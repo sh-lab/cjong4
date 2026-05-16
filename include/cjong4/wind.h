@@ -1,5 +1,5 @@
-#ifndef CJONG4_WIND_H
-#define CJONG4_WIND_H
+#ifndef CJ4_WIND_H
+#define CJ4_WIND_H
 
 #include <stdint.h>
 
@@ -30,4 +30,4 @@ enum cj4_wind_e {
 }
 #endif
 
-#endif /* CJONG4_WIND_H */
+#endif /* CJ4_WIND_H */
