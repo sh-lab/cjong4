@@ -1,0 +1,66 @@
+#ifndef CJ4_RULES_H
+#define CJ4_RULES_H
+
+#include <stdint.h>
+#include "tile.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    CJ4_GAME_TONPUU,
+    CJ4_GAME_HANCHAN,
+    CJ4_GAME_FULL
+} cj4_game_type;
+
+typedef struct {
+
+    /* score / structure */
+
+    int32_t initial_score;
+    int32_t target_score;
+    cj4_game_type game_type;
+    uint8_t tobi_end;
+
+    /* general */
+
+    uint8_t kuitan;
+    uint8_t furiten;
+
+    /* riichi */
+
+    uint8_t double_riichi;
+    uint8_t ippatsu;
+
+    /* ron */
+
+    uint8_t double_ron;
+    uint8_t triple_ron;
+
+    /* dealer */
+
+    uint8_t dealer_renchan_tenpai;
+
+    /* draw / abort */
+
+    uint8_t noten_penalty;
+    int32_t noten_penalty_points;
+
+    uint8_t abort_kyushukyuhai;
+    uint8_t abort_sufurenta;
+
+    /* kan */
+
+    uint8_t kan_flow;
+
+    /* red tiles */
+    uint8_t aka_tiles[136];
+
+} cj4_rules;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CJ4_RULES_H */
