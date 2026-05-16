@@ -27,7 +27,6 @@ typedef enum {
 typedef struct {
     cj4_zone   zone;   /* which zone the tile is in */
     cj4_player owner;  /* owner player (undefined for wall) */
-    uint8_t    index;  /* position within the zone */
 } cj4_location;
 
 #ifdef __cplusplus
