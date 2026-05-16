@@ -67,6 +67,9 @@ typedef struct
     uint8_t dora_indicators_count;
     cj4_tile_id dora_indicators[5];
 
+    uint8_t     ura_dora_indicators_count;
+    cj4_tile_id ura_dora_indicators[5];
+
     cj4_discard discards[CJ4_MAX_DISCARDS];
     uint8_t discard_count;
 
