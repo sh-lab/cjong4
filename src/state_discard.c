@@ -30,8 +30,20 @@ cj4_do_discard(
     const cj4_mahjong state,
     cj4_tile_id tile)
 {
-    return cj4_state_discard_tile(
-        state,
-        state.current_player,
-        tile);
+    cj4_mahjong next = state;
+
+    next.locations[tile].zone  = CJ4_ZONE_RIVER;
+    next.locations[tile].owner = state.current_player;
+
+    cj4_discard *d = &next.discards[next.discard_count++];
+    d->tile = tile;
+    d->player = state.current_player;
+    d->is_active = 1;
+    d->is_tsumogiri = (tile == next.draw_tile);
+
+    next.draw_tile = CJ4_TILE_ID_INVALID;
+
+    next.phase = CJ4_PHASE_DISCARD;
+
+    return next;
 }
