@@ -15,7 +15,7 @@ cj4_can_discard(
 );
 
 cj4_mahjong
-cj4_discard(
+cj4_do_discard(
     const cj4_mahjong state,
     cj4_tile_id tile
 );
