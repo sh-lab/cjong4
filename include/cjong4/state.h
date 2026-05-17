@@ -9,7 +9,9 @@
 #include "location.h"
 #include "wind.h"
 
-#define CJ4_MAX_DISCARDS 70
+#define CJ4_MAX_DRAWS 70
+#define CJ4_MAX_DISCARDS 82
+
 
 #define CJ4_MAX_MELDS 4
 
@@ -25,7 +27,9 @@ typedef enum
 {
     CJ4_MELD_CHI,
     CJ4_MELD_PON,
-    CJ4_MELD_KAN
+    CJ4_MELD_MINKAN,
+    CJ4_MELD_ANKAN,
+    CJ4_MELD_KAKAN
 } cj4_meld_type;
 
 typedef struct
@@ -40,7 +44,11 @@ typedef struct
 typedef struct
 {
 
-    cj4_location locations[136]; // indexed by cj4_tile_id
+    cj4_location locations[CJ4_TILE_ID_COUNT]; // indexed by cj4_tile_id
+    
+    uint8_t draw_count; // number of tiles drawn in the current round
+
+    uint8_t dead_wall_draw_pos; // position in the wall for the next dead wall draw (for kan replacement)
 
     cj4_phase phase;
     cj4_player current_player;
@@ -61,8 +69,9 @@ typedef struct
 
     cj4_tile_id draw_tile; // valid only when phase == CJ4_PHASE_DRAW
 
-    cj4_tile_id wall[136];
+    cj4_tile_id wall[CJ4_TILE_ID_COUNT];
     uint8_t wall_pos; // next draw position
+
 
     uint8_t dora_indicators_count;
     cj4_tile_id dora_indicators[5];

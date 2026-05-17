@@ -17,10 +17,10 @@ cj4_do_pass(const cj4_mahjong state)
 {
     cj4_mahjong next = state;
 
-    if (next.discard_count >= CJ4_MAX_DISCARDS)
+    if (next.discard_count >= CJ4_MAX_DRAWS)
     {
         next.phase = CJ4_PHASE_ROUND_END;
-        
+
         return next;
     }
 

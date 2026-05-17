@@ -6,7 +6,7 @@ cj4_can_discard(
     const cj4_mahjong state,
     cj4_tile_id tile)
 {
-    if (state.phase != CJ4_PHASE_DRAW)
+    if (state.phase != CJ4_PHASE_DRAW && state.phase != CJ4_PHASE_AFTER_CALL)
     {
         return false;
     }
@@ -39,7 +39,7 @@ cj4_do_discard(
     d->tile = tile;
     d->player = state.current_player;
     d->is_active = 1;
-    d->is_tsumogiri = (tile == next.draw_tile);
+    d->is_tsumogiri = (tile == state.draw_tile);
 
     next.draw_tile = CJ4_TILE_ID_INVALID;
 

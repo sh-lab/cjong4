@@ -55,8 +55,11 @@ cj4_create_initial_state(
 
     state.draw_tile = cj4_state_draw_tile(&state, state.dealer);
 
-    state.phase = CJ4_PHASE_DRAW;
+    state.dead_wall_draw_pos = state.dead_wall_draw_pos = CJ4_TILE_ID_COUNT - 1;
+
     state.current_player = state.dealer;
+
+    state.phase = CJ4_PHASE_DRAW;
 
     return state;
 }
