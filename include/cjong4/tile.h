@@ -81,6 +81,62 @@ cj4_tile_get_type(cj4_tile_id id)
     return (cj4_tile_type)(id / CJ4_TILE_PER_TYPE);
 }
 
+typedef enum {
+    CJ4_TILE_SUIT_MANZU = 0,
+    CJ4_TILE_SUIT_PINZU = 1,
+    CJ4_TILE_SUIT_SOUZU = 2,
+    CJ4_TILE_SUIT_HONOR = 3
+} cj4_tile_suit;
+
+static inline cj4_tile_suit
+cj4_tile_type_get_suit(cj4_tile_type type)
+{
+    assert(type >= CJ4_TILE_TYPE_MIN && type <= CJ4_TILE_TYPE_MAX);
+
+    if (type <= 8)   return CJ4_TILE_SUIT_MANZU;
+    if (type <= 17)  return CJ4_TILE_SUIT_PINZU;
+    if (type <= 26)  return CJ4_TILE_SUIT_SOUZU;
+    return CJ4_TILE_SUIT_HONOR;
+}
+
+static inline cj4_tile_suit
+cj4_tile_get_suit(cj4_tile_id id)
+{
+    return cj4_tile_type_get_suit(cj4_tile_get_type(id));
+}
+
+static inline uint8_t
+cj4_tile_type_is_yaochu(cj4_tile_type type)
+{
+    assert(type >= CJ4_TILE_TYPE_MIN && type <= CJ4_TILE_TYPE_MAX);
+
+    if (type >= 27) return 1;
+
+    uint8_t n = type % 9;
+    return (n == 0 || n == 8);
+}
+
+static inline uint8_t
+cj4_tile_is_yaochu(cj4_tile_id id)
+{
+    return cj4_tile_type_is_yaochu(cj4_tile_get_type(id));
+}
+
+static inline uint8_t
+cj4_tile_type_get_number(cj4_tile_type type)
+{
+    assert(type >= CJ4_TILE_TYPE_MIN && type <= CJ4_TILE_TYPE_MAX);
+
+    if (type >= 27) return 0;
+    return (uint8_t)(type % 9 + 1);
+}
+
+static inline uint8_t
+cj4_tile_get_number(cj4_tile_id id)
+{
+    return cj4_tile_type_get_number(cj4_tile_get_type(id));
+}
+
 /*
  * Get index (0-3) within a tile type.
  *
