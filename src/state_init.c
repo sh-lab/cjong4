@@ -1,4 +1,5 @@
 #include "state_init.h"
+#include "state_ops.h"
 #include <string.h>
 
 cj4_mahjong

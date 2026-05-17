@@ -38,7 +38,10 @@ enum {
     CJ4_TILE_TYPE_MAX = 33,
 
     CJ4_TILE_TYPE_COUNT = 34,
-    CJ4_TILE_PER_TYPE  = 4
+    CJ4_TILE_PER_TYPE  = 4,
+
+    CJ4_TILE_ID_INVALID = 255
+
 };
 
 /*
