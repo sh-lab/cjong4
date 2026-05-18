@@ -100,6 +100,8 @@ cj4_do_ankan(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_
 
     cj4_state_draw_dead_wall_tile(&next, player);
 
+    cj4_state_add_dora_indicator(&next);
+
     next.current_player = player;
 
     next.phase = CJ4_PHASE_DRAW;

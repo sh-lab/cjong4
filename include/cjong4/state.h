@@ -48,7 +48,7 @@ typedef struct
     
     uint8_t draw_count; // number of tiles drawn in the current round
 
-    uint8_t dead_wall_draw_pos; // position in the wall for the next dead wall draw (for kan replacement)
+    uint8_t dead_wall_draw_count; // number of tiles drawn from the dead wall
 
     cj4_phase phase;
     cj4_player current_player;
@@ -72,12 +72,7 @@ typedef struct
     cj4_tile_id wall[CJ4_TILE_ID_COUNT];
     uint8_t wall_pos; // next draw position
 
-
     uint8_t dora_indicators_count;
-    cj4_tile_id dora_indicators[5];
-
-    uint8_t     ura_dora_indicators_count;
-    cj4_tile_id ura_dora_indicators[5];
 
     cj4_discard discards[CJ4_MAX_DISCARDS];
     uint8_t discard_count;

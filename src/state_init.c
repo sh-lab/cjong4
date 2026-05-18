@@ -55,7 +55,9 @@ cj4_create_initial_state(
 
     state.draw_tile = cj4_state_draw_tile(&state, state.dealer);
 
-    state.dead_wall_draw_pos = state.dead_wall_draw_pos = CJ4_TILE_ID_COUNT - 1;
+    state.dead_wall_draw_count = 0;
+
+    state.dora_indicators_count = 1;
 
     state.current_player = state.dealer;
 
