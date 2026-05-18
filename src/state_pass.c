@@ -24,7 +24,7 @@ cj4_do_pass(const cj4_mahjong state)
         return next;
     }
 
-    next.current_player = (state.current_player + 1) % CJ4_PLAYER_COUNT;
+    next.current_player = cj4_next_player(&state);
     next.draw_tile = cj4_state_draw_tile(&next, next.current_player);
 
     next.phase = CJ4_PHASE_DRAW;
