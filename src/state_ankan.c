@@ -3,13 +3,10 @@
 #include <assert.h>
 
 bool
-cj4_can_ankan(const cj4_mahjong *state, cj4_player player)
+cj4_can_ankan(const cj4_mahjong *state)
 {
+    cj4_player player = state->current_player;
     if (state->phase != CJ4_PHASE_DRAW)
-    {
-        return false;
-    }
-    if (player != state->current_player)
     {
         return false;
     }
@@ -31,12 +28,14 @@ cj4_can_ankan(const cj4_mahjong *state, cj4_player player)
 }
 
 bool
-cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4)
+cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4)
 {
-    if (!cj4_can_ankan(state, player))
+    if (!cj4_can_ankan(state))
     {
         return false;
     }
+
+    cj4_player player = state->current_player;
 
     cj4_tile_type type = cj4_tile_get_type(tile1);
 
@@ -80,10 +79,11 @@ cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id
 }
 
 cj4_mahjong
-cj4_do_ankan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4)
+cj4_do_ankan(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4)
 {
-    assert(cj4_can_ankan_with_tile(&state, player, tile1, tile2, tile3, tile4));
+    assert(cj4_can_ankan_with_tile(&state, tile1, tile2, tile3, tile4));
     cj4_mahjong next = state;
+    cj4_player player = state.current_player;
 
     cj4_meld *m = &next.melds[player][next.meld_count[player]++];
     m->type = CJ4_MELD_ANKAN;

@@ -16,13 +16,13 @@ extern "C" {
  * Ankan (closed kan) state functions.
  */
 bool
-cj4_can_ankan(const cj4_mahjong *state, cj4_player player);
+cj4_can_ankan(const cj4_mahjong *state);
 
 bool
-cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4);
+cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4);
 
 cj4_mahjong
-cj4_do_ankan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4);
+cj4_do_ankan(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4);
 
 #ifdef __cplusplus
 }
