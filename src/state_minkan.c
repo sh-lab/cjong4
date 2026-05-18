@@ -1,4 +1,5 @@
 #include "state_minkan.h"
+#include "state_ops.h"
 
 bool
 cj4_can_minkan(const cj4_mahjong *state, cj4_player player)

@@ -12,8 +12,8 @@
 #define CJ4_MAX_DRAWS 70
 #define CJ4_MAX_DISCARDS 82
 
-
 #define CJ4_MAX_MELDS 4
+#define CJ4_CALLED_INDEX_NONE 255
 
 typedef struct
 {

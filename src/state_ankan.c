@@ -1,5 +1,6 @@
 #include "state_ankan.h"
 #include "state_query.h"
+#include "state_ops.h"
 #include <assert.h>
 
 bool
@@ -11,17 +12,10 @@ cj4_can_ankan(const cj4_mahjong *state)
         return false;
     }
 
-    for (cj4_tile_id t = 0; t < CJ4_TILE_ID_COUNT; ++t)
+    for (cj4_tile_type type = 0; type < CJ4_TILE_TYPE_COUNT; ++type)
     {
-        const cj4_location *loc = cj4_tile_location_const(state, t);
-        if (loc->zone == CJ4_ZONE_HAND && loc->owner == player)
-        {
-            cj4_tile_type type = cj4_tile_get_type(t);
-            if (cj4_count_hand(state, player, type) >= 4)
-            {
-                return true;
-            }
-        }
+        if (cj4_count_hand(state, player, type) >= 4)
+            return true;
     }
 
     return false;
@@ -93,7 +87,7 @@ cj4_do_ankan(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_
     m->tiles[3] = tile4;
     m->size = 4;
     m->from_player = player;
-    m->called_index = 0;
+    m->called_index = CJ4_CALLED_INDEX_NONE;
 
     next.locations[tile1].zone = CJ4_ZONE_MELD;
     next.locations[tile1].owner = player;
@@ -103,8 +97,6 @@ cj4_do_ankan(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_
     next.locations[tile3].owner = player;
     next.locations[tile4].zone = CJ4_ZONE_MELD;
     next.locations[tile4].owner = player;
-
-    cj4_state_call_post_process(&next);
 
     cj4_state_draw_dead_wall_tile(&next, player);
 
