@@ -54,6 +54,8 @@ dkms.conf
 # debug information files
 *.dwo
 
+.vscode/c_cpp_properties.json
+
 
 build/
 
