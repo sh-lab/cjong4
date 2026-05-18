@@ -18,9 +18,14 @@ extern "C" {
  *
  * Functions related to the "minkan" action in Mahjong.
  */
-bool cj4_can_minkan(const cj4_mahjong state, cj4_player player);
-bool cj4_can_minkan_with_tile(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3);
-cj4_mahjong cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3);
+bool
+cj4_can_minkan(const cj4_mahjong *state, cj4_player player);
+
+bool
+cj4_can_minkan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3);
+
+cj4_mahjong
+cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3);
 
 #ifdef __cplusplus
 }

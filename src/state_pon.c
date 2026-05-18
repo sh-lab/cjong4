@@ -1,14 +1,14 @@
 #include "state_pon.h"
 #include "state_query.h"
 
-bool cj4_can_pon(const cj4_mahjong state, cj4_player player)
+bool cj4_can_pon(const cj4_mahjong *state, cj4_player player)
 {
-    if (state.phase != CJ4_PHASE_DISCARD)
+    if (state->phase != CJ4_PHASE_DISCARD)
     {
         return false;
     }
 
-    if (player == state.current_player)
+    if (player == state->current_player)
     {
         return false;
     }
@@ -23,7 +23,7 @@ bool cj4_can_pon(const cj4_mahjong state, cj4_player player)
     return true;
 }
 
-bool cj4_can_pon_with_tile(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2)
+bool cj4_can_pon_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2)
 {
     if (!cj4_can_pon(state, player))
     {
@@ -39,8 +39,8 @@ bool cj4_can_pon_with_tile(const cj4_mahjong state, cj4_player player, cj4_tile_
         return false;
     }
 
-    const cj4_location *l1 = &state.locations[tile1];
-    const cj4_location *l2 = &state.locations[tile2];
+    const cj4_location *l1 = cj4_tile_location_const(state, tile1);
+    const cj4_location *l2 = cj4_tile_location_const(state, tile2);
 
     if (l1->zone != CJ4_ZONE_HAND || l1->owner != player)
     {
@@ -58,11 +58,11 @@ bool cj4_can_pon_with_tile(const cj4_mahjong state, cj4_player player, cj4_tile_
 cj4_mahjong
 cj4_do_pon(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2)
 {
-    assert(cj4_can_pon_with_tile(state, player, tile1, tile2));
+    assert(cj4_can_pon_with_tile(&state, player, tile1, tile2));
 
     cj4_mahjong next = state;
 
-    cj4_tile_id last = cj4_get_last_discard_tile(state);
+    cj4_tile_id last = cj4_get_last_discard_tile(&state);
 
     cj4_meld *m = &next.melds[player][next.meld_count[player]++];
     m->type = CJ4_MELD_PON;
@@ -83,7 +83,7 @@ cj4_do_pon(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_ti
     cj4_state_call_post_process(&next);
 
     next.current_player = player;
-    
+
     next.phase = CJ4_PHASE_AFTER_CALL;
 
     return next;

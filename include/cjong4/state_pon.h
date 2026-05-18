@@ -11,10 +11,10 @@ extern "C" {
 
 
 bool
-cj4_can_pon(const cj4_mahjong state, cj4_player player);
+cj4_can_pon(const cj4_mahjong *state, cj4_player player);
 
 bool
-cj4_can_pon_with_tile(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2);
+cj4_can_pon_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2);
 
 cj4_mahjong
 cj4_do_pon(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2);

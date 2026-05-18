@@ -1,13 +1,13 @@
 #include "state_minkan.h"
 
 bool
-cj4_can_minkan(const cj4_mahjong state, cj4_player player)
+cj4_can_minkan(const cj4_mahjong *state, cj4_player player)
 {
-    if (state.phase != CJ4_PHASE_DISCARD)
+    if (state->phase != CJ4_PHASE_DISCARD)
     {
         return false;
     }
-    if (player == state.current_player)
+    if (player == state->current_player)
     {
         return false;
     }
@@ -23,7 +23,7 @@ cj4_can_minkan(const cj4_mahjong state, cj4_player player)
 }
 
 bool
-cj4_can_minkan_with_tile(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3)
+cj4_can_minkan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3)
 {
     if (!cj4_can_minkan(state, player))
     {
@@ -39,9 +39,9 @@ cj4_can_minkan_with_tile(const cj4_mahjong state, cj4_player player, cj4_tile_id
         return false;
     } 
 
-    const cj4_location *l1 = &state.locations[tile1];
-    const cj4_location *l2 = &state.locations[tile2];
-    const cj4_location *l3 = &state.locations[tile3]; 
+    const cj4_location *l1 = cj4_tile_location_const(state, tile1);
+    const cj4_location *l2 = cj4_tile_location_const(state, tile2);
+    const cj4_location *l3 = cj4_tile_location_const(state, tile3); 
     if (l1->zone != CJ4_ZONE_HAND || l1->owner != player)
     {
         return false;
@@ -61,9 +61,9 @@ cj4_can_minkan_with_tile(const cj4_mahjong state, cj4_player player, cj4_tile_id
 cj4_mahjong
 cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3)
 {
-    assert(cj4_can_minkan_with_tile(state, player, tile1, tile2, tile3));
+    assert(cj4_can_minkan_with_tile(&state, player, tile1, tile2, tile3));
     cj4_mahjong next = state;
-    cj4_tile_id last = cj4_get_last_discard_tile(state);
+    cj4_tile_id last = cj4_get_last_discard_tile(&state);
 
     cj4_meld *m = &next.melds[player][next.meld_count[player]++];
     m->type = CJ4_MELD_MINKAN;
@@ -72,6 +72,9 @@ cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4
     m->tiles[2] = tile2;
     m->tiles[3] = tile3;
     m->size = 4;
+    m->from_player = state.current_player;
+    m->called_index = 0;
+    
     next.locations[last].zone = CJ4_ZONE_MELD;
     next.locations[last].owner = player;
     next.locations[tile1].zone = CJ4_ZONE_MELD;

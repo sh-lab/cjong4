@@ -8,14 +8,20 @@
 extern "C" {
 #endif
 
+static inline const cj4_location*
+cj4_tile_location_const(const cj4_mahjong *state, cj4_tile_id tile)
+{
+    return &state->locations[tile];
+}
+
 uint8_t
 cj4_count_hand(
-    const cj4_mahjong state,cj4_player player,
+    const cj4_mahjong *state,cj4_player player,
     cj4_tile_type type
 );
 
 cj4_tile_id
-cj4_get_last_discard_tile(const cj4_mahjong state);
+cj4_get_last_discard_tile(const cj4_mahjong *state);
 
 #ifdef __cplusplus
 }
