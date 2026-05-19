@@ -1,4 +1,5 @@
 #include "state_minkan.h"
+#include "state_query.h"
 #include "state_ops.h"
 
 bool

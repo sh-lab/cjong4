@@ -1,5 +1,6 @@
 #include "state_pon.h"
 #include "state_query.h"
+#include "state_ops.h"
 
 bool cj4_can_pon(const cj4_mahjong *state, cj4_player player)
 {

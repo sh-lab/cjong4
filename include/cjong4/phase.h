@@ -12,6 +12,7 @@ extern "C" {
  */
 typedef enum {
     CJ4_PHASE_DRAW,        /**< A tile has been drawn; tsumo/discard actions allowed */
+    CJ4_PHASE_KAN_RESOLVE, /**< Kan resolution phase (no reactions) */
     CJ4_PHASE_AFTER_CALL,  /**< A call (chi/pon) was made; current player must discard */
     CJ4_PHASE_DISCARD,     /**< A tile was discarded; other players may react */
     CJ4_PHASE_ROUND_END,   /**< The round has ended; no further actions allowed */

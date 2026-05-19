@@ -1,5 +1,6 @@
 #include "state_chi.h"
 #include "state_query.h"
+#include "state_ops.h"
 #include <assert.h>
 
 bool cj4_can_chi(const cj4_mahjong *state)
