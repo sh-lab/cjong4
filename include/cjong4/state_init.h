@@ -10,7 +10,7 @@ extern "C" {
 
 cj4_mahjong
 cj4_create_initial_state(
-    const cj4_tile_id wall[136],
+    const cj4_tile_id wall[CJ4_TILE_ID_COUNT],
     const cj4_rules* rules
 );
 
