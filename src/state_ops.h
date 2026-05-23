@@ -48,6 +48,9 @@ void
 cj4_state_clear_draw_tile(cj4_mahjong *state);
 
 void
+cj4_state_clear_all_ippatsu(cj4_mahjong *state);
+
+void
 cj4_state_record_discard(
     cj4_mahjong *state,
     cj4_tile_id tile,

@@ -80,6 +80,11 @@ typedef struct
     cj4_player winners[CJ4_PLAYER_COUNT]; /* list of winners for multi-ron */
     uint8_t winner_count;
     cj4_tile_id winning_tile;    /* winning tile; CJ4_TILE_ID_INVALID if none */
+    
+    /* Settlement result (valid when phase == CJ4_PHASE_SETTLE). */
+    cj4_wind next_round_wind;
+    cj4_player next_dealer;
+    uint8_t settlement_should_end;
 
     cj4_tile_id wall[CJ4_TILE_ID_COUNT];
     uint8_t wall_pos; // next draw position

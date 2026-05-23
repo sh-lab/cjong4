@@ -79,6 +79,13 @@ cj4_state_clear_draw_tile(cj4_mahjong *state)
 }
 
 void
+cj4_state_clear_all_ippatsu(cj4_mahjong *state)
+{
+    for (int i = 0; i < CJ4_PLAYER_COUNT; ++i)
+        state->is_ippatsu[i] = 0;
+}
+
+void
 cj4_state_record_discard(
     cj4_mahjong *state,
     cj4_tile_id tile,
@@ -137,6 +144,7 @@ cj4_state_finish_open_call(
 {
     cj4_state_clear_draw_tile(state);
     cj4_state_consume_last_discard(state);
+    cj4_state_clear_all_ippatsu(state);
     state->current_player = player;
     state->phase = next_phase;
 }

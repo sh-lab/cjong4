@@ -35,6 +35,8 @@ cj4_do_discard(
     cj4_state_clear_draw_tile(&next);
     next.winning_from_chankan = 0;
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    if (state.is_ippatsu[state.current_player])
+        next.is_ippatsu[state.current_player] = 0;
 
     if (state.is_riichi[state.current_player] &&
         state.first_turn_uninterrupted &&

@@ -127,6 +127,7 @@ cj4_do_ankan(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_
         player,
         CJ4_CALLED_INDEX_NONE);
     cj4_state_clear_draw_tile(&next);
+    cj4_state_clear_all_ippatsu(&next);
 
     next.draw_tile = cj4_state_draw_dead_wall_tile(&next, player);
 
@@ -214,6 +215,7 @@ cj4_do_kakan(const cj4_mahjong state, cj4_tile_id tile)
     /* Do not add dora or draw here; resolve in separate phase */
     /* current_player stays unchanged for kakan */
     cj4_state_clear_draw_tile(&next);
+    cj4_state_clear_all_ippatsu(&next);
     next.first_turn_uninterrupted = 0;
     next.winning_from_chankan = 0;
     next.pending_kakan_tile = tile;
