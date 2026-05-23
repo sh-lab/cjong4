@@ -4,12 +4,7 @@
 
 bool cj4_can_pon(const cj4_mahjong *state, cj4_player player)
 {
-    if (state->phase != CJ4_PHASE_DISCARD)
-    {
-        return false;
-    }
-
-    if (player == state->current_player)
+    if (!cj4_state_can_claim_discard(state, player))
     {
         return false;
     }
@@ -40,15 +35,8 @@ bool cj4_can_pon_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile
         return false;
     }
 
-    const cj4_location *l1 = cj4_tile_location_const(state, tile1);
-    const cj4_location *l2 = cj4_tile_location_const(state, tile2);
-
-    if (l1->zone != CJ4_ZONE_HAND || l1->owner != player)
-    {
-        return false;
-    }
-
-    if (l2->zone != CJ4_ZONE_HAND || l2->owner != player)
+    if (!cj4_state_tile_is_in_hand(state, player, tile1) ||
+        !cj4_state_tile_is_in_hand(state, player, tile2))
     {
         return false;
     }
@@ -64,28 +52,17 @@ cj4_do_pon(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_ti
     cj4_mahjong next = state;
 
     cj4_tile_id last = cj4_get_last_discard_tile(&state);
+    const cj4_tile_id meld_tiles[3] = { last, tile1, tile2 };
 
-    cj4_meld *m = &next.melds[player][next.meld_count[player]++];
-    m->type = CJ4_MELD_PON;
-    m->tiles[0] = last;
-    m->tiles[1] = tile1;
-    m->tiles[2] = tile2;
-    m->size = 3;
-    m->from_player = state.current_player;
-    m->called_index = 0;
-
-    next.locations[last].zone = CJ4_ZONE_MELD;
-    next.locations[last].owner = player;
-    next.locations[tile1].zone = CJ4_ZONE_MELD;
-    next.locations[tile1].owner = player;
-    next.locations[tile2].zone = CJ4_ZONE_MELD;
-    next.locations[tile2].owner = player;
-
-    cj4_state_call_post_process(&next);
-
-    next.current_player = player;
-
-    next.phase = CJ4_PHASE_AFTER_CALL;
+    cj4_state_add_meld(
+        &next,
+        player,
+        CJ4_MELD_PON,
+        meld_tiles,
+        3,
+        state.current_player,
+        0);
+    cj4_state_finish_open_call(&next, player, CJ4_PHASE_AFTER_CALL);
 
     return next;
 }

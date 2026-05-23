@@ -1,6 +1,7 @@
 #include "state_tsumo.h"
 #include "state_query.h"
-#include "hand_check.h"
+#include "state_ops.h"
+#include "state_yaku.h"
 #include <assert.h>
 
 bool cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules)
@@ -11,26 +12,14 @@ bool cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules)
     if (state->draw_tile == CJ4_TILE_ID_INVALID)
         return false;
 
-    /* Validate hand shape (yaku validation is separate). */
-    if (!cj4_is_complete_hand(state, state->current_player))
-        return false;
-    /* 8. yaku check using cj4_has_yaku */
-    if (!cj4_has_yaku(state, state->current_player, rules))
-        return false;
-
-    return true;
+    return cj4_has_yaku(state, state->current_player, rules);
 }
 
 cj4_mahjong cj4_do_tsumo(const cj4_mahjong state)
 {
 
     cj4_mahjong next = state;
-
-    next.winner = state.current_player;
-    next.winning_tile = state.draw_tile;
-
-    /* Per draft: do NOT modify wall, do NOT clear draw_tile, do NOT change hand/melds. */
-    next.phase = CJ4_PHASE_ROUND_END;
+    cj4_state_finish_tsumo(&next, state.current_player, state.draw_tile);
 
     return next;
 }

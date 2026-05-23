@@ -9,7 +9,7 @@ option(BUILD_EXAMPLES "Build example programs" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 
 # Collect source files from src/
-file(GLOB CJ4_SOURCES
+file(GLOB CJ4_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
 )
 

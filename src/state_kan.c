@@ -8,9 +8,7 @@
 bool
 cj4_can_minkan(const cj4_mahjong *state, cj4_player player)
 {
-    if (state->phase != CJ4_PHASE_DISCARD)
-        return false;
-    if (player == state->current_player)
+    if (!cj4_state_can_claim_discard(state, player))
         return false;
 
     cj4_tile_type last_discard_tile_type = cj4_tile_get_type(cj4_get_last_discard_tile(state));
@@ -34,14 +32,9 @@ cj4_can_minkan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_i
         cj4_tile_get_type(tile3) != type)
         return false;
 
-    const cj4_location *l1 = cj4_tile_location_const(state, tile1);
-    const cj4_location *l2 = cj4_tile_location_const(state, tile2);
-    const cj4_location *l3 = cj4_tile_location_const(state, tile3);
-    if (l1->zone != CJ4_ZONE_HAND || l1->owner != player)
-        return false;
-    if (l2->zone != CJ4_ZONE_HAND || l2->owner != player)
-        return false;
-    if (l3->zone != CJ4_ZONE_HAND || l3->owner != player)
+    if (!cj4_state_tile_is_in_hand(state, player, tile1) ||
+        !cj4_state_tile_is_in_hand(state, player, tile2) ||
+        !cj4_state_tile_is_in_hand(state, player, tile3))
         return false;
 
     return true;
@@ -53,33 +46,17 @@ cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4
     assert(cj4_can_minkan_with_tile(&state, player, tile1, tile2, tile3));
     cj4_mahjong next = state;
     cj4_tile_id last = cj4_get_last_discard_tile(&state);
+    const cj4_tile_id meld_tiles[4] = { last, tile1, tile2, tile3 };
 
-    cj4_meld *m = &next.melds[player][next.meld_count[player]++];
-    m->type = CJ4_MELD_MINKAN;
-    m->tiles[0] = last;
-    m->tiles[1] = tile1;
-    m->tiles[2] = tile2;
-    m->tiles[3] = tile3;
-    m->size = 4;
-    m->from_player = state.current_player;
-    m->called_index = 0;
-
-    next.locations[last].zone = CJ4_ZONE_MELD;
-    next.locations[last].owner = player;
-    next.locations[tile1].zone = CJ4_ZONE_MELD;
-    next.locations[tile1].owner = player;
-    next.locations[tile2].zone = CJ4_ZONE_MELD;
-    next.locations[tile2].owner = player;
-    next.locations[tile3].zone = CJ4_ZONE_MELD;
-    next.locations[tile3].owner = player;
-
-    /* Post-process the call (reset draw_tile, mark discard consumed) */
-    cj4_state_call_post_process(&next);
-
-    /* Defer dora increase and rinshan draw to resolve step
-       set current_player to the player who made the minkan so resolve draws to them */
-    next.current_player = player;
-    next.phase = CJ4_PHASE_ANKAN_RESOLVE;
+    cj4_state_add_meld(
+        &next,
+        player,
+        CJ4_MELD_MINKAN,
+        meld_tiles,
+        4,
+        state.current_player,
+        0);
+    cj4_state_finish_open_call(&next, player, CJ4_PHASE_ANKAN_RESOLVE);
 
     return next;
 }
@@ -121,18 +98,10 @@ cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id
         tile2 == tile3 || tile2 == tile4 || tile3 == tile4)
         return false;
 
-    const cj4_location *l1 = cj4_tile_location_const(state, tile1);
-    const cj4_location *l2 = cj4_tile_location_const(state, tile2);
-    const cj4_location *l3 = cj4_tile_location_const(state, tile3);
-    const cj4_location *l4 = cj4_tile_location_const(state, tile4);
-
-    if (l1->zone != CJ4_ZONE_HAND || l1->owner != player)
-        return false;
-    if (l2->zone != CJ4_ZONE_HAND || l2->owner != player)
-        return false;
-    if (l3->zone != CJ4_ZONE_HAND || l3->owner != player)
-        return false;
-    if (l4->zone != CJ4_ZONE_HAND || l4->owner != player)
+    if (!cj4_state_tile_is_in_hand(state, player, tile1) ||
+        !cj4_state_tile_is_in_hand(state, player, tile2) ||
+        !cj4_state_tile_is_in_hand(state, player, tile3) ||
+        !cj4_state_tile_is_in_hand(state, player, tile4))
         return false;
 
     return true;
@@ -144,29 +113,19 @@ cj4_do_ankan(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_
     assert(cj4_can_ankan_with_tile(&state, tile1, tile2, tile3, tile4));
     cj4_mahjong next = state;
     cj4_player player = state.current_player;
+    const cj4_tile_id meld_tiles[4] = { tile1, tile2, tile3, tile4 };
 
-    cj4_meld *m = &next.melds[player][next.meld_count[player]++];
-    m->type = CJ4_MELD_ANKAN;
-    m->tiles[0] = tile1;
-    m->tiles[1] = tile2;
-    m->tiles[2] = tile3;
-    m->tiles[3] = tile4;
-    m->size = 4;
-    m->from_player = player;
-    m->called_index = CJ4_CALLED_INDEX_NONE;
+    cj4_state_add_meld(
+        &next,
+        player,
+        CJ4_MELD_ANKAN,
+        meld_tiles,
+        4,
+        player,
+        CJ4_CALLED_INDEX_NONE);
+    cj4_state_clear_draw_tile(&next);
 
-    next.locations[tile1].zone = CJ4_ZONE_MELD;
-    next.locations[tile1].owner = player;
-    next.locations[tile2].zone = CJ4_ZONE_MELD;
-    next.locations[tile2].owner = player;
-    next.locations[tile3].zone = CJ4_ZONE_MELD;
-    next.locations[tile3].owner = player;
-    next.locations[tile4].zone = CJ4_ZONE_MELD;
-    next.locations[tile4].owner = player;
-
-    cj4_state_call_post_process(&next);
-
-    cj4_state_draw_dead_wall_tile(&next, player);
+    next.draw_tile = cj4_state_draw_dead_wall_tile(&next, player);
 
     cj4_state_add_dora_indicator(&next);
 
@@ -207,8 +166,7 @@ cj4_can_kakan_with_tile(const cj4_mahjong *state, cj4_tile_id tile)
         return false;
 
     cj4_player player = state->current_player;
-    const cj4_location *loc = cj4_tile_location_const(state, tile);
-    if (loc->zone != CJ4_ZONE_HAND || loc->owner != player)
+    if (!cj4_state_tile_is_in_hand(state, player, tile))
         return false;
 
     cj4_tile_type type = cj4_tile_get_type(tile);
@@ -241,8 +199,7 @@ cj4_do_kakan(const cj4_mahjong state, cj4_tile_id tile)
             m->type = CJ4_MELD_KAKAN; /* convert from PON to KAKAN */
             /* called_index stays unchanged */
 
-            next.locations[tile].zone = CJ4_ZONE_MELD;
-            next.locations[tile].owner = player;
+            cj4_state_set_location(&next, tile, CJ4_ZONE_MELD, player);
 
             break;
         }
@@ -250,6 +207,7 @@ cj4_do_kakan(const cj4_mahjong state, cj4_tile_id tile)
 
     /* Do not add dora or draw here; resolve in separate phase */
     /* current_player stays unchanged for kakan */
+    cj4_state_clear_draw_tile(&next);
     next.phase = CJ4_PHASE_KAKAN_RESOLVE;
 
     return next;

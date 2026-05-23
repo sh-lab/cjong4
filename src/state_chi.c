@@ -5,13 +5,12 @@
 
 bool cj4_can_chi(const cj4_mahjong *state)
 {
-    if (state->phase != CJ4_PHASE_DISCARD)
+    cj4_player next_player = cj4_next_player(state);
+
+    if (!cj4_state_can_claim_discard(state, next_player))
     {
         return false;
     }
-
-    /* Chi is only allowed for the left/next player */
-    cj4_player next_player = cj4_next_player(state);
 
     cj4_tile_id last = cj4_get_last_discard_tile(state);
     cj4_tile_type last_type = cj4_tile_get_type(last);
@@ -122,15 +121,8 @@ bool cj4_can_chi_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile
     }
 
     /* Ensure tile1 and tile2 are indeed in the player's hand */
-    const cj4_location *l1 = cj4_tile_location_const(state, tile1);
-    const cj4_location *l2 = cj4_tile_location_const(state, tile2);
-
-    if (l1->zone != CJ4_ZONE_HAND || l1->owner != next_player)
-    {
-        return false;
-    }
-
-    if (l2->zone != CJ4_ZONE_HAND || l2->owner != next_player)
+    if (!cj4_state_tile_is_in_hand(state, next_player, tile1) ||
+        !cj4_state_tile_is_in_hand(state, next_player, tile2))
     {
         return false;
     }
@@ -148,29 +140,17 @@ cj4_do_chi(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2)
     cj4_player next_player = cj4_next_player(&state);
 
     cj4_tile_id last = cj4_get_last_discard_tile(&state);
+    const cj4_tile_id meld_tiles[3] = { last, tile1, tile2 };
 
-    cj4_meld *m = &next.melds[next_player][next.meld_count[next_player]++];
-    m->type = CJ4_MELD_CHI;
-    m->tiles[0] = last;
-    m->tiles[1] = tile1;
-    m->tiles[2] = tile2;
-    m->size = 3;
-    m->from_player = state.current_player;
-    m->called_index = 0;
-
-
-    next.locations[last].zone = CJ4_ZONE_MELD;
-    next.locations[last].owner = next_player;
-    next.locations[tile1].zone = CJ4_ZONE_MELD;
-    next.locations[tile1].owner = next_player;
-    next.locations[tile2].zone = CJ4_ZONE_MELD;
-    next.locations[tile2].owner = next_player;
-
-    cj4_state_call_post_process(&next);
-
-    next.current_player = next_player;
-
-    next.phase = CJ4_PHASE_AFTER_CALL;
+    cj4_state_add_meld(
+        &next,
+        next_player,
+        CJ4_MELD_CHI,
+        meld_tiles,
+        3,
+        state.current_player,
+        0);
+    cj4_state_finish_open_call(&next, next_player, CJ4_PHASE_AFTER_CALL);
 
     return next;
 }

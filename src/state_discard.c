@@ -15,9 +15,8 @@ cj4_can_discard(
     {
         return false;
     }
-    
-    cj4_location *loc = &state.locations[tile];
-    if (loc->zone != CJ4_ZONE_HAND || loc->owner != state.current_player)
+
+    if (!cj4_state_tile_is_in_hand(&state, state.current_player, tile))
     {
         return false;
     }
@@ -32,16 +31,8 @@ cj4_do_discard(
 {
     cj4_mahjong next = state;
 
-    next.locations[tile].zone  = CJ4_ZONE_RIVER;
-    next.locations[tile].owner = state.current_player;
-
-    cj4_discard *d = &next.discards[next.discard_count++];
-    d->tile = tile;
-    d->player = state.current_player;
-    d->is_active = 1;
-    d->is_tsumogiri = (tile == state.draw_tile);
-
-    next.draw_tile = CJ4_TILE_ID_INVALID;
+    cj4_state_record_discard(&next, tile, (uint8_t)(tile == state.draw_tile));
+    cj4_state_clear_draw_tile(&next);
 
     next.phase = CJ4_PHASE_DISCARD;
 
