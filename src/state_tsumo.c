@@ -14,8 +14,9 @@ bool cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules)
     /* Validate hand shape (yaku validation is separate). */
     if (!cj4_is_complete_hand(state, state->current_player))
         return false;
-
-    /* TODO 役判定 */
+    /* 8. yaku check using cj4_has_yaku */
+    if (!cj4_has_yaku(state, state->current_player, rules))
+        return false;
 
     return true;
 }

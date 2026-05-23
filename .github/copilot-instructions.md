@@ -39,3 +39,28 @@
 ## Notes
 - Keep implementations simple and deterministic rather than abstract or generic.
 - Do not introduce unnecessary dynamic allocation if fixed-size structures are sufficient.
+
+## Safety / Constraints for Copilot
+
+- Do NOT create commits automatically.
+- Do NOT run git commands (commit, push, rebase, etc.).
+- Do NOT download or install any external tools, packages, or dependencies.
+- Do NOT execute shell commands that modify the environment.
+
+## Code generation constraints
+
+- Only modify files when explicitly instructed by the user.
+- Prefer showing diffs or full file content instead of applying changes automatically.
+- Do not introduce new build systems or dependencies unless explicitly requested.
+- Keep the project self-contained (no external libraries unless specified).
+
+## Environment constraints
+
+- Assume a local development environment without internet access.
+- Do not attempt to fetch remote resources or install anything.
+
+## Language
+
+- All responses must be written in Japanese.
+- Use clear and concise technical Japanese.
+- Keep code comments in English unless otherwise specified.

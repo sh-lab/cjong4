@@ -70,7 +70,10 @@ typedef struct
     cj4_tile_id draw_tile; // valid only when phase == CJ4_PHASE_DRAW
 
     /* Round result (set when the round ends). */
-    cj4_player winner;           /* winning player */
+    cj4_player winner;           /* winning player (first winner, for compatibility) */
+    cj4_player loser;            /* losing player (discarder) */
+    cj4_player winners[CJ4_PLAYER_COUNT]; /* list of winners for multi-ron */
+    uint8_t winner_count;
     cj4_tile_id winning_tile;    /* winning tile; CJ4_TILE_ID_INVALID if none */
 
     cj4_tile_id wall[CJ4_TILE_ID_COUNT];
