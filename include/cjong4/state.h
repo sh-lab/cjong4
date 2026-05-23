@@ -69,6 +69,10 @@ typedef struct
 
     cj4_tile_id draw_tile; // valid only when phase == CJ4_PHASE_DRAW
 
+    /* Round result (set when the round ends). */
+    cj4_player winner;           /* winning player */
+    cj4_tile_id winning_tile;    /* winning tile; CJ4_TILE_ID_INVALID if none */
+
     cj4_tile_id wall[CJ4_TILE_ID_COUNT];
     uint8_t wall_pos; // next draw position
 
