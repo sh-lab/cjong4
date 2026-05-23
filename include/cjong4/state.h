@@ -66,8 +66,13 @@ typedef struct
     // player state
     uint8_t is_riichi[CJ4_PLAYER_COUNT];
     uint8_t is_ippatsu[CJ4_PLAYER_COUNT];
+    uint8_t riichi_declared_on_first_turn[CJ4_PLAYER_COUNT];
+    uint8_t draw_turn_count[CJ4_PLAYER_COUNT];
+    uint8_t first_turn_uninterrupted;
+    uint8_t winning_from_chankan;
 
     cj4_tile_id draw_tile; // valid only when phase == CJ4_PHASE_DRAW
+    cj4_tile_id pending_kakan_tile; /* valid only when phase == CJ4_PHASE_KAKAN_RESOLVE */
 
     /* Round result (set when the round ends). */
     cj4_player winner;           /* winning player (first winner, for compatibility) */

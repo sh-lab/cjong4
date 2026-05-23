@@ -57,6 +57,9 @@ cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4
         state.current_player,
         0);
     cj4_state_finish_open_call(&next, player, CJ4_PHASE_ANKAN_RESOLVE);
+    next.first_turn_uninterrupted = 0;
+    next.winning_from_chankan = 0;
+    next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
 
     return next;
 }
@@ -130,6 +133,9 @@ cj4_do_ankan(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_
     cj4_state_add_dora_indicator(&next);
 
     next.current_player = player;
+    next.first_turn_uninterrupted = 0;
+    next.winning_from_chankan = 0;
+    next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
 
     next.phase = CJ4_PHASE_DRAW;
 
@@ -208,6 +214,9 @@ cj4_do_kakan(const cj4_mahjong state, cj4_tile_id tile)
     /* Do not add dora or draw here; resolve in separate phase */
     /* current_player stays unchanged for kakan */
     cj4_state_clear_draw_tile(&next);
+    next.first_turn_uninterrupted = 0;
+    next.winning_from_chankan = 0;
+    next.pending_kakan_tile = tile;
     next.phase = CJ4_PHASE_KAKAN_RESOLVE;
 
     return next;
@@ -235,6 +244,8 @@ cj4_do_rinshan_draw(const cj4_mahjong state)
     /* Increase dora indicator if possible */
     cj4_state_add_dora_indicator(&next);
 
+    next.winning_from_chankan = 0;
+    next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     next.phase = CJ4_PHASE_DRAW;
 
     return next;

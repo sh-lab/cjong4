@@ -26,7 +26,12 @@ cj4_do_pass(const cj4_mahjong state)
     }
 
     next.current_player = cj4_next_player(&state);
+    if (next.draw_turn_count[next.current_player] > 0)
+        next.first_turn_uninterrupted = 0;
     next.draw_tile = cj4_state_draw_tile(&next, next.current_player);
+    next.draw_turn_count[next.current_player]++;
+    next.winning_from_chankan = 0;
+    next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
 
     next.phase = CJ4_PHASE_DRAW;
 
