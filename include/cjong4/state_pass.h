@@ -14,7 +14,10 @@ bool
 cj4_can_pass(const cj4_mahjong state);
 
 cj4_mahjong
-cj4_do_pass(const cj4_mahjong state);
+cj4_do_pass(
+    const cj4_mahjong state,
+    const cj4_rules *rules
+);
 
 #ifdef __cplusplus
 }

@@ -727,8 +727,7 @@ cj4_yaku_apply_count_based_yaku(
     if (state->is_riichi[player])
         *flags |= CJ4_YAKU_RIICHI;
 
-    if (rules && rules->double_riichi &&
-        state->riichi_declared_on_first_turn[player])
+    if (state->riichi_declared_on_first_turn[player])
         *flags |= CJ4_YAKU_DOUBLE_RIICHI;
 
     if (rules && rules->ippatsu && state->is_ippatsu[player])

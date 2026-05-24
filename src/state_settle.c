@@ -137,7 +137,7 @@ cj4_settle_apply_draw(
 
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
     {
-        tenpai[i] = (uint8_t)cj4_player_is_tenpai(state, (cj4_player)i, rules);
+        tenpai[i] = (uint8_t)cj4_player_is_shape_tenpai(state, (cj4_player)i);
         tenpai_count += tenpai[i];
     }
 
@@ -265,10 +265,16 @@ cj4_do_settle(const cj4_mahjong state, const cj4_rules *rules)
     }
     else
     {
-        cj4_settle_apply_draw(&next, &state, rules, tenpai);
-        dealer_continues = (rules &&
-                            rules->dealer_renchan_tenpai &&
-                            tenpai[state.dealer]);
+        if (state.round_end_type != CJ4_ROUND_END_ABORTIVE_DRAW)
+        {
+            cj4_settle_apply_draw(&next, &state, rules, tenpai);
+            dealer_continues = tenpai[state.dealer];
+        }
+        else
+        {
+            dealer_continues = 1;
+        }
+
         next.honba = (uint8_t)(state.honba + 1);
     }
 

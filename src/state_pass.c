@@ -1,6 +1,7 @@
 #include "state_pass.h"
 #include "state_query.h"
 #include "state_ops.h"
+#include "state_ron.h"
 
 bool
 cj4_can_pass(const cj4_mahjong state)
@@ -14,13 +15,29 @@ cj4_can_pass(const cj4_mahjong state)
 }
 
 cj4_mahjong
-cj4_do_pass(const cj4_mahjong state)
+cj4_do_pass(
+    const cj4_mahjong state,
+    const cj4_rules *rules)
 {
     cj4_mahjong next = state;
 
+    for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
+    {
+        if (player == state.current_player)
+            continue;
+
+        if (!cj4_can_ron(&state, (cj4_player)player, rules))
+            continue;
+
+        if (state.is_riichi[player])
+            next.riichi_furiten[player] = 1;
+        else
+            next.temporary_furiten[player] = 1;
+    }
+
     if (next.discard_count >= CJ4_MAX_DRAWS)
     {
-        next.phase = CJ4_PHASE_ROUND_END;
+        cj4_state_finish_draw_round(&next, CJ4_ROUND_END_EXHAUSTIVE_DRAW);
 
         return next;
     }

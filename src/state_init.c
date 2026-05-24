@@ -71,6 +71,7 @@ cj4_state_create_round(
     state.winning_from_chankan = 0;
     state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     state.winning_tile = CJ4_TILE_ID_INVALID;
+    state.round_end_type = CJ4_ROUND_END_NONE;
     state.next_round_wind = CJ4_WIND_EAST;
     state.next_dealer = CJ4_PLAYER_0;
     state.settlement_should_end = 0;

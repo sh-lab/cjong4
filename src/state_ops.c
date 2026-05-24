@@ -45,6 +45,55 @@ cj4_state_set_location(
     state->locations[tile].owner = owner;
 }
 
+uint8_t
+cj4_state_count_total_kans(const cj4_mahjong *state)
+{
+    uint8_t total = 0;
+
+    for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
+    {
+        for (uint8_t i = 0; i < state->meld_count[player]; ++i)
+        {
+            cj4_meld_type type = state->melds[player][i].type;
+            if (type == CJ4_MELD_MINKAN ||
+                type == CJ4_MELD_ANKAN ||
+                type == CJ4_MELD_KAKAN)
+            {
+                total++;
+            }
+        }
+    }
+
+    return total;
+}
+
+uint8_t
+cj4_state_all_kans_by_one_player(const cj4_mahjong *state)
+{
+    uint8_t owner = CJ4_PLAYER_COUNT;
+
+    for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
+    {
+        for (uint8_t i = 0; i < state->meld_count[player]; ++i)
+        {
+            cj4_meld_type type = state->melds[player][i].type;
+            if (type != CJ4_MELD_MINKAN &&
+                type != CJ4_MELD_ANKAN &&
+                type != CJ4_MELD_KAKAN)
+            {
+                continue;
+            }
+
+            if (owner == CJ4_PLAYER_COUNT)
+                owner = player;
+            else if (owner != player)
+                return 0;
+        }
+    }
+
+    return 1;
+}
+
 cj4_tile_id
 cj4_state_draw_tile(
     cj4_mahjong *state,
@@ -55,6 +104,7 @@ cj4_state_draw_tile(
     cj4_state_set_location(state, t, CJ4_ZONE_HAND, player);
 
     state->draw_count++;
+    state->temporary_furiten[player] = 0;
 
     return t;
 }
@@ -64,10 +114,12 @@ cj4_state_draw_dead_wall_tile(
     cj4_mahjong *state,
     cj4_player player)
 {
+    assert(state->dead_wall_draw_count < 4);
     cj4_tile_id t = state->wall[CJ4_RINSHAN_INDICES[state->dead_wall_draw_count++]];
     cj4_state_set_location(state, t, CJ4_ZONE_HAND, player);
 
     state->draw_count++;
+    state->temporary_furiten[player] = 0;
 
     return t;
 }
@@ -166,6 +218,7 @@ cj4_state_finish_tsumo(
     state->winners[0] = winner;
     state->winner_count = 1;
     state->winning_tile = winning_tile;
+    state->round_end_type = CJ4_ROUND_END_TSUMO;
     state->phase = CJ4_PHASE_ROUND_END;
 }
 
@@ -187,5 +240,17 @@ cj4_state_finish_multi_ron(
 
     state->winner = state->winners[0];
     state->winning_tile = winning_tile;
+    state->round_end_type = CJ4_ROUND_END_RON;
+    state->phase = CJ4_PHASE_ROUND_END;
+}
+
+void
+cj4_state_finish_draw_round(
+    cj4_mahjong *state,
+    cj4_round_end_type round_end_type)
+{
+    state->winner_count = 0;
+    state->winning_tile = CJ4_TILE_ID_INVALID;
+    state->round_end_type = round_end_type;
     state->phase = CJ4_PHASE_ROUND_END;
 }

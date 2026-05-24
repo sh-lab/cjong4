@@ -2,6 +2,8 @@
 #include "state_query.h"
 #include "tile.h"
 
+#include <string.h>
+
 /* Recursive meld partitioning using type counts. */
 static bool remove_melds(int counts[CJ4_TILE_TYPE_COUNT], int melds_needed)
 {
@@ -171,4 +173,55 @@ bool cj4_is_complete_hand(const cj4_mahjong* state, cj4_player player)
     if (check_standard(counts, melds_needed)) return true;
 
     return false;
+}
+
+static cj4_tile_id
+cj4_find_test_tile(
+    const cj4_mahjong *state,
+    cj4_player player,
+    cj4_tile_type type)
+{
+    for (uint8_t i = 0; i < CJ4_TILE_PER_TYPE; ++i)
+    {
+        cj4_tile_id tile = cj4_tile_make(type, i);
+        const cj4_location *loc = cj4_tile_location_const(state, tile);
+
+        if (!(loc->zone == CJ4_ZONE_HAND && loc->owner == player))
+            return tile;
+    }
+
+    return CJ4_TILE_ID_INVALID;
+}
+
+uint8_t
+cj4_collect_waiting_tile_types(
+    const cj4_mahjong *state,
+    cj4_player player,
+    uint8_t waits[CJ4_TILE_TYPE_COUNT])
+{
+    uint8_t count = 0;
+
+    memset(waits, 0, CJ4_TILE_TYPE_COUNT);
+
+    for (cj4_tile_type type = CJ4_TILE_TYPE_MIN;
+         type <= CJ4_TILE_TYPE_MAX;
+         ++type)
+    {
+        cj4_tile_id tile = cj4_find_test_tile(state, player, type);
+
+        if (tile == CJ4_TILE_ID_INVALID)
+            continue;
+
+        cj4_mahjong tmp = *state;
+        tmp.locations[tile].zone = CJ4_ZONE_HAND;
+        tmp.locations[tile].owner = player;
+
+        if (!cj4_is_complete_hand(&tmp, player))
+            continue;
+
+        waits[type] = 1;
+        count++;
+    }
+
+    return count;
 }

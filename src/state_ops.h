@@ -36,6 +36,12 @@ cj4_state_draw_dead_wall_tile(
     cj4_player player
 );
 
+uint8_t
+cj4_state_count_total_kans(const cj4_mahjong *state);
+
+uint8_t
+cj4_state_all_kans_by_one_player(const cj4_mahjong *state);
+
 void
 cj4_state_set_location(
     cj4_mahjong *state,
@@ -94,6 +100,12 @@ cj4_state_finish_multi_ron(
     const cj4_player *players,
     uint8_t count,
     cj4_tile_id winning_tile
+);
+
+void
+cj4_state_finish_draw_round(
+    cj4_mahjong *state,
+    cj4_round_end_type round_end_type
 );
 
 #endif /* CJ4_STATE_OPS_H */

@@ -15,6 +15,13 @@ extern "C" {
  */
 bool cj4_is_complete_hand(const cj4_mahjong* state, cj4_player player);
 
+uint8_t
+cj4_collect_waiting_tile_types(
+    const cj4_mahjong *state,
+    cj4_player player,
+    uint8_t waits[CJ4_TILE_TYPE_COUNT]
+);
+
 #ifdef __cplusplus
 }
 #endif

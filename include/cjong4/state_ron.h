@@ -21,7 +21,8 @@ cj4_mahjong
 cj4_do_ron_multi(
     const cj4_mahjong state,
     const cj4_player* players,
-    int count
+    int count,
+    const cj4_rules *rules
 );
 
 #ifdef __cplusplus

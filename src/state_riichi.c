@@ -51,7 +51,7 @@ cj4_can_riichi(
     tmp.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     tmp.phase = CJ4_PHASE_DISCARD;
 
-    return cj4_player_is_tenpai(&tmp, player, NULL);
+    return cj4_player_is_shape_tenpai(&tmp, player);
 }
 
 cj4_mahjong

@@ -19,10 +19,9 @@ typedef struct
 } cj4_hand_score;
 
 bool
-cj4_player_is_tenpai(
+cj4_player_is_shape_tenpai(
     const cj4_mahjong *state,
-    cj4_player player,
-    const cj4_rules *rules);
+    cj4_player player);
 
 bool
 cj4_calculate_hand_score(

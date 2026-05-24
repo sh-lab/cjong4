@@ -41,6 +41,15 @@ typedef struct
     uint8_t called_index;   // index of the called tile in the meld (0-3)
 } cj4_meld;
 
+typedef enum
+{
+    CJ4_ROUND_END_NONE,
+    CJ4_ROUND_END_TSUMO,
+    CJ4_ROUND_END_RON,
+    CJ4_ROUND_END_EXHAUSTIVE_DRAW,
+    CJ4_ROUND_END_ABORTIVE_DRAW
+} cj4_round_end_type;
+
 typedef struct
 {
 
@@ -68,6 +77,8 @@ typedef struct
     uint8_t is_ippatsu[CJ4_PLAYER_COUNT];
     uint8_t riichi_declared_on_first_turn[CJ4_PLAYER_COUNT];
     uint8_t draw_turn_count[CJ4_PLAYER_COUNT];
+    uint8_t temporary_furiten[CJ4_PLAYER_COUNT];
+    uint8_t riichi_furiten[CJ4_PLAYER_COUNT];
     uint8_t first_turn_uninterrupted;
     uint8_t winning_from_chankan;
 
@@ -80,6 +91,7 @@ typedef struct
     cj4_player winners[CJ4_PLAYER_COUNT]; /* list of winners for multi-ron */
     uint8_t winner_count;
     cj4_tile_id winning_tile;    /* winning tile; CJ4_TILE_ID_INVALID if none */
+    cj4_round_end_type round_end_type;
     
     /* Settlement result (valid when phase == CJ4_PHASE_SETTLE). */
     cj4_wind next_round_wind;

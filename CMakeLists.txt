@@ -32,6 +32,17 @@ set_target_properties(cj4 PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib"
 )
 
+if (BUILD_TESTS)
+    enable_testing()
+
+    add_executable(cj4_tests
+        tests/test_core_rules.c
+    )
+    target_link_libraries(cj4_tests PRIVATE cj4)
+
+    add_test(NAME cj4_tests COMMAND cj4_tests)
+endif()
+
 # Install (optional)
 install(TARGETS cj4
     ARCHIVE DESTINATION lib
