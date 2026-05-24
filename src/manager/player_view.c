@@ -30,6 +30,7 @@ cj4m_make_player_view(
     memcpy(view.scores, state->scores, sizeof(view.scores));
     memcpy(view.is_riichi, state->is_riichi, sizeof(view.is_riichi));
     memcpy(view.discards, state->discards, sizeof(view.discards));
+    view.discard_count = state->discard_count;
     memcpy(view.melds, state->melds, sizeof(view.melds));
     memcpy(view.meld_count, state->meld_count, sizeof(view.meld_count));
 

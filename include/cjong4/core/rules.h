@@ -33,12 +33,9 @@ extern "C"
         /* ron */
         uint8_t max_ron_players; /* 1=head bump, 2=double ron, 3=triple ron */
 
-        /* draw / abort */
+        /* draw */
         uint8_t noten_penalty;
         int32_t noten_penalty_points;
-
-        uint8_t abort_kyushukyuhai;
-        uint8_t abort_sufurenta;
 
         /* red tiles */
         uint8_t aka_tiles[136];

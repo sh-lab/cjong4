@@ -165,6 +165,8 @@ test_player_view_hides_hidden_information(void)
     assert(!contains_tile(view.hand, view.hand_count, hand1[0]));
     assert(view.draw_tile == hand0[3]);
     assert(view.last_discard == tile(20, 0));
+    assert(view.discard_count == 1);
+    assert(view.discards[0].tile == tile(20, 0));
     assert(view.is_riichi[CJ4_PLAYER_1] == 1);
     assert(view.temporary_furiten == 1);
 }
