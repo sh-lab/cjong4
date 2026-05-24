@@ -1,6 +1,6 @@
 #include "state_pon.h"
-#include "state_query.h"
 #include "state_ops.h"
+#include "state_query.h"
 
 bool cj4_can_pon(const cj4_mahjong *state, cj4_player player)
 {
@@ -52,7 +52,7 @@ cj4_do_pon(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_ti
     cj4_mahjong next = state;
 
     cj4_tile_id last = cj4_get_last_discard_tile(&state);
-    const cj4_tile_id meld_tiles[3] = { last, tile1, tile2 };
+    const cj4_tile_id meld_tiles[3] = {last, tile1, tile2};
 
     cj4_state_add_meld(
         &next,

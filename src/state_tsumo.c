@@ -1,6 +1,6 @@
 #include "state_tsumo.h"
-#include "state_query.h"
 #include "state_ops.h"
+#include "state_query.h"
 #include "state_yaku.h"
 #include <assert.h>
 

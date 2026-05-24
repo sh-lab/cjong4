@@ -4,8 +4,7 @@
 
 #include <assert.h>
 
-bool
-cj4_can_next_round(const cj4_mahjong state)
+bool cj4_can_next_round(const cj4_mahjong state)
 {
     return state.phase == CJ4_PHASE_SETTLE &&
            !state.settlement_should_end;
@@ -30,8 +29,7 @@ cj4_do_next_round(
         state.riichi_sticks);
 }
 
-bool
-cj4_can_game_end(const cj4_mahjong state)
+bool cj4_can_game_end(const cj4_mahjong state)
 {
     return state.phase == CJ4_PHASE_SETTLE &&
            state.settlement_should_end;

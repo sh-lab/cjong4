@@ -1,8 +1,8 @@
 #include "state_yaku.h"
 #include "hand_check.h"
-#include "state_score.h"
 #include "state_internal.h"
 #include "state_query.h"
+#include "state_score.h"
 #include "tile.h"
 #include "tile_const.h"
 
@@ -14,48 +14,48 @@
 
 typedef uint64_t cj4_yaku_flags;
 
-#define CJ4_YAKU_RIICHI             ((cj4_yaku_flags)1ULL << 0)
-#define CJ4_YAKU_IPPATSU            ((cj4_yaku_flags)1ULL << 1)
-#define CJ4_YAKU_MENZEN_TSUMO       ((cj4_yaku_flags)1ULL << 2)
-#define CJ4_YAKU_TANYAO             ((cj4_yaku_flags)1ULL << 3)
-#define CJ4_YAKU_YAKUHAI            ((cj4_yaku_flags)1ULL << 4)
-#define CJ4_YAKU_CHIITOI            ((cj4_yaku_flags)1ULL << 5)
-#define CJ4_YAKU_KOKUSHI            ((cj4_yaku_flags)1ULL << 6)
-#define CJ4_YAKU_TOITOI             ((cj4_yaku_flags)1ULL << 7)
-#define CJ4_YAKU_HONROUTOU          ((cj4_yaku_flags)1ULL << 8)
-#define CJ4_YAKU_HONITSU            ((cj4_yaku_flags)1ULL << 9)
-#define CJ4_YAKU_CHINITSU           ((cj4_yaku_flags)1ULL << 10)
-#define CJ4_YAKU_PINFU              ((cj4_yaku_flags)1ULL << 11)
-#define CJ4_YAKU_IIPEIKOU           ((cj4_yaku_flags)1ULL << 12)
-#define CJ4_YAKU_RYANPEIKOU         ((cj4_yaku_flags)1ULL << 13)
-#define CJ4_YAKU_SANSHOKU_DOUJUN    ((cj4_yaku_flags)1ULL << 14)
-#define CJ4_YAKU_ITTSUU             ((cj4_yaku_flags)1ULL << 15)
-#define CJ4_YAKU_CHANTA             ((cj4_yaku_flags)1ULL << 16)
-#define CJ4_YAKU_JUNCHAN            ((cj4_yaku_flags)1ULL << 17)
-#define CJ4_YAKU_SANANKOU           ((cj4_yaku_flags)1ULL << 18)
-#define CJ4_YAKU_SHOUSANGEN         ((cj4_yaku_flags)1ULL << 19)
-#define CJ4_YAKU_DAISANGEN          ((cj4_yaku_flags)1ULL << 20)
-#define CJ4_YAKU_SHOUSUUSHII        ((cj4_yaku_flags)1ULL << 21)
-#define CJ4_YAKU_DAISUUSHII         ((cj4_yaku_flags)1ULL << 22)
-#define CJ4_YAKU_TSUUIISOU          ((cj4_yaku_flags)1ULL << 23)
-#define CJ4_YAKU_RYUUIISOU          ((cj4_yaku_flags)1ULL << 24)
-#define CJ4_YAKU_CHINROUTOU         ((cj4_yaku_flags)1ULL << 25)
-#define CJ4_YAKU_SANKANTSU          ((cj4_yaku_flags)1ULL << 26)
-#define CJ4_YAKU_SUUKANTSU          ((cj4_yaku_flags)1ULL << 27)
-#define CJ4_YAKU_SANSHOKU_DOUKOU    ((cj4_yaku_flags)1ULL << 28)
-#define CJ4_YAKU_SUUANKOU           ((cj4_yaku_flags)1ULL << 29)
-#define CJ4_YAKU_CHUUREN            ((cj4_yaku_flags)1ULL << 30)
-#define CJ4_YAKU_RINSHAN            ((cj4_yaku_flags)1ULL << 31)
-#define CJ4_YAKU_HAITEI             ((cj4_yaku_flags)1ULL << 32)
-#define CJ4_YAKU_HOUTEI             ((cj4_yaku_flags)1ULL << 33)
-#define CJ4_YAKU_KOKUSHI_13         ((cj4_yaku_flags)1ULL << 34)
-#define CJ4_YAKU_SUUANKOU_TANKI     ((cj4_yaku_flags)1ULL << 35)
-#define CJ4_YAKU_JUNSEI_CHUUREN     ((cj4_yaku_flags)1ULL << 36)
-#define CJ4_YAKU_DAISUUSHII_DOUBLE  ((cj4_yaku_flags)1ULL << 37)
-#define CJ4_YAKU_DOUBLE_RIICHI      ((cj4_yaku_flags)1ULL << 38)
-#define CJ4_YAKU_CHANKAN            ((cj4_yaku_flags)1ULL << 39)
-#define CJ4_YAKU_TENHOU             ((cj4_yaku_flags)1ULL << 40)
-#define CJ4_YAKU_CHIIHOU            ((cj4_yaku_flags)1ULL << 41)
+#define CJ4_YAKU_RIICHI ((cj4_yaku_flags)1ULL << 0)
+#define CJ4_YAKU_IPPATSU ((cj4_yaku_flags)1ULL << 1)
+#define CJ4_YAKU_MENZEN_TSUMO ((cj4_yaku_flags)1ULL << 2)
+#define CJ4_YAKU_TANYAO ((cj4_yaku_flags)1ULL << 3)
+#define CJ4_YAKU_YAKUHAI ((cj4_yaku_flags)1ULL << 4)
+#define CJ4_YAKU_CHIITOI ((cj4_yaku_flags)1ULL << 5)
+#define CJ4_YAKU_KOKUSHI ((cj4_yaku_flags)1ULL << 6)
+#define CJ4_YAKU_TOITOI ((cj4_yaku_flags)1ULL << 7)
+#define CJ4_YAKU_HONROUTOU ((cj4_yaku_flags)1ULL << 8)
+#define CJ4_YAKU_HONITSU ((cj4_yaku_flags)1ULL << 9)
+#define CJ4_YAKU_CHINITSU ((cj4_yaku_flags)1ULL << 10)
+#define CJ4_YAKU_PINFU ((cj4_yaku_flags)1ULL << 11)
+#define CJ4_YAKU_IIPEIKOU ((cj4_yaku_flags)1ULL << 12)
+#define CJ4_YAKU_RYANPEIKOU ((cj4_yaku_flags)1ULL << 13)
+#define CJ4_YAKU_SANSHOKU_DOUJUN ((cj4_yaku_flags)1ULL << 14)
+#define CJ4_YAKU_ITTSUU ((cj4_yaku_flags)1ULL << 15)
+#define CJ4_YAKU_CHANTA ((cj4_yaku_flags)1ULL << 16)
+#define CJ4_YAKU_JUNCHAN ((cj4_yaku_flags)1ULL << 17)
+#define CJ4_YAKU_SANANKOU ((cj4_yaku_flags)1ULL << 18)
+#define CJ4_YAKU_SHOUSANGEN ((cj4_yaku_flags)1ULL << 19)
+#define CJ4_YAKU_DAISANGEN ((cj4_yaku_flags)1ULL << 20)
+#define CJ4_YAKU_SHOUSUUSHII ((cj4_yaku_flags)1ULL << 21)
+#define CJ4_YAKU_DAISUUSHII ((cj4_yaku_flags)1ULL << 22)
+#define CJ4_YAKU_TSUUIISOU ((cj4_yaku_flags)1ULL << 23)
+#define CJ4_YAKU_RYUUIISOU ((cj4_yaku_flags)1ULL << 24)
+#define CJ4_YAKU_CHINROUTOU ((cj4_yaku_flags)1ULL << 25)
+#define CJ4_YAKU_SANKANTSU ((cj4_yaku_flags)1ULL << 26)
+#define CJ4_YAKU_SUUKANTSU ((cj4_yaku_flags)1ULL << 27)
+#define CJ4_YAKU_SANSHOKU_DOUKOU ((cj4_yaku_flags)1ULL << 28)
+#define CJ4_YAKU_SUUANKOU ((cj4_yaku_flags)1ULL << 29)
+#define CJ4_YAKU_CHUUREN ((cj4_yaku_flags)1ULL << 30)
+#define CJ4_YAKU_RINSHAN ((cj4_yaku_flags)1ULL << 31)
+#define CJ4_YAKU_HAITEI ((cj4_yaku_flags)1ULL << 32)
+#define CJ4_YAKU_HOUTEI ((cj4_yaku_flags)1ULL << 33)
+#define CJ4_YAKU_KOKUSHI_13 ((cj4_yaku_flags)1ULL << 34)
+#define CJ4_YAKU_SUUANKOU_TANKI ((cj4_yaku_flags)1ULL << 35)
+#define CJ4_YAKU_JUNSEI_CHUUREN ((cj4_yaku_flags)1ULL << 36)
+#define CJ4_YAKU_DAISUUSHII_DOUBLE ((cj4_yaku_flags)1ULL << 37)
+#define CJ4_YAKU_DOUBLE_RIICHI ((cj4_yaku_flags)1ULL << 38)
+#define CJ4_YAKU_CHANKAN ((cj4_yaku_flags)1ULL << 39)
+#define CJ4_YAKU_TENHOU ((cj4_yaku_flags)1ULL << 40)
+#define CJ4_YAKU_CHIIHOU ((cj4_yaku_flags)1ULL << 41)
 
 typedef enum
 {
@@ -339,8 +339,7 @@ cj4_yaku_is_kokushi(const int counts[CJ4_TILE_TYPE_COUNT])
         CJ4_TILE_TYPE_1S, CJ4_TILE_TYPE_9S,
         CJ4_TILE_TYPE_EAST, CJ4_TILE_TYPE_SOUTH, CJ4_TILE_TYPE_WEST,
         CJ4_TILE_TYPE_NORTH, CJ4_TILE_TYPE_HAKU, CJ4_TILE_TYPE_HATSU,
-        CJ4_TILE_TYPE_CHUN
-    };
+        CJ4_TILE_TYPE_CHUN};
     int found = 0;
     int duplicates = 0;
 
@@ -387,8 +386,7 @@ cj4_yaku_is_kokushi_13_wait(const cj4_yaku_context *ctx)
         CJ4_TILE_TYPE_1S, CJ4_TILE_TYPE_9S,
         CJ4_TILE_TYPE_EAST, CJ4_TILE_TYPE_SOUTH, CJ4_TILE_TYPE_WEST,
         CJ4_TILE_TYPE_NORTH, CJ4_TILE_TYPE_HAKU, CJ4_TILE_TYPE_HATSU,
-        CJ4_TILE_TYPE_CHUN
-    };
+        CJ4_TILE_TYPE_CHUN};
 
     if (!ctx->has_winning_tile || ctx->winning_type_id >= CJ4_TILE_TYPE_COUNT)
         return 0;
@@ -558,11 +556,10 @@ static uint8_t
 cj4_yaku_is_ryuuiisou(const cj4_yaku_context *ctx)
 {
     static const uint8_t green[CJ4_TILE_TYPE_COUNT] = {
-        0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,
-        0,1,1,1,0,1,0,1,0,
-        0,0,0,0,0,1,0
-    };
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1, 1, 1, 0, 1, 0, 1, 0,
+        0, 0, 0, 0, 0, 1, 0};
 
     for (int i = 0; i < CJ4_TILE_TYPE_COUNT; ++i)
     {
@@ -1083,8 +1080,7 @@ cj4_yaku_search_standard(
                 (cj4_tile_type)first,
                 0,
                 0,
-                0
-            };
+                0};
             decomp->group_count++;
             cj4_yaku_search_standard(
                 state, player, ctx, counts, win_available, decomp, flags);
@@ -1100,8 +1096,7 @@ cj4_yaku_search_standard(
                 (cj4_tile_type)first,
                 0,
                 1,
-                0
-            };
+                0};
             decomp->group_count++;
             cj4_yaku_search_standard(
                 state, player, ctx, counts, 0, decomp, flags);
@@ -1138,8 +1133,7 @@ cj4_yaku_search_standard(
                 (cj4_tile_type)first,
                 0,
                 0,
-                0
-            };
+                0};
             decomp->group_count++;
             cj4_yaku_search_standard(
                 state, player, ctx, counts, win_available, decomp, flags);
@@ -1159,8 +1153,7 @@ cj4_yaku_search_standard(
                 (cj4_tile_type)first,
                 0,
                 1,
-                winning_position
-            };
+                winning_position};
             decomp->group_count++;
             cj4_yaku_search_standard(
                 state, player, ctx, counts, 0, decomp, flags);
@@ -1207,8 +1200,7 @@ cj4_yaku_collect_flags(
     return flags;
 }
 
-bool
-cj4_has_yaku(
+bool cj4_has_yaku(
     const cj4_mahjong *state,
     cj4_player player,
     const cj4_rules *rules)
@@ -1706,8 +1698,8 @@ cj4_yaku_consider_score(
         return;
 
     han = yakuman_count == 0
-        ? cj4_yaku_count_han(state, player, rules, ctx, flags)
-        : 0;
+              ? cj4_yaku_count_han(state, player, rules, ctx, flags)
+              : 0;
     fu = cj4_yaku_calculate_fu(state, player, ctx, decomp, flags);
 
     cj4_yaku_fill_basic_points(ctx, han, fu, yakuman_count, &candidate);
@@ -1812,8 +1804,7 @@ cj4_yaku_search_best_standard(
                 (cj4_tile_type)first,
                 0,
                 0,
-                0
-            };
+                0};
             decomp->group_count++;
             cj4_yaku_search_best_standard(
                 state, player, rules, ctx, counts, win_available, decomp, base_flags, best);
@@ -1829,8 +1820,7 @@ cj4_yaku_search_best_standard(
                 (cj4_tile_type)first,
                 0,
                 1,
-                0
-            };
+                0};
             decomp->group_count++;
             cj4_yaku_search_best_standard(
                 state, player, rules, ctx, counts, 0, decomp, base_flags, best);
@@ -1866,8 +1856,7 @@ cj4_yaku_search_best_standard(
                 (cj4_tile_type)first,
                 0,
                 0,
-                0
-            };
+                0};
             decomp->group_count++;
             cj4_yaku_search_best_standard(
                 state, player, rules, ctx, counts, win_available, decomp, base_flags, best);
@@ -1887,8 +1876,7 @@ cj4_yaku_search_best_standard(
                 (cj4_tile_type)first,
                 0,
                 1,
-                winning_position
-            };
+                winning_position};
             decomp->group_count++;
             cj4_yaku_search_best_standard(
                 state, player, rules, ctx, counts, 0, decomp, base_flags, best);
@@ -1997,8 +1985,7 @@ cj4_yaku_prepare_round_end_state(
     return 1;
 }
 
-bool
-cj4_calculate_hand_score(
+bool cj4_calculate_hand_score(
     const cj4_mahjong *state,
     cj4_player player,
     const cj4_rules *rules,

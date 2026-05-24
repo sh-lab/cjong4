@@ -224,8 +224,7 @@ cj4_settle_determine_progress(
     }
 }
 
-bool
-cj4_can_settle(const cj4_mahjong state)
+bool cj4_can_settle(const cj4_mahjong state)
 {
     return state.phase == CJ4_PHASE_ROUND_END;
 }

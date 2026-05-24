@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-#include "tile.h"
-#include "player.h"
-#include "phase.h"
 #include "location.h"
+#include "phase.h"
+#include "player.h"
+#include "tile.h"
 #include "wind.h"
 
 #define CJ4_MAX_DRAWS 70
@@ -54,7 +54,7 @@ typedef struct
 {
 
     cj4_location locations[CJ4_TILE_ID_COUNT]; // indexed by cj4_tile_id
-    
+
     uint8_t draw_count; // number of tiles drawn in the current round
 
     uint8_t dead_wall_draw_count; // number of tiles drawn from the dead wall
@@ -82,17 +82,17 @@ typedef struct
     uint8_t first_turn_uninterrupted;
     uint8_t winning_from_chankan;
 
-    cj4_tile_id draw_tile; // valid only when phase == CJ4_PHASE_DRAW
+    cj4_tile_id draw_tile;          // valid only when phase == CJ4_PHASE_DRAW
     cj4_tile_id pending_kakan_tile; /* valid only when phase == CJ4_PHASE_KAKAN_RESOLVE */
 
     /* Round result (set when the round ends). */
-    cj4_player winner;           /* winning player (first winner, for compatibility) */
-    cj4_player loser;            /* losing player (discarder) */
+    cj4_player winner;                    /* winning player (first winner, for compatibility) */
+    cj4_player loser;                     /* losing player (discarder) */
     cj4_player winners[CJ4_PLAYER_COUNT]; /* list of winners for multi-ron */
     uint8_t winner_count;
-    cj4_tile_id winning_tile;    /* winning tile; CJ4_TILE_ID_INVALID if none */
+    cj4_tile_id winning_tile; /* winning tile; CJ4_TILE_ID_INVALID if none */
     cj4_round_end_type round_end_type;
-    
+
     /* Settlement result (valid when phase == CJ4_PHASE_SETTLE). */
     cj4_wind next_round_wind;
     cj4_player next_dealer;
@@ -108,8 +108,6 @@ typedef struct
 
     cj4_meld melds[CJ4_PLAYER_COUNT][CJ4_MAX_MELDS];
     uint8_t meld_count[CJ4_PLAYER_COUNT];
-
-    
 
 } cj4_mahjong;
 

@@ -6,18 +6,19 @@
 #include "state.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-bool
-cj4_can_riichi(
-    const cj4_mahjong *state,
-    cj4_tile_id tile);
+    bool
+    cj4_can_riichi(
+        const cj4_mahjong *state,
+        cj4_tile_id tile);
 
-cj4_mahjong
-cj4_do_riichi(
-    const cj4_mahjong state,
-    cj4_tile_id tile);
+    cj4_mahjong
+    cj4_do_riichi(
+        const cj4_mahjong state,
+        cj4_tile_id tile);
 
 #ifdef __cplusplus
 }

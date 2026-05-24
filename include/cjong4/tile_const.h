@@ -6,18 +6,18 @@
 /* Each tile instance: 4 copies per type. */
 
 /* manzu (1m - 9m): types 0-8 */
-#define CJ4_TILE_ID_1M_0  0
-#define CJ4_TILE_ID_1M_1  1
-#define CJ4_TILE_ID_1M_2  2
-#define CJ4_TILE_ID_1M_3  3
+#define CJ4_TILE_ID_1M_0 0
+#define CJ4_TILE_ID_1M_1 1
+#define CJ4_TILE_ID_1M_2 2
+#define CJ4_TILE_ID_1M_3 3
 
-#define CJ4_TILE_ID_2M_0  4
-#define CJ4_TILE_ID_2M_1  5
-#define CJ4_TILE_ID_2M_2  6
-#define CJ4_TILE_ID_2M_3  7
+#define CJ4_TILE_ID_2M_0 4
+#define CJ4_TILE_ID_2M_1 5
+#define CJ4_TILE_ID_2M_2 6
+#define CJ4_TILE_ID_2M_3 7
 
-#define CJ4_TILE_ID_3M_0  8
-#define CJ4_TILE_ID_3M_1  9
+#define CJ4_TILE_ID_3M_0 8
+#define CJ4_TILE_ID_3M_1 9
 #define CJ4_TILE_ID_3M_2 10
 #define CJ4_TILE_ID_3M_3 11
 
@@ -144,40 +144,40 @@
 #define CJ4_TILE_ID_9S_3 107
 
 /* honors: East, South, West, North, Haku, Hatsu, Chun: types 27-33 */
-#define CJ4_TILE_ID_EAST_0  108
-#define CJ4_TILE_ID_EAST_1  109
-#define CJ4_TILE_ID_EAST_2  110
-#define CJ4_TILE_ID_EAST_3  111
+#define CJ4_TILE_ID_EAST_0 108
+#define CJ4_TILE_ID_EAST_1 109
+#define CJ4_TILE_ID_EAST_2 110
+#define CJ4_TILE_ID_EAST_3 111
 
 #define CJ4_TILE_ID_SOUTH_0 112
 #define CJ4_TILE_ID_SOUTH_1 113
 #define CJ4_TILE_ID_SOUTH_2 114
 #define CJ4_TILE_ID_SOUTH_3 115
 
-#define CJ4_TILE_ID_WEST_0  116
-#define CJ4_TILE_ID_WEST_1  117
-#define CJ4_TILE_ID_WEST_2  118
-#define CJ4_TILE_ID_WEST_3  119
+#define CJ4_TILE_ID_WEST_0 116
+#define CJ4_TILE_ID_WEST_1 117
+#define CJ4_TILE_ID_WEST_2 118
+#define CJ4_TILE_ID_WEST_3 119
 
 #define CJ4_TILE_ID_NORTH_0 120
 #define CJ4_TILE_ID_NORTH_1 121
 #define CJ4_TILE_ID_NORTH_2 122
 #define CJ4_TILE_ID_NORTH_3 123
 
-#define CJ4_TILE_ID_HAKU_0  124
-#define CJ4_TILE_ID_HAKU_1  125
-#define CJ4_TILE_ID_HAKU_2  126
-#define CJ4_TILE_ID_HAKU_3  127
+#define CJ4_TILE_ID_HAKU_0 124
+#define CJ4_TILE_ID_HAKU_1 125
+#define CJ4_TILE_ID_HAKU_2 126
+#define CJ4_TILE_ID_HAKU_3 127
 
 #define CJ4_TILE_ID_HATSU_0 128
 #define CJ4_TILE_ID_HATSU_1 129
 #define CJ4_TILE_ID_HATSU_2 130
 #define CJ4_TILE_ID_HATSU_3 131
 
-#define CJ4_TILE_ID_CHUN_0  132
-#define CJ4_TILE_ID_CHUN_1  133
-#define CJ4_TILE_ID_CHUN_2  134
-#define CJ4_TILE_ID_CHUN_3  135
+#define CJ4_TILE_ID_CHUN_0 132
+#define CJ4_TILE_ID_CHUN_1 133
+#define CJ4_TILE_ID_CHUN_2 134
+#define CJ4_TILE_ID_CHUN_3 135
 
 /* tile type constants */
 /* manzu */
@@ -214,12 +214,12 @@
 #define CJ4_TILE_TYPE_9S 26
 
 /* honor */
-#define CJ4_TILE_TYPE_EAST  27
+#define CJ4_TILE_TYPE_EAST 27
 #define CJ4_TILE_TYPE_SOUTH 28
-#define CJ4_TILE_TYPE_WEST  29
+#define CJ4_TILE_TYPE_WEST 29
 #define CJ4_TILE_TYPE_NORTH 30
-#define CJ4_TILE_TYPE_HAKU  31
+#define CJ4_TILE_TYPE_HAKU 31
 #define CJ4_TILE_TYPE_HATSU 32
-#define CJ4_TILE_TYPE_CHUN  33
+#define CJ4_TILE_TYPE_CHUN 33
 
 #endif /* CJ4_TILE_CONST_H */

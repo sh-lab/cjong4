@@ -1,6 +1,6 @@
 #include "state_chi.h"
-#include "state_query.h"
 #include "state_ops.h"
+#include "state_query.h"
 #include <assert.h>
 
 bool cj4_can_chi(const cj4_mahjong *state)
@@ -99,8 +99,8 @@ bool cj4_can_chi_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile
     uint8_t n2 = cj4_tile_type_get_number(t2);
 
     /* Collect numbers into array and sort */
-    uint8_t nums[3] = { n_last, n1, n2 };
-    cj4_tile_id tiles[3] = { last, tile1, tile2 };
+    uint8_t nums[3] = {n_last, n1, n2};
+    cj4_tile_id tiles[3] = {last, tile1, tile2};
 
     /* Simple sort (ascending) for three elements */
     for (int i = 0; i < 3; ++i)
@@ -109,8 +109,12 @@ bool cj4_can_chi_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile
         {
             if (nums[i] > nums[j])
             {
-                uint8_t tmpn = nums[i]; nums[i] = nums[j]; nums[j] = tmpn;
-                cj4_tile_id tmpt = tiles[i]; tiles[i] = tiles[j]; tiles[j] = tmpt;
+                uint8_t tmpn = nums[i];
+                nums[i] = nums[j];
+                nums[j] = tmpn;
+                cj4_tile_id tmpt = tiles[i];
+                tiles[i] = tiles[j];
+                tiles[j] = tmpt;
             }
         }
     }
@@ -140,7 +144,7 @@ cj4_do_chi(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2)
     cj4_player next_player = cj4_next_player(&state);
 
     cj4_tile_id last = cj4_get_last_discard_tile(&state);
-    const cj4_tile_id meld_tiles[3] = { last, tile1, tile2 };
+    const cj4_tile_id meld_tiles[3] = {last, tile1, tile2};
 
     cj4_state_add_meld(
         &next,

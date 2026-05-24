@@ -1,8 +1,8 @@
 #include "state_ron.h"
 #include "hand_check.h"
+#include "state_ops.h"
 #include "state_query.h"
 #include "state_yaku.h"
-#include "state_ops.h"
 #include "tile.h"
 
 #include <assert.h>
@@ -90,12 +90,10 @@ cj4_state_player_has_permanent_furiten(
     return 0;
 }
 
-bool
-cj4_can_ron(
-    const cj4_mahjong* state,
+bool cj4_can_ron(
+    const cj4_mahjong *state,
     cj4_player player,
-    const cj4_rules* rules
-)
+    const cj4_rules *rules)
 {
     cj4_tile_id tile;
 
@@ -135,10 +133,9 @@ cj4_can_ron(
 cj4_mahjong
 cj4_do_ron_multi(
     const cj4_mahjong state,
-    const cj4_player* players,
+    const cj4_player *players,
     int count,
-    const cj4_rules *rules
-)
+    const cj4_rules *rules)
 {
     assert(count > 0);
 

@@ -38,22 +38,27 @@ static bool remove_melds(int counts[CJ4_TILE_TYPE_COUNT], int melds_needed)
         int number = i % 9;
         if (number <= 6)
         {
-            if (counts[i+1] > 0 && counts[i+2] > 0)
+            if (counts[i + 1] > 0 && counts[i + 2] > 0)
             {
-                counts[i]--; counts[i+1]--; counts[i+2]--;
+                counts[i]--;
+                counts[i + 1]--;
+                counts[i + 2]--;
                 if (remove_melds(counts, melds_needed - 1))
                 {
-                    counts[i]++; counts[i+1]++; counts[i+2]++;
+                    counts[i]++;
+                    counts[i + 1]++;
+                    counts[i + 2]++;
                     return true;
                 }
-                counts[i]++; counts[i+1]++; counts[i+2]++;
+                counts[i]++;
+                counts[i + 1]++;
+                counts[i + 2]++;
             }
         }
     }
 
     return false;
 }
-
 
 static bool check_standard(int counts_orig[CJ4_TILE_TYPE_COUNT], int melds_needed)
 {
@@ -102,10 +107,10 @@ static bool check_kokushi(int counts[CJ4_TILE_TYPE_COUNT])
 {
     /* Kokushi (thirteen orphans) set of types */
     const int terminals[13] = {
-        0, 8,    /* manzu 1,9 */
-        9, 17,   /* pinzu 1,9 */
-        18, 26,  /* souzu 1,9 */
-        27,28,29,30,31,32,33 /* honors */
+        0, 8,                      /* manzu 1,9 */
+        9, 17,                     /* pinzu 1,9 */
+        18, 26,                    /* souzu 1,9 */
+        27, 28, 29, 30, 31, 32, 33 /* honors */
     };
 
     int found = 0;
@@ -113,11 +118,11 @@ static bool check_kokushi(int counts[CJ4_TILE_TYPE_COUNT])
     for (int i = 0; i < 13; ++i)
     {
         int t = terminals[i];
-        if (counts[t] >= 1) 
+        if (counts[t] >= 1)
         {
             found++;
         }
-        if (counts[t] >= 2) 
+        if (counts[t] >= 2)
         {
             duplicates++;
         }
@@ -125,7 +130,7 @@ static bool check_kokushi(int counts[CJ4_TILE_TYPE_COUNT])
     return (found == 13 && duplicates == 1);
 }
 
-bool cj4_is_complete_hand(const cj4_mahjong* state, cj4_player player)
+bool cj4_is_complete_hand(const cj4_mahjong *state, cj4_player player)
 {
     int counts[34] = {0};
     int tiles = 0;
@@ -142,7 +147,8 @@ bool cj4_is_complete_hand(const cj4_mahjong* state, cj4_player player)
     }
 
     /* Compute expected number of concealed tiles based on existing melds. */
-    if (state->meld_count[player] > CJ4_MAX_MELDS) return false; /* sanity */
+    if (state->meld_count[player] > CJ4_MAX_MELDS)
+        return false; /* sanity */
     int melds = state->meld_count[player];
     int expected_tiles = (4 - melds) * 3 + 2;
 
@@ -151,7 +157,8 @@ bool cj4_is_complete_hand(const cj4_mahjong* state, cj4_player player)
      * re-counted into the concealed tile grouping. Therefore, the number of
      * concealed tiles must equal expected_tiles.
      */
-    if (tiles != expected_tiles) return false;
+    if (tiles != expected_tiles)
+        return false;
 
     /* If there are no melds, also allow kokushi and seven pairs shapes. If there
      * are melds, kokushi and seven pairs are impossible as shape-only checks.
@@ -159,10 +166,12 @@ bool cj4_is_complete_hand(const cj4_mahjong* state, cj4_player player)
     if (melds == 0)
     {
         /* Check kokushi */
-        if (check_kokushi(counts)) return true;
+        if (check_kokushi(counts))
+            return true;
 
         /* Check seven pairs */
-        if (check_seven_pairs(counts)) return true;
+        if (check_seven_pairs(counts))
+            return true;
     }
 
     /* Check standard meld partitioning for the remaining concealed tiles. This
@@ -170,7 +179,8 @@ bool cj4_is_complete_hand(const cj4_mahjong* state, cj4_player player)
      * (which is 4 - melds) plus a pair.
      */
     int melds_needed = 4 - melds;
-    if (check_standard(counts, melds_needed)) return true;
+    if (check_standard(counts, melds_needed))
+        return true;
 
     return false;
 }

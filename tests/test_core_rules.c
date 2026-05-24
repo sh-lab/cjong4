@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "../src/state_score.h"
 #include "state.h"
 #include "state_init.h"
 #include "state_kan.h"
@@ -8,7 +9,6 @@
 #include "state_riichi.h"
 #include "state_ron.h"
 #include "state_settle.h"
-#include "../src/state_score.h"
 
 static cj4_tile_id
 tile(cj4_tile_type type, uint8_t index)
@@ -77,8 +77,7 @@ test_riichi_uses_shape_tenpai(void)
         tile(18, 0), tile(19, 0), tile(20, 0),
         tile(3, 0), tile(4, 0),
         tile(15, 0), tile(15, 1),
-        draw
-    };
+        draw};
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
     state.current_player = CJ4_PLAYER_0;
@@ -100,8 +99,7 @@ test_temporary_furiten_blocks_ron(void)
         tile(10, 0), tile(11, 0), tile(12, 0),
         tile(19, 0), tile(20, 0), tile(21, 0),
         tile(4, 0), tile(5, 0),
-        tile(14, 0), tile(14, 1)
-    };
+        tile(14, 0), tile(14, 1)};
 
     rules.kuitan = 1;
 
@@ -137,8 +135,7 @@ test_riichi_furiten_is_recorded(void)
         tile(10, 0), tile(11, 0), tile(12, 0),
         tile(19, 0), tile(20, 0), tile(21, 0),
         tile(4, 0), tile(5, 0),
-        tile(14, 0), tile(14, 1)
-    };
+        tile(14, 0), tile(14, 1)};
 
     rules.kuitan = 1;
 
@@ -173,8 +170,7 @@ test_permanent_furiten_blocks_other_wait(void)
         tile(10, 0), tile(11, 0), tile(12, 0),
         tile(19, 0), tile(20, 0), tile(21, 0),
         tile(4, 0), tile(5, 0),
-        tile(14, 0), tile(14, 1)
-    };
+        tile(14, 0), tile(14, 1)};
 
     rules.kuitan = 1;
 
@@ -232,15 +228,13 @@ test_kan_flow_aborts_on_fourth_ankan(void)
     cj4_mahjong state = make_empty_state();
     cj4_mahjong round_end;
     const cj4_tile_id ankan_tiles[] = {
-        tile(0, 0), tile(0, 1), tile(0, 2), tile(0, 3)
-    };
+        tile(0, 0), tile(0, 1), tile(0, 2), tile(0, 3)};
     const cj4_tile_id hand[] = {
         tile(0, 0), tile(0, 1), tile(0, 2), tile(0, 3),
         tile(10, 0), tile(11, 0), tile(12, 0),
         tile(19, 0), tile(20, 0), tile(21, 0),
         tile(4, 0), tile(5, 0),
-        tile(14, 0), tile(14, 1)
-    };
+        tile(14, 0), tile(14, 1)};
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
     state.phase = CJ4_PHASE_DRAW;
@@ -278,8 +272,7 @@ test_exhaustive_draw_uses_shape_tenpai(void)
         tile(9, 0), tile(10, 0), tile(11, 0),
         tile(18, 0), tile(19, 0), tile(20, 0),
         tile(3, 0), tile(4, 0),
-        tile(15, 0), tile(15, 1)
-    };
+        tile(15, 0), tile(15, 1)};
 
     rules.noten_penalty = 1;
     rules.noten_penalty_points = 3000;
@@ -314,8 +307,7 @@ test_double_riichi_is_always_enabled(void)
         tile(18, 0), tile(19, 0), tile(20, 0),
         tile(3, 0), tile(4, 0),
         tile(15, 0), tile(15, 1),
-        draw
-    };
+        draw};
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
     state.current_player = CJ4_PLAYER_0;
@@ -360,15 +352,13 @@ test_riichi_ankan_keeps_waits(void)
 {
     cj4_mahjong state = make_empty_state();
     const cj4_tile_id kan_tiles[] = {
-        tile(0, 0), tile(0, 1), tile(0, 2), tile(0, 3)
-    };
+        tile(0, 0), tile(0, 1), tile(0, 2), tile(0, 3)};
     const cj4_tile_id hand[] = {
         tile(0, 0), tile(0, 1), tile(0, 2), tile(0, 3),
         tile(10, 0), tile(11, 0), tile(12, 0),
         tile(19, 0), tile(20, 0), tile(21, 0),
         tile(4, 0), tile(5, 0),
-        tile(15, 0), tile(15, 1)
-    };
+        tile(15, 0), tile(15, 1)};
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
     state.phase = CJ4_PHASE_DRAW;
@@ -384,8 +374,7 @@ test_riichi_ankan_keeps_waits(void)
         kan_tiles[3]));
 }
 
-int
-main(void)
+int main(void)
 {
     test_riichi_uses_shape_tenpai();
     test_temporary_furiten_blocks_ron();

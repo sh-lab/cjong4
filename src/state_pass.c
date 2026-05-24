@@ -1,10 +1,9 @@
 #include "state_pass.h"
-#include "state_query.h"
 #include "state_ops.h"
+#include "state_query.h"
 #include "state_ron.h"
 
-bool
-cj4_can_pass(const cj4_mahjong state)
+bool cj4_can_pass(const cj4_mahjong state)
 {
     if (state.phase != CJ4_PHASE_DISCARD)
     {
