@@ -1,14 +1,16 @@
 #include <assert.h>
 #include <string.h>
 
-#include "../src/state_score.h"
-#include "state.h"
-#include "state_init.h"
-#include "state_kan.h"
-#include "state_pass.h"
-#include "state_riichi.h"
-#include "state_ron.h"
-#include "state_settle.h"
+#include "../../src/core/state_score.h"
+#include "cjong4/core/state.h"
+#include "cjong4/core/state_init.h"
+#include "cjong4/core/state_kan.h"
+#include "cjong4/core/state_pass.h"
+#include "cjong4/core/state_riichi.h"
+#include "cjong4/core/state_ron.h"
+#include "cjong4/core/state_settle.h"
+
+int manager_tests_main(void);
 
 static cj4_tile_id
 tile(cj4_tile_type type, uint8_t index)
@@ -252,8 +254,7 @@ test_kan_flow_aborts_on_fourth_ankan(void)
         ankan_tiles[0],
         ankan_tiles[1],
         ankan_tiles[2],
-        ankan_tiles[3],
-        &rules);
+        ankan_tiles[3]);
 
     assert(round_end.phase == CJ4_PHASE_ROUND_END);
     assert(round_end.round_end_type == CJ4_ROUND_END_ABORTIVE_DRAW);
@@ -386,5 +387,6 @@ int main(void)
     test_double_riichi_is_always_enabled();
     test_max_ron_players_uses_head_bump_order();
     test_riichi_ankan_keeps_waits();
+    manager_tests_main();
     return 0;
 }

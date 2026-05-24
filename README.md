@@ -116,10 +116,14 @@ cj4_state cj4_tile cj4_apply_action cj4_is_agari
 
 ---
 
-## ディレクトリ構成（予定） / Project Structure (Planned)
+## ディレクトリ構成 / Project Structure
 
-include/ cjong4/
-src/
+- `include/cjong4/core/` : core public API
+- `include/cjong4/manager/` : manager public API
+- `src/core/` : core implementation
+- `src/manager/` : manager implementation
+- `tests/core/` : core tests
+- `tests/manager/` : manager tests
 
 ---
 
