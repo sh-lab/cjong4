@@ -1,0 +1,114 @@
+#ifndef CJ4_STATE_H
+#define CJ4_STATE_H
+
+#include <stdint.h>
+
+#include "location.h"
+#include "phase.h"
+#include "player.h"
+#include "tile.h"
+#include "wind.h"
+
+#define CJ4_MAX_DRAWS 70
+#define CJ4_MAX_DISCARDS 82
+
+#define CJ4_MAX_MELDS 4
+#define CJ4_CALLED_INDEX_NONE 255
+
+typedef struct
+{
+    cj4_tile_id tile;
+    cj4_player player;
+    uint8_t is_active;    // 1: still in river, 0: consumed (meld)
+    uint8_t is_tsumogiri; // 1: tsumogiri, 0: from hand
+} cj4_discard;
+
+typedef enum
+{
+    CJ4_MELD_CHI,
+    CJ4_MELD_PON,
+    CJ4_MELD_MINKAN,
+    CJ4_MELD_ANKAN,
+    CJ4_MELD_KAKAN
+} cj4_meld_type;
+
+typedef struct
+{
+    cj4_tile_id tiles[4]; // tiles in meld (3 or 4)
+    uint8_t size;         // 3 (chi/pon) or 4 (kan)
+    cj4_meld_type type;
+    cj4_player from_player; // player who provided the called tile
+    uint8_t called_index;   // index of the called tile in the meld (0-3)
+} cj4_meld;
+
+typedef enum
+{
+    CJ4_ROUND_END_NONE,
+    CJ4_ROUND_END_TSUMO,
+    CJ4_ROUND_END_RON,
+    CJ4_ROUND_END_EXHAUSTIVE_DRAW,
+    CJ4_ROUND_END_ABORTIVE_DRAW
+} cj4_round_end_type;
+
+typedef struct
+{
+
+    cj4_location locations[CJ4_TILE_ID_COUNT]; // indexed by cj4_tile_id
+
+    uint8_t draw_count; // number of tiles drawn in the current round
+
+    uint8_t dead_wall_draw_count; // number of tiles drawn from the dead wall
+
+    cj4_phase phase;
+    cj4_player current_player;
+
+    // scores
+    int32_t scores[CJ4_PLAYER_COUNT];
+
+    // round info
+    cj4_wind round_wind;
+    cj4_player dealer;
+
+    uint8_t honba;
+    uint8_t riichi_sticks;
+
+    // player state
+    uint8_t is_riichi[CJ4_PLAYER_COUNT];
+    uint8_t is_ippatsu[CJ4_PLAYER_COUNT];
+    uint8_t riichi_declared_on_first_turn[CJ4_PLAYER_COUNT];
+    uint8_t draw_turn_count[CJ4_PLAYER_COUNT];
+    uint8_t temporary_furiten[CJ4_PLAYER_COUNT];
+    uint8_t riichi_furiten[CJ4_PLAYER_COUNT];
+    uint8_t first_turn_uninterrupted;
+    uint8_t winning_from_chankan;
+
+    cj4_tile_id draw_tile;          // valid only when phase == CJ4_PHASE_DRAW
+    cj4_tile_id pending_kakan_tile; /* valid only when phase == CJ4_PHASE_KAKAN_RESOLVE */
+
+    /* Round result (set when the round ends). */
+    cj4_player winner;                    /* winning player (first winner, for compatibility) */
+    cj4_player loser;                     /* losing player (discarder) */
+    cj4_player winners[CJ4_PLAYER_COUNT]; /* list of winners for multi-ron */
+    uint8_t winner_count;
+    cj4_tile_id winning_tile; /* winning tile; CJ4_TILE_ID_INVALID if none */
+    cj4_round_end_type round_end_type;
+
+    /* Settlement result (valid when phase == CJ4_PHASE_SETTLE). */
+    cj4_wind next_round_wind;
+    cj4_player next_dealer;
+    uint8_t settlement_should_end;
+
+    cj4_tile_id wall[CJ4_TILE_ID_COUNT];
+    uint8_t wall_pos; // next draw position
+
+    uint8_t dora_indicators_count;
+
+    cj4_discard discards[CJ4_MAX_DISCARDS];
+    uint8_t discard_count;
+
+    cj4_meld melds[CJ4_PLAYER_COUNT][CJ4_MAX_MELDS];
+    uint8_t meld_count[CJ4_PLAYER_COUNT];
+
+} cj4_mahjong;
+
+#endif /* CJ4_STATE_H */
