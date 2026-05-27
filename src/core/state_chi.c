@@ -3,7 +3,8 @@
 #include "state_query.h"
 #include <assert.h>
 
-bool cj4_can_chi(const cj4_mahjong *state)
+bool
+cj4_can_chi(const cj4_mahjong *state)
 {
     cj4_player next_player = cj4_next_player(state);
 
@@ -72,7 +73,8 @@ bool cj4_can_chi(const cj4_mahjong *state)
     return false;
 }
 
-bool cj4_can_chi_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2)
+bool
+cj4_can_chi_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2)
 {
     if (!cj4_can_chi(state))
     {

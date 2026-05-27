@@ -4,7 +4,8 @@
 #include "state_yaku.h"
 #include <assert.h>
 
-bool cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules)
+bool
+cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules)
 {
     if (state->phase != CJ4_PHASE_DRAW)
         return false;
@@ -15,7 +16,8 @@ bool cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules)
     return cj4_has_yaku(state, state->current_player, rules);
 }
 
-cj4_mahjong cj4_do_tsumo(const cj4_mahjong state)
+cj4_mahjong
+cj4_do_tsumo(const cj4_mahjong state)
 {
 
     cj4_mahjong next = state;

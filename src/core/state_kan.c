@@ -9,7 +9,8 @@
 #include <string.h>
 
 static uint8_t
-cj4_state_can_declare_more_kans(const cj4_mahjong *state)
+cj4_state_can_declare_more_kans(
+    const cj4_mahjong *state)
 {
     return cj4_state_count_total_kans(state) < 4;
 }
@@ -106,7 +107,8 @@ cj4_can_ankan_after_riichi(
 }
 
 /* Minkan implementation (open kan using last discard) */
-bool cj4_can_minkan(const cj4_mahjong *state, cj4_player player)
+bool
+cj4_can_minkan(const cj4_mahjong *state, cj4_player player)
 {
     if (!cj4_state_can_declare_more_kans(state))
         return false;
@@ -125,7 +127,8 @@ bool cj4_can_minkan(const cj4_mahjong *state, cj4_player player)
     return true;
 }
 
-bool cj4_can_minkan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3)
+bool
+cj4_can_minkan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3)
 {
     if (!cj4_can_minkan(state, player))
         return false;
@@ -173,7 +176,8 @@ cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4
 }
 
 /* Ankan (closed kan) */
-bool cj4_can_ankan(const cj4_mahjong *state)
+bool
+cj4_can_ankan(const cj4_mahjong *state)
 {
     cj4_player player = state->current_player;
     if (state->phase != CJ4_PHASE_DRAW)
@@ -196,7 +200,8 @@ bool cj4_can_ankan(const cj4_mahjong *state)
     return false;
 }
 
-bool cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4)
+bool
+cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4)
 {
     if (!cj4_can_ankan(state))
         return false;
@@ -274,7 +279,8 @@ cj4_do_ankan(
 }
 
 /* Kakan (added kan to existing pon) */
-bool cj4_can_kakan(const cj4_mahjong *state)
+bool
+cj4_can_kakan(const cj4_mahjong *state)
 {
     cj4_player player = state->current_player;
 
@@ -301,7 +307,8 @@ bool cj4_can_kakan(const cj4_mahjong *state)
     return false;
 }
 
-bool cj4_can_kakan_with_tile(const cj4_mahjong *state, cj4_tile_id tile)
+bool
+cj4_can_kakan_with_tile(const cj4_mahjong *state, cj4_tile_id tile)
 {
     cj4_player player = state->current_player;
 
@@ -365,7 +372,8 @@ cj4_do_kakan(const cj4_mahjong state, cj4_tile_id tile)
     return next;
 }
 
-bool cj4_can_rinshan_draw(const cj4_mahjong *state)
+bool
+cj4_can_rinshan_draw(const cj4_mahjong *state)
 {
     return (state->phase == CJ4_PHASE_ANKAN_RESOLVE ||
             state->phase == CJ4_PHASE_KAKAN_RESOLVE) &&

@@ -334,11 +334,18 @@ static uint8_t
 cj4_yaku_is_kokushi(const int counts[CJ4_TILE_TYPE_COUNT])
 {
     static const int terminals[13] = {
-        CJ4_TILE_TYPE_1M, CJ4_TILE_TYPE_9M,
-        CJ4_TILE_TYPE_1P, CJ4_TILE_TYPE_9P,
-        CJ4_TILE_TYPE_1S, CJ4_TILE_TYPE_9S,
-        CJ4_TILE_TYPE_EAST, CJ4_TILE_TYPE_SOUTH, CJ4_TILE_TYPE_WEST,
-        CJ4_TILE_TYPE_NORTH, CJ4_TILE_TYPE_HAKU, CJ4_TILE_TYPE_HATSU,
+        CJ4_TILE_TYPE_1M,
+        CJ4_TILE_TYPE_9M,
+        CJ4_TILE_TYPE_1P,
+        CJ4_TILE_TYPE_9P,
+        CJ4_TILE_TYPE_1S,
+        CJ4_TILE_TYPE_9S,
+        CJ4_TILE_TYPE_EAST,
+        CJ4_TILE_TYPE_SOUTH,
+        CJ4_TILE_TYPE_WEST,
+        CJ4_TILE_TYPE_NORTH,
+        CJ4_TILE_TYPE_HAKU,
+        CJ4_TILE_TYPE_HATSU,
         CJ4_TILE_TYPE_CHUN};
     int found = 0;
     int duplicates = 0;
@@ -381,11 +388,18 @@ cj4_yaku_is_kokushi_13_wait(const cj4_yaku_context *ctx)
 {
     int counts[CJ4_TILE_TYPE_COUNT];
     static const int terminals[13] = {
-        CJ4_TILE_TYPE_1M, CJ4_TILE_TYPE_9M,
-        CJ4_TILE_TYPE_1P, CJ4_TILE_TYPE_9P,
-        CJ4_TILE_TYPE_1S, CJ4_TILE_TYPE_9S,
-        CJ4_TILE_TYPE_EAST, CJ4_TILE_TYPE_SOUTH, CJ4_TILE_TYPE_WEST,
-        CJ4_TILE_TYPE_NORTH, CJ4_TILE_TYPE_HAKU, CJ4_TILE_TYPE_HATSU,
+        CJ4_TILE_TYPE_1M,
+        CJ4_TILE_TYPE_9M,
+        CJ4_TILE_TYPE_1P,
+        CJ4_TILE_TYPE_9P,
+        CJ4_TILE_TYPE_1S,
+        CJ4_TILE_TYPE_9S,
+        CJ4_TILE_TYPE_EAST,
+        CJ4_TILE_TYPE_SOUTH,
+        CJ4_TILE_TYPE_WEST,
+        CJ4_TILE_TYPE_NORTH,
+        CJ4_TILE_TYPE_HAKU,
+        CJ4_TILE_TYPE_HATSU,
         CJ4_TILE_TYPE_CHUN};
 
     if (!ctx->has_winning_tile || ctx->winning_type_id >= CJ4_TILE_TYPE_COUNT)
@@ -556,10 +570,40 @@ static uint8_t
 cj4_yaku_is_ryuuiisou(const cj4_yaku_context *ctx)
 {
     static const uint8_t green[CJ4_TILE_TYPE_COUNT] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 1, 1, 1, 0, 1, 0, 1, 0,
-        0, 0, 0, 0, 0, 1, 0};
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0};
 
     for (int i = 0; i < CJ4_TILE_TYPE_COUNT; ++i)
     {
@@ -808,9 +852,13 @@ cj4_yaku_apply_count_based_yaku(
         *flags |= CJ4_YAKU_SUUKANTSU;
 
     dragon_triplets = cj4_yaku_count_triplets_in_range(
-        ctx, CJ4_TILE_TYPE_HAKU, CJ4_TILE_TYPE_CHUN);
+        ctx,
+        CJ4_TILE_TYPE_HAKU,
+        CJ4_TILE_TYPE_CHUN);
     wind_triplets = cj4_yaku_count_triplets_in_range(
-        ctx, CJ4_TILE_TYPE_EAST, CJ4_TILE_TYPE_NORTH);
+        ctx,
+        CJ4_TILE_TYPE_EAST,
+        CJ4_TILE_TYPE_NORTH);
 
     if (dragon_triplets == 3)
         *flags |= CJ4_YAKU_DAISANGEN;
@@ -1043,7 +1091,13 @@ cj4_yaku_search_standard(
             decomp->pair_type = (cj4_tile_type)first;
             decomp->pair_uses_winning_tile = 0;
             cj4_yaku_search_standard(
-                state, player, ctx, counts, win_available, decomp, flags);
+                state,
+                player,
+                ctx,
+                counts,
+                win_available,
+                decomp,
+                flags);
             decomp->has_pair = 0;
             decomp->pair_uses_winning_tile = 0;
             counts[first] += 2;
@@ -1056,7 +1110,13 @@ cj4_yaku_search_standard(
             decomp->pair_type = (cj4_tile_type)first;
             decomp->pair_uses_winning_tile = 1;
             cj4_yaku_search_standard(
-                state, player, ctx, counts, 0, decomp, flags);
+                state,
+                player,
+                ctx,
+                counts,
+                0,
+                decomp,
+                flags);
             decomp->has_pair = 0;
             decomp->pair_uses_winning_tile = 0;
             counts[first] += 2;
@@ -1083,7 +1143,13 @@ cj4_yaku_search_standard(
                 0};
             decomp->group_count++;
             cj4_yaku_search_standard(
-                state, player, ctx, counts, win_available, decomp, flags);
+                state,
+                player,
+                ctx,
+                counts,
+                win_available,
+                decomp,
+                flags);
             decomp->group_count--;
             counts[first] += 3;
         }
@@ -1099,7 +1165,13 @@ cj4_yaku_search_standard(
                 0};
             decomp->group_count++;
             cj4_yaku_search_standard(
-                state, player, ctx, counts, 0, decomp, flags);
+                state,
+                player,
+                ctx,
+                counts,
+                0,
+                decomp,
+                flags);
             decomp->group_count--;
             counts[first] += 3;
         }
@@ -1136,7 +1208,13 @@ cj4_yaku_search_standard(
                 0};
             decomp->group_count++;
             cj4_yaku_search_standard(
-                state, player, ctx, counts, win_available, decomp, flags);
+                state,
+                player,
+                ctx,
+                counts,
+                win_available,
+                decomp,
+                flags);
             decomp->group_count--;
             counts[first]++;
             counts[first + 1]++;
@@ -1156,7 +1234,13 @@ cj4_yaku_search_standard(
                 winning_position};
             decomp->group_count++;
             cj4_yaku_search_standard(
-                state, player, ctx, counts, 0, decomp, flags);
+                state,
+                player,
+                ctx,
+                counts,
+                0,
+                decomp,
+                flags);
             decomp->group_count--;
             counts[first]++;
             counts[first + 1]++;
@@ -1200,7 +1284,8 @@ cj4_yaku_collect_flags(
     return flags;
 }
 
-bool cj4_has_yaku(
+bool
+cj4_has_yaku(
     const cj4_mahjong *state,
     cj4_player player,
     const cj4_rules *rules)
@@ -1802,7 +1887,15 @@ cj4_yaku_search_best_standard(
             decomp->pair_type = (cj4_tile_type)first;
             decomp->pair_uses_winning_tile = 0;
             cj4_yaku_search_best_standard(
-                state, player, rules, ctx, counts, win_available, decomp, base_flags, best);
+                state,
+                player,
+                rules,
+                ctx,
+                counts,
+                win_available,
+                decomp,
+                base_flags,
+                best);
             decomp->has_pair = 0;
             decomp->pair_uses_winning_tile = 0;
             counts[first] += 2;
@@ -1815,7 +1908,15 @@ cj4_yaku_search_best_standard(
             decomp->pair_type = (cj4_tile_type)first;
             decomp->pair_uses_winning_tile = 1;
             cj4_yaku_search_best_standard(
-                state, player, rules, ctx, counts, 0, decomp, base_flags, best);
+                state,
+                player,
+                rules,
+                ctx,
+                counts,
+                0,
+                decomp,
+                base_flags,
+                best);
             decomp->has_pair = 0;
             decomp->pair_uses_winning_tile = 0;
             counts[first] += 2;
@@ -1842,7 +1943,15 @@ cj4_yaku_search_best_standard(
                 0};
             decomp->group_count++;
             cj4_yaku_search_best_standard(
-                state, player, rules, ctx, counts, win_available, decomp, base_flags, best);
+                state,
+                player,
+                rules,
+                ctx,
+                counts,
+                win_available,
+                decomp,
+                base_flags,
+                best);
             decomp->group_count--;
             counts[first] += 3;
         }
@@ -1858,7 +1967,15 @@ cj4_yaku_search_best_standard(
                 0};
             decomp->group_count++;
             cj4_yaku_search_best_standard(
-                state, player, rules, ctx, counts, 0, decomp, base_flags, best);
+                state,
+                player,
+                rules,
+                ctx,
+                counts,
+                0,
+                decomp,
+                base_flags,
+                best);
             decomp->group_count--;
             counts[first] += 3;
         }
@@ -1894,7 +2011,15 @@ cj4_yaku_search_best_standard(
                 0};
             decomp->group_count++;
             cj4_yaku_search_best_standard(
-                state, player, rules, ctx, counts, win_available, decomp, base_flags, best);
+                state,
+                player,
+                rules,
+                ctx,
+                counts,
+                win_available,
+                decomp,
+                base_flags,
+                best);
             decomp->group_count--;
             counts[first]++;
             counts[first + 1]++;
@@ -1914,7 +2039,15 @@ cj4_yaku_search_best_standard(
                 winning_position};
             decomp->group_count++;
             cj4_yaku_search_best_standard(
-                state, player, rules, ctx, counts, 0, decomp, base_flags, best);
+                state,
+                player,
+                rules,
+                ctx,
+                counts,
+                0,
+                decomp,
+                base_flags,
+                best);
             decomp->group_count--;
             counts[first]++;
             counts[first + 1]++;
@@ -2214,7 +2347,8 @@ cj4_yaku_prepare_round_end_state(
     return 1;
 }
 
-bool cj4_calculate_hand_score(
+bool
+cj4_calculate_hand_score(
     const cj4_mahjong *state,
     cj4_player player,
     const cj4_rules *rules,
@@ -2238,7 +2372,8 @@ bool cj4_calculate_hand_score(
     return true;
 }
 
-bool cj4_collect_winning_results(
+bool
+cj4_collect_winning_results(
     const cj4_mahjong *state,
     const cj4_rules *rules,
     cj4_win_result *out_results,

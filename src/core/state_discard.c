@@ -1,7 +1,8 @@
 #include "state_discard.h"
 #include "state_ops.h"
 
-bool cj4_can_discard(
+bool
+cj4_can_discard(
     const cj4_mahjong state,
     cj4_tile_id tile)
 {

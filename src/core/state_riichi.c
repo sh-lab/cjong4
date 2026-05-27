@@ -19,7 +19,8 @@ cj4_state_is_closed_for_riichi(const cj4_mahjong *state, cj4_player player)
     return true;
 }
 
-bool cj4_can_riichi(
+bool
+cj4_can_riichi(
     const cj4_mahjong *state,
     cj4_tile_id tile)
 {

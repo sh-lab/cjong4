@@ -2,7 +2,8 @@
 #include "state_ops.h"
 #include "state_query.h"
 
-bool cj4_can_pon(const cj4_mahjong *state, cj4_player player)
+bool
+cj4_can_pon(const cj4_mahjong *state, cj4_player player)
 {
     if (state->is_riichi[player])
     {
@@ -24,7 +25,8 @@ bool cj4_can_pon(const cj4_mahjong *state, cj4_player player)
     return true;
 }
 
-bool cj4_can_pon_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2)
+bool
+cj4_can_pon_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2)
 {
     if (!cj4_can_pon(state, player))
     {

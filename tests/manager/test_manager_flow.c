@@ -158,9 +158,14 @@ test_player_view_hides_hidden_information(void)
 {
     cj4_mahjong state = make_empty_state();
     const cj4_tile_id hand0[] = {
-        tile(0, 0), tile(1, 0), tile(2, 0), tile(3, 0)};
+        tile(0, 0),
+        tile(1, 0),
+        tile(2, 0),
+        tile(3, 0)};
     const cj4_tile_id hand1[] = {
-        tile(10, 0), tile(10, 1), tile(10, 2)};
+        tile(10, 0),
+        tile(10, 1),
+        tile(10, 2)};
     cj4_player_view view;
 
     set_hand(&state, CJ4_PLAYER_0, hand0, 4);
@@ -192,9 +197,11 @@ test_collect_actions_includes_pass_and_claims(void)
 {
     cj4_mahjong state = make_empty_state();
     const cj4_tile_id chi_hand[] = {
-        tile(1, 0), tile(2, 0)};
+        tile(1, 0),
+        tile(2, 0)};
     const cj4_tile_id pon_hand[] = {
-        tile(3, 1), tile(3, 2)};
+        tile(3, 1),
+        tile(3, 2)};
     cj4_action actions[CJ4M_MAX_ACTIONS];
     uint8_t action_count;
 
@@ -232,11 +239,19 @@ test_step_uses_delegate_for_draw_phase(void)
     cj4_mahjong next;
     cj4_tile_id draw = tile(26, 0);
     const cj4_tile_id hand[] = {
-        tile(0, 0), tile(1, 0), tile(2, 0),
-        tile(9, 0), tile(10, 0), tile(11, 0),
-        tile(18, 0), tile(19, 0), tile(20, 0),
-        tile(3, 0), tile(4, 0),
-        tile(15, 0), tile(15, 1),
+        tile(0, 0),
+        tile(1, 0),
+        tile(2, 0),
+        tile(9, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(18, 0),
+        tile(19, 0),
+        tile(20, 0),
+        tile(3, 0),
+        tile(4, 0),
+        tile(15, 0),
+        tile(15, 1),
         draw};
 
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
@@ -266,10 +281,18 @@ test_collect_actions_respects_riichi_restrictions(void)
     cj4_tile_id draw = tile(4, 3);
     const cj4_tile_id hand[] = {
         tile(4, 3),
-        tile(9, 0), tile(10, 0), tile(11, 0),
-        tile(18, 0), tile(19, 0), tile(20, 0),
-        tile(12, 0), tile(13, 0), tile(14, 0),
-        tile(21, 0), tile(22, 0), tile(23, 0),
+        tile(9, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(18, 0),
+        tile(19, 0),
+        tile(20, 0),
+        tile(12, 0),
+        tile(13, 0),
+        tile(14, 0),
+        tile(21, 0),
+        tile(22, 0),
+        tile(23, 0),
         tile(24, 0)};
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
@@ -305,9 +328,11 @@ test_step_prioritizes_pon_over_chi(void)
     cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
     cj4_mahjong next;
     const cj4_tile_id chi_hand[] = {
-        tile(1, 0), tile(2, 0)};
+        tile(1, 0),
+        tile(2, 0)};
     const cj4_tile_id pon_hand[] = {
-        tile(3, 1), tile(3, 2)};
+        tile(3, 1),
+        tile(3, 2)};
 
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
         delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
@@ -340,19 +365,36 @@ test_step_prioritizes_ron_and_respects_limit(void)
     cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
     cj4_mahjong next;
     const cj4_tile_id chi_hand[] = {
-        tile(4, 0), tile(5, 0)};
+        tile(4, 0),
+        tile(5, 0)};
     const cj4_tile_id ron_hand[] = {
-        tile(1, 0), tile(2, 0), tile(3, 0),
-        tile(10, 0), tile(11, 0), tile(12, 0),
-        tile(19, 0), tile(20, 0), tile(21, 0),
-        tile(4, 1), tile(5, 1),
-        tile(14, 0), tile(14, 1)};
+        tile(1, 0),
+        tile(2, 0),
+        tile(3, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(12, 0),
+        tile(19, 0),
+        tile(20, 0),
+        tile(21, 0),
+        tile(4, 1),
+        tile(5, 1),
+        tile(14, 0),
+        tile(14, 1)};
     const cj4_tile_id ron_hand_alt[] = {
-        tile(1, 1), tile(2, 1), tile(3, 1),
-        tile(10, 1), tile(11, 1), tile(12, 1),
-        tile(19, 1), tile(20, 1), tile(21, 1),
-        tile(4, 2), tile(5, 2),
-        tile(14, 2), tile(14, 3)};
+        tile(1, 1),
+        tile(2, 1),
+        tile(3, 1),
+        tile(10, 1),
+        tile(11, 1),
+        tile(12, 1),
+        tile(19, 1),
+        tile(20, 1),
+        tile(21, 1),
+        tile(4, 2),
+        tile(5, 2),
+        tile(14, 2),
+        tile(14, 3)};
 
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
         delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
@@ -410,7 +452,8 @@ test_step_advances_after_all_pass(void)
     assert(contexts[CJ4_PLAYER_3].call_count == 1);
 }
 
-int manager_tests_main(void)
+int
+manager_tests_main(void)
 {
     test_player_view_hides_hidden_information();
     test_collect_actions_includes_pass_and_claims();

@@ -28,9 +28,6 @@ This library is designed with the following principles:
 
 cjong4 は以下の3層構造で設計されています：
 
-core     : ルール・状態・純粋ロジック 
-manager  : ゲーム進行・優先順位制御 
-
 ### core
 
 - ゲーム状態（state）
@@ -162,12 +159,14 @@ cj4_do_discard cj4_can_ron cj4m_step cj4m_collect_actions
 
 ## ディレクトリ構成 / Project Structure
 
+```
 include/cjong4/core/      core public API
 include/cjong4/manager/   manager public API
 src/core/                 core implementation 
 src/manager/              manager implementation
 tests/core/               core tests 
 tests/manager/            manager tests
+```
 
 ---
 
