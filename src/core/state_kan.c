@@ -16,7 +16,8 @@ cj4_state_can_declare_more_kans(
 }
 
 static uint8_t
-cj4_state_should_abort_on_four_kans(const cj4_mahjong *state)
+cj4_state_should_abort_on_four_kans(
+    const cj4_mahjong *state)
 {
     return cj4_state_count_total_kans(state) >= 4 &&
            !cj4_state_all_kans_by_one_player(state);
@@ -108,7 +109,9 @@ cj4_can_ankan_after_riichi(
 
 /* Minkan implementation (open kan using last discard) */
 bool
-cj4_can_minkan(const cj4_mahjong *state, cj4_player player)
+cj4_can_minkan(
+    const cj4_mahjong *state,
+    cj4_player player)
 {
     if (!cj4_state_can_declare_more_kans(state))
         return false;
@@ -128,7 +131,12 @@ cj4_can_minkan(const cj4_mahjong *state, cj4_player player)
 }
 
 bool
-cj4_can_minkan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3)
+cj4_can_minkan_with_tile(
+    const cj4_mahjong *state,
+    cj4_player player,
+    cj4_tile_id tile1,
+    cj4_tile_id tile2,
+    cj4_tile_id tile3)
 {
     if (!cj4_can_minkan(state, player))
         return false;
@@ -152,7 +160,12 @@ cj4_can_minkan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_i
 }
 
 cj4_mahjong
-cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3)
+cj4_do_minkan(
+    const cj4_mahjong state,
+    cj4_player player,
+    cj4_tile_id tile1,
+    cj4_tile_id tile2,
+    cj4_tile_id tile3)
 {
     assert(cj4_can_minkan_with_tile(&state, player, tile1, tile2, tile3));
     cj4_mahjong next = state;
@@ -177,7 +190,8 @@ cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4
 
 /* Ankan (closed kan) */
 bool
-cj4_can_ankan(const cj4_mahjong *state)
+cj4_can_ankan(
+    const cj4_mahjong *state)
 {
     cj4_player player = state->current_player;
     if (state->phase != CJ4_PHASE_DRAW)
@@ -201,7 +215,12 @@ cj4_can_ankan(const cj4_mahjong *state)
 }
 
 bool
-cj4_can_ankan_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3, cj4_tile_id tile4)
+cj4_can_ankan_with_tile(
+    const cj4_mahjong *state,
+    cj4_tile_id tile1,
+    cj4_tile_id tile2,
+    cj4_tile_id tile3,
+    cj4_tile_id tile4)
 {
     if (!cj4_can_ankan(state))
         return false;
@@ -265,7 +284,7 @@ cj4_do_ankan(
 
     if (cj4_state_should_abort_on_four_kans(&next))
     {
-        cj4_state_finish_draw_round(&next, CJ4_ROUND_END_ABORTIVE_DRAW);
+        cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_FOUR_KANS);
         return next;
     }
 
@@ -280,7 +299,8 @@ cj4_do_ankan(
 
 /* Kakan (added kan to existing pon) */
 bool
-cj4_can_kakan(const cj4_mahjong *state)
+cj4_can_kakan(
+    const cj4_mahjong *state)
 {
     cj4_player player = state->current_player;
 
@@ -308,7 +328,9 @@ cj4_can_kakan(const cj4_mahjong *state)
 }
 
 bool
-cj4_can_kakan_with_tile(const cj4_mahjong *state, cj4_tile_id tile)
+cj4_can_kakan_with_tile(
+    const cj4_mahjong *state,
+    cj4_tile_id tile)
 {
     cj4_player player = state->current_player;
 
@@ -337,7 +359,9 @@ cj4_can_kakan_with_tile(const cj4_mahjong *state, cj4_tile_id tile)
 }
 
 cj4_mahjong
-cj4_do_kakan(const cj4_mahjong state, cj4_tile_id tile)
+cj4_do_kakan(
+    const cj4_mahjong state,
+    cj4_tile_id tile)
 {
     assert(cj4_can_kakan_with_tile(&state, tile));
     cj4_mahjong next = state;
@@ -355,6 +379,7 @@ cj4_do_kakan(const cj4_mahjong state, cj4_tile_id tile)
             /* called_index stays unchanged */
 
             cj4_state_set_location(&next, tile, CJ4_ZONE_MELD, player);
+            cj4_state_update_pao(&next, player, m->from_player);
 
             break;
         }
@@ -373,7 +398,8 @@ cj4_do_kakan(const cj4_mahjong state, cj4_tile_id tile)
 }
 
 bool
-cj4_can_rinshan_draw(const cj4_mahjong *state)
+cj4_can_rinshan_draw(
+    const cj4_mahjong *state)
 {
     return (state->phase == CJ4_PHASE_ANKAN_RESOLVE ||
             state->phase == CJ4_PHASE_KAKAN_RESOLVE) &&
@@ -382,7 +408,9 @@ cj4_can_rinshan_draw(const cj4_mahjong *state)
 
 /* Kan resolution: run once after any kan that defers draw/dora */
 cj4_mahjong
-cj4_do_rinshan_draw(const cj4_mahjong state, const cj4_rules *rules)
+cj4_do_rinshan_draw(
+    const cj4_mahjong state,
+    const cj4_rules *rules)
 {
     assert(cj4_can_rinshan_draw(&state));
     cj4_mahjong next = state;
@@ -409,7 +437,7 @@ cj4_do_rinshan_draw(const cj4_mahjong state, const cj4_rules *rules)
     {
         next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
         next.winning_from_chankan = 0;
-        cj4_state_finish_draw_round(&next, CJ4_ROUND_END_ABORTIVE_DRAW);
+        cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_FOUR_KANS);
         return next;
     }
 

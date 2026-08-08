@@ -70,6 +70,12 @@ cj4_state_add_meld(
     uint8_t called_index);
 
 void
+cj4_state_update_pao(
+    cj4_mahjong *state,
+    cj4_player player,
+    cj4_player from_player);
+
+void
 cj4_state_finish_open_call(
     cj4_mahjong *state,
     cj4_player player,
@@ -95,5 +101,10 @@ void
 cj4_state_finish_draw_round(
     cj4_mahjong *state,
     cj4_round_end_type round_end_type);
+
+void
+cj4_state_finish_abortive_draw(
+    cj4_mahjong *state,
+    cj4_abortive_draw_reason reason);
 
 #endif /* CJ4_STATE_OPS_H */

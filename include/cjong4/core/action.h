@@ -27,6 +27,7 @@ extern "C"
         CJ4_ACTION_RIICHI,
         CJ4_ACTION_TSUMO,
         CJ4_ACTION_RON,
+        CJ4_ACTION_ABORTIVE_DRAW,
         CJ4_ACTION_PASS
     } cj4_action_type;
 

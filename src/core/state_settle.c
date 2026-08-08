@@ -5,7 +5,9 @@
 #include <assert.h>
 
 static uint8_t
-cj4_settle_player_has_top_score(const cj4_mahjong *state, cj4_player player)
+cj4_settle_player_has_top_score(
+    const cj4_mahjong *state,
+    cj4_player player)
 {
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
     {
@@ -17,7 +19,8 @@ cj4_settle_player_has_top_score(const cj4_mahjong *state, cj4_player player)
 }
 
 static uint8_t
-cj4_settle_dealer_wins(const cj4_mahjong *state)
+cj4_settle_dealer_wins(
+    const cj4_mahjong *state)
 {
     for (uint8_t i = 0; i < state->winner_count; ++i)
     {
@@ -29,7 +32,51 @@ cj4_settle_dealer_wins(const cj4_mahjong *state)
 }
 
 static uint8_t
-cj4_settle_any_negative_score(const cj4_mahjong *state)
+cj4_settle_has_nagashi_mangan(
+    const cj4_mahjong *state)
+{
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+    {
+        if (state->nagashi_mangan[i])
+            return 1;
+    }
+
+    return 0;
+}
+
+static uint8_t
+cj4_settle_first_nagashi_mangan_player(
+    const cj4_mahjong *state)
+{
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+    {
+        if (state->nagashi_mangan[i])
+            return i;
+    }
+
+    return CJ4_PLAYER_COUNT;
+}
+
+static uint8_t
+cj4_settle_get_pao_player(
+    const cj4_mahjong *state,
+    const cj4_rules *rules,
+    cj4_player winner,
+    cj4_player *out_player)
+{
+    if (!rules || !rules->pao || !state->pao_owner[winner])
+        return 0;
+
+    if (state->pao_player[winner] >= CJ4_PLAYER_COUNT)
+        return 0;
+
+    *out_player = state->pao_player[winner];
+    return 1;
+}
+
+static uint8_t
+cj4_settle_any_negative_score(
+    const cj4_mahjong *state)
 {
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
     {
@@ -41,7 +88,8 @@ cj4_settle_any_negative_score(const cj4_mahjong *state)
 }
 
 static cj4_wind
-cj4_settle_last_round_wind(const cj4_rules *rules)
+cj4_settle_last_round_wind(
+    const cj4_rules *rules)
 {
     if (!rules)
         return CJ4_WIND_SOUTH;
@@ -59,7 +107,8 @@ cj4_settle_last_round_wind(const cj4_rules *rules)
 }
 
 static cj4_wind
-cj4_settle_extension_last_round_wind(const cj4_rules *rules)
+cj4_settle_extension_last_round_wind(
+    const cj4_rules *rules)
 {
     if (!rules)
         return CJ4_WIND_SOUTH;
@@ -77,7 +126,9 @@ cj4_settle_extension_last_round_wind(const cj4_rules *rules)
 }
 
 static uint8_t
-cj4_settle_is_endgame_round(const cj4_mahjong *state, cj4_wind last_round_wind)
+cj4_settle_is_endgame_round(
+    const cj4_mahjong *state,
+    cj4_wind last_round_wind)
 {
     return state->round_wind > last_round_wind ||
            (state->round_wind == last_round_wind &&
@@ -88,10 +139,33 @@ static void
 cj4_settle_apply_tsumo(
     cj4_mahjong *next,
     const cj4_mahjong *state,
+    const cj4_rules *rules,
     const cj4_hand_score *score)
 {
     int32_t honba_payment = state->honba * 100;
     cj4_player winner = state->winner;
+    cj4_player pao_player = CJ4_PLAYER_COUNT;
+
+    if (cj4_settle_get_pao_player(state, rules, winner, &pao_player))
+    {
+        int32_t total;
+
+        if (winner == state->dealer)
+        {
+            total = (score->tsumo_non_dealer_payment + honba_payment) *
+                    (CJ4_PLAYER_COUNT - 1);
+        }
+        else
+        {
+            total = score->tsumo_dealer_payment + honba_payment +
+                    (score->tsumo_non_dealer_payment + honba_payment) *
+                        (CJ4_PLAYER_COUNT - 2);
+        }
+
+        next->scores[pao_player] -= total;
+        next->scores[winner] += total;
+        return;
+    }
 
     if (winner == state->dealer)
     {
@@ -151,8 +225,57 @@ cj4_settle_apply_ron(
             continue;
         total = score.ron_points + honba_bonus;
 
-        next->scores[state->loser] -= total;
-        next->scores[winner] += total;
+        cj4_player pao_player = CJ4_PLAYER_COUNT;
+
+        if (cj4_settle_get_pao_player(state, rules, winner, &pao_player) &&
+            pao_player != state->loser)
+        {
+            int32_t loser_payment = score.ron_points / 2;
+            int32_t pao_payment = score.ron_points - loser_payment + honba_bonus;
+
+            next->scores[state->loser] -= loser_payment;
+            next->scores[pao_player] -= pao_payment;
+            next->scores[winner] += total;
+        }
+        else
+        {
+            next->scores[state->loser] -= total;
+            next->scores[winner] += total;
+        }
+    }
+}
+
+static void
+cj4_settle_apply_nagashi_mangan(
+    cj4_mahjong *next,
+    const cj4_mahjong *state)
+{
+    const int32_t dealer_payment = 4000;
+    const int32_t child_payment = 2000;
+    int32_t honba_payment = state->honba * 100;
+
+    for (uint8_t winner = 0; winner < CJ4_PLAYER_COUNT; ++winner)
+    {
+        if (!state->nagashi_mangan[winner])
+            continue;
+
+        for (uint8_t payer = 0; payer < CJ4_PLAYER_COUNT; ++payer)
+        {
+            int32_t payment;
+
+            if (payer == winner || state->nagashi_mangan[payer])
+                continue;
+
+            if (winner == state->dealer)
+                payment = dealer_payment + honba_payment;
+            else if (payer == state->dealer)
+                payment = dealer_payment + honba_payment;
+            else
+                payment = child_payment + honba_payment;
+
+            next->scores[payer] -= payment;
+            next->scores[winner] += payment;
+        }
     }
 }
 
@@ -261,13 +384,16 @@ cj4_settle_determine_progress(
 }
 
 bool
-cj4_can_settle(const cj4_mahjong state)
+cj4_can_settle(
+    const cj4_mahjong state)
 {
     return state.phase == CJ4_PHASE_ROUND_END;
 }
 
 cj4_mahjong
-cj4_do_settle(const cj4_mahjong state, const cj4_rules *rules)
+cj4_do_settle(
+    const cj4_mahjong state,
+    const cj4_rules *rules)
 {
     cj4_mahjong next = state;
     uint8_t tenpai[CJ4_PLAYER_COUNT] = {0};
@@ -283,11 +409,14 @@ cj4_do_settle(const cj4_mahjong state, const cj4_rules *rules)
         {
             cj4_hand_score score = {0};
             bool calculated = cj4_calculate_hand_score(
-                &state, state.winner, rules, &score);
+                &state,
+                state.winner,
+                rules,
+                &score);
 
             assert(calculated);
             if (calculated)
-                cj4_settle_apply_tsumo(&next, &state, &score);
+                cj4_settle_apply_tsumo(&next, &state, rules, &score);
         }
         else
         {
@@ -305,7 +434,21 @@ cj4_do_settle(const cj4_mahjong state, const cj4_rules *rules)
     }
     else
     {
-        if (state.round_end_type != CJ4_ROUND_END_ABORTIVE_DRAW)
+        if (cj4_settle_has_nagashi_mangan(&state))
+        {
+            uint8_t stick_winner;
+
+            cj4_settle_apply_nagashi_mangan(&next, &state);
+            dealer_continues = state.nagashi_mangan[state.dealer];
+
+            stick_winner = cj4_settle_first_nagashi_mangan_player(&state);
+            if (stick_winner < CJ4_PLAYER_COUNT && state.riichi_sticks > 0)
+            {
+                next.scores[stick_winner] += state.riichi_sticks * 1000;
+                next.riichi_sticks = 0;
+            }
+        }
+        else if (state.round_end_type != CJ4_ROUND_END_ABORTIVE_DRAW)
         {
             cj4_settle_apply_draw(&next, &state, rules, tenpai);
             dealer_continues = tenpai[state.dealer];

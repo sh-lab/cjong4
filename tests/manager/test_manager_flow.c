@@ -9,13 +9,16 @@
 #include "cjong4/manager/manager.h"
 
 static cj4_tile_id
-tile(cj4_tile_type type, uint8_t index)
+tile(
+    cj4_tile_type type,
+    uint8_t index)
 {
     return cj4_tile_make(type, index);
 }
 
 static cj4_mahjong
-make_empty_state(void)
+make_empty_state(
+    void)
 {
     cj4_mahjong state;
 
@@ -141,7 +144,9 @@ choose_preferred_action(
 }
 
 static cj4m_player_delegate
-make_delegate(chooser_ctx *ctx, cj4_action_type preferred)
+make_delegate(
+    chooser_ctx *ctx,
+    cj4_action_type preferred)
 {
     ctx->preferred = preferred;
     ctx->call_count = 0;
@@ -154,7 +159,8 @@ make_delegate(chooser_ctx *ctx, cj4_action_type preferred)
 }
 
 static void
-test_player_view_hides_hidden_information(void)
+test_player_view_hides_hidden_information(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     const cj4_tile_id hand0[] = {
@@ -193,7 +199,8 @@ test_player_view_hides_hidden_information(void)
 }
 
 static void
-test_collect_actions_includes_pass_and_claims(void)
+test_collect_actions_includes_pass_and_claims(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     const cj4_tile_id chi_hand[] = {
@@ -231,7 +238,8 @@ test_collect_actions_includes_pass_and_claims(void)
 }
 
 static void
-test_step_uses_delegate_for_draw_phase(void)
+test_step_uses_delegate_for_draw_phase(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     chooser_ctx contexts[CJ4_PLAYER_COUNT];
@@ -273,7 +281,8 @@ test_step_uses_delegate_for_draw_phase(void)
 }
 
 static void
-test_collect_actions_respects_riichi_restrictions(void)
+test_collect_actions_respects_riichi_restrictions(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     cj4_action actions[CJ4M_MAX_ACTIONS];
@@ -321,7 +330,55 @@ test_collect_actions_respects_riichi_restrictions(void)
 }
 
 static void
-test_step_prioritizes_pon_over_chi(void)
+test_step_can_choose_kyuushu_kyuuhai(
+    void)
+{
+    cj4_rules rules = {0};
+    cj4_mahjong state = make_empty_state();
+    chooser_ctx contexts[CJ4_PLAYER_COUNT];
+    cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
+    cj4_mahjong next;
+    cj4_tile_id draw = tile(30, 0);
+    const cj4_tile_id hand[] = {
+        tile(0, 0),
+        tile(8, 0),
+        tile(9, 0),
+        tile(17, 0),
+        tile(18, 0),
+        tile(26, 0),
+        tile(27, 0),
+        tile(28, 0),
+        tile(29, 0),
+        tile(2, 0),
+        tile(3, 0),
+        tile(4, 0),
+        tile(5, 0),
+        draw};
+
+    rules.abortive_kyuushu_kyuuhai = 1;
+
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+        delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
+
+    delegates[CJ4_PLAYER_0] = make_delegate(&contexts[CJ4_PLAYER_0], CJ4_ACTION_ABORTIVE_DRAW);
+
+    set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
+    state.current_player = CJ4_PLAYER_0;
+    state.phase = CJ4_PHASE_DRAW;
+    state.draw_tile = draw;
+    state.first_turn_uninterrupted = 1;
+    state.draw_turn_count[CJ4_PLAYER_0] = 1;
+
+    next = cj4m_step(&state, &rules, delegates);
+
+    assert(next.phase == CJ4_PHASE_ROUND_END);
+    assert(next.round_end_type == CJ4_ROUND_END_ABORTIVE_DRAW);
+    assert(next.abortive_draw_reason == CJ4_ABORTIVE_DRAW_KYUUSHU_KYUUHAI);
+}
+
+static void
+test_step_prioritizes_pon_over_chi(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     chooser_ctx contexts[CJ4_PLAYER_COUNT];
@@ -357,7 +414,8 @@ test_step_prioritizes_pon_over_chi(void)
 }
 
 static void
-test_step_prioritizes_ron_and_respects_limit(void)
+test_step_prioritizes_ron_and_respects_limit(
+    void)
 {
     cj4_rules rules = {0};
     cj4_mahjong state = make_empty_state();
@@ -425,7 +483,8 @@ test_step_prioritizes_ron_and_respects_limit(void)
 }
 
 static void
-test_step_advances_after_all_pass(void)
+test_step_advances_after_all_pass(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     chooser_ctx contexts[CJ4_PLAYER_COUNT];
@@ -453,12 +512,14 @@ test_step_advances_after_all_pass(void)
 }
 
 int
-manager_tests_main(void)
+manager_tests_main(
+    void)
 {
     test_player_view_hides_hidden_information();
     test_collect_actions_includes_pass_and_claims();
     test_step_uses_delegate_for_draw_phase();
     test_collect_actions_respects_riichi_restrictions();
+    test_step_can_choose_kyuushu_kyuuhai();
     test_step_prioritizes_pon_over_chi();
     test_step_prioritizes_ron_and_respects_limit();
     test_step_advances_after_all_pass();

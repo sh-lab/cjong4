@@ -36,6 +36,13 @@ extern "C"
         /* draw */
         uint8_t noten_penalty;
         int32_t noten_penalty_points;
+        uint8_t abortive_kyuushu_kyuuhai;
+        uint8_t abortive_suufon_renda;
+        uint8_t abortive_four_riichi;
+        uint8_t nagashi_mangan;
+
+        /* settlement */
+        uint8_t pao;
 
         /* red tiles */
         uint8_t aka_tiles[136];

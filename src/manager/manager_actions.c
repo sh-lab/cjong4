@@ -1,5 +1,6 @@
 #include "cjong4/manager/manager.h"
 
+#include "state_abortive.h"
 #include "state_chi.h"
 #include "state_discard.h"
 #include "state_kan.h"
@@ -30,7 +31,9 @@ cj4m_push_action(
 }
 
 static cj4_action
-cj4m_make_action(cj4_action_type type, cj4_player player)
+cj4m_make_action(
+    cj4_action_type type,
+    cj4_player player)
 {
     cj4_action action;
 
@@ -106,6 +109,13 @@ cj4m_collect_turn_actions(
     if (cj4_can_tsumo(state, rules))
     {
         cj4_action action = cj4m_make_action(CJ4_ACTION_TSUMO, player);
+        action.tile = state->draw_tile;
+        cj4m_push_action(actions, capacity, count, &action);
+    }
+
+    if (cj4_can_kyuushu_kyuuhai(state, rules))
+    {
+        cj4_action action = cj4m_make_action(CJ4_ACTION_ABORTIVE_DRAW, player);
         action.tile = state->draw_tile;
         cj4m_push_action(actions, capacity, count, &action);
     }

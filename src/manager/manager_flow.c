@@ -1,5 +1,6 @@
 #include "cjong4/manager/manager.h"
 
+#include "state_abortive.h"
 #include "state_chi.h"
 #include "state_discard.h"
 #include "state_kan.h"
@@ -117,6 +118,8 @@ cj4m_apply_single_action(
         cj4_player players[1] = {action->player};
         return cj4_do_ron_multi(*state, players, 1, rules);
     }
+    case CJ4_ACTION_ABORTIVE_DRAW:
+        return cj4_do_kyuushu_kyuuhai(*state);
     case CJ4_ACTION_PASS:
     default:
         break;
