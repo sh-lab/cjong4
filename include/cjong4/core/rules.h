@@ -63,6 +63,8 @@ extern "C"
         uint8_t pao_daisangen;
         uint8_t pao_daisuushii;
         uint8_t pao_suukantsu;
+        uint8_t multi_ron_honba_first_only;
+        uint8_t nagashi_dealer_tenpai_renchan;
 
         /* red tiles */
         uint8_t aka_tiles[136];

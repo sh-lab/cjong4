@@ -312,6 +312,7 @@ cj4_settle_apply_ron(
     {
         cj4_hand_score score = {0};
         cj4_player winner = state->winners[i];
+        int32_t winner_honba_bonus = honba_bonus;
         int32_t total;
         bool calculated =
             cj4_calculate_hand_score(state, winner, rules, &score);
@@ -319,7 +320,17 @@ cj4_settle_apply_ron(
         assert(calculated);
         if (!calculated)
             continue;
-        total = score.ron_points + honba_bonus;
+
+        if (i > 0 &&
+            cj4_settle_rule_bool(
+                rules,
+                rules ? rules->multi_ron_honba_first_only : 0,
+                0))
+        {
+            winner_honba_bonus = 0;
+        }
+
+        total = score.ron_points + winner_honba_bonus;
 
         cj4_player pao_player = CJ4_PLAYER_COUNT;
 
@@ -342,7 +353,7 @@ cj4_settle_apply_ron(
             else
             {
                 loser_payment = score.ron_points / 2;
-                pao_payment = score.ron_points - loser_payment + honba_bonus;
+                pao_payment = score.ron_points - loser_payment + winner_honba_bonus;
             }
 
             next->scores[state->loser] -= loser_payment;
@@ -551,7 +562,19 @@ cj4_do_settle(
             uint8_t stick_winner;
 
             cj4_settle_apply_nagashi_mangan(&next, &state);
-            dealer_continues = state.nagashi_mangan[state.dealer];
+            if (cj4_settle_rule_bool(
+                    rules,
+                    rules ? rules->nagashi_dealer_tenpai_renchan : 0,
+                    0))
+            {
+                dealer_continues = (uint8_t)cj4_player_is_shape_tenpai(
+                    &state,
+                    state.dealer);
+            }
+            else
+            {
+                dealer_continues = state.nagashi_mangan[state.dealer];
+            }
 
             stick_winner = cj4_settle_first_nagashi_mangan_player(&state);
             if (stick_winner < CJ4_PLAYER_COUNT && state.riichi_sticks > 0)

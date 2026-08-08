@@ -176,6 +176,8 @@ test_rules_default_and_validate(
     assert(rules.kokushi_ron_on_ankan == 1);
     assert(rules.kazoe_yakuman == 1);
     assert(rules.kiriage_mangan == 1);
+    assert(rules.multi_ron_honba_first_only == 0);
+    assert(rules.nagashi_dealer_tenpai_renchan == 0);
 
     rules.max_ron_players = 0;
     assert(!cj4_rules_validate(&rules));
@@ -201,6 +203,8 @@ test_tenhou_preset_fields(
     assert(rules.pao_daisangen == 1);
     assert(rules.pao_daisuushii == 1);
     assert(rules.pao_suukantsu == 0);
+    assert(rules.multi_ron_honba_first_only == 1);
+    assert(rules.nagashi_dealer_tenpai_renchan == 1);
 }
 
 static void
@@ -2210,6 +2214,7 @@ test_collect_winning_results_returns_multi_ron_details(
     cj4_rules rules = {0};
     cj4_mahjong state = make_empty_state();
     cj4_mahjong won;
+    cj4_mahjong settled;
     cj4_win_result results[CJ4_PLAYER_COUNT];
     uint8_t result_count = 0;
     cj4_player winners[] = {CJ4_PLAYER_3, CJ4_PLAYER_2};
@@ -2267,6 +2272,16 @@ test_collect_winning_results_returns_multi_ron_details(
     assert(results[1].fu == 30);
     assert(contains_win_yaku(&results[0], CJ4_WIN_YAKU_TANYAO));
     assert(contains_win_yaku(&results[1], CJ4_WIN_YAKU_TANYAO));
+
+    rules = cj4_rules_tenhou();
+    state.honba = 2;
+    won = cj4_do_ron_multi(state, winners, 2, &rules);
+    settled = cj4_do_settle(won, &rules);
+
+    assert(settled.scores[CJ4_PLAYER_0] == 9000);
+    assert(settled.scores[CJ4_PLAYER_1] == 25000);
+    assert(settled.scores[CJ4_PLAYER_2] == 33300);
+    assert(settled.scores[CJ4_PLAYER_3] == 32700);
 }
 
 static void
@@ -2507,6 +2522,44 @@ test_nagashi_mangan_settles_as_mangan_tsumo(
     assert(settled.scores[CJ4_PLAYER_2] == 23000);
     assert(settled.scores[CJ4_PLAYER_3] == 23000);
     assert(settled.next_dealer == CJ4_PLAYER_1);
+}
+
+static void
+test_tenhou_nagashi_mangan_uses_dealer_tenpai_for_renchan(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong settled;
+    const cj4_tile_id dealer_hand[] = {
+        tile(0, 0),
+        tile(1, 0),
+        tile(2, 0),
+        tile(9, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(18, 0),
+        tile(19, 0),
+        tile(20, 0),
+        tile(3, 0),
+        tile(4, 0),
+        tile(15, 0),
+        tile(15, 1)};
+
+    set_hand(
+        &state,
+        CJ4_PLAYER_0,
+        dealer_hand,
+        (uint8_t)(sizeof(dealer_hand) / sizeof(dealer_hand[0])));
+    state.phase = CJ4_PHASE_ROUND_END;
+    state.round_end_type = CJ4_ROUND_END_EXHAUSTIVE_DRAW;
+    state.dealer = CJ4_PLAYER_0;
+    state.nagashi_mangan[CJ4_PLAYER_1] = 1;
+
+    settled = cj4_do_settle(state, &rules);
+
+    assert(settled.next_dealer == CJ4_PLAYER_0);
+    assert(settled.honba == 1);
 }
 
 static void
@@ -2792,6 +2845,7 @@ main(
     test_suufon_renda_aborts_after_reactions_pass();
     test_four_riichi_aborts_after_reactions_pass();
     test_nagashi_mangan_settles_as_mangan_tsumo();
+    test_tenhou_nagashi_mangan_uses_dealer_tenpai_for_renchan();
     test_pao_splits_ron_payment_with_responsible_player();
     test_pao_liability_only_splits_compound_yakuman_tsumo();
     test_daisuushii_double_pao_liability_uses_two_yakuman();

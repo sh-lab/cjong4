@@ -35,7 +35,9 @@ cj4_rules_booleans_are_valid(const cj4_rules *rules)
         rules->pao_liability_only,
         rules->pao_daisangen,
         rules->pao_daisuushii,
-        rules->pao_suukantsu};
+        rules->pao_suukantsu,
+        rules->multi_ron_honba_first_only,
+        rules->nagashi_dealer_tenpai_renchan};
 
     for (uint8_t i = 0; i < (uint8_t)(sizeof(values) / sizeof(values[0])); ++i)
     {
@@ -95,6 +97,8 @@ cj4_rules_default(void)
     rules.pao_daisangen = 1;
     rules.pao_daisuushii = 1;
     rules.pao_suukantsu = 1;
+    rules.multi_ron_honba_first_only = 0;
+    rules.nagashi_dealer_tenpai_renchan = 0;
 
     cj4_rules_set_common_red_fives(&rules);
 
@@ -117,6 +121,8 @@ cj4_rules_tenhou(void)
     rules.pao_daisangen = 1;
     rules.pao_daisuushii = 1;
     rules.pao_suukantsu = 0;
+    rules.multi_ron_honba_first_only = 1;
+    rules.nagashi_dealer_tenpai_renchan = 1;
 
     return rules;
 }
