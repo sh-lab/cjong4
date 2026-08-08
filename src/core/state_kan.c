@@ -180,10 +180,12 @@ cj4_do_minkan(
         4,
         state.current_player,
         0);
+    cj4_state_establish_pending_riichi(&next);
     cj4_state_finish_open_call(&next, player, CJ4_PHASE_ANKAN_RESOLVE);
     next.first_turn_uninterrupted = 0;
     next.winning_from_chankan = 0;
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    next.pending_ankan_tile = CJ4_TILE_ID_INVALID;
 
     return next;
 }
@@ -281,18 +283,12 @@ cj4_do_ankan(
     next.first_turn_uninterrupted = 0;
     next.winning_from_chankan = 0;
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
-
-    if (cj4_state_should_abort_on_four_kans(&next))
-    {
-        cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_FOUR_KANS);
-        return next;
-    }
-
-    next.draw_tile = cj4_state_draw_dead_wall_tile(&next, player);
+    next.pending_ankan_tile = tile1;
+    next.pending_kan_dora = 0;
 
     cj4_state_add_dora_indicator(&next);
 
-    next.phase = CJ4_PHASE_DRAW;
+    next.phase = CJ4_PHASE_ANKAN_RESOLVE;
 
     return next;
 }
@@ -392,6 +388,7 @@ cj4_do_kakan(
     next.first_turn_uninterrupted = 0;
     next.winning_from_chankan = 0;
     next.pending_kakan_tile = tile;
+    next.pending_ankan_tile = CJ4_TILE_ID_INVALID;
     next.phase = CJ4_PHASE_KAKAN_RESOLVE;
 
     return next;
@@ -416,7 +413,9 @@ cj4_do_rinshan_draw(
     cj4_mahjong next = state;
     cj4_player player = state.current_player;
 
-    if (state.phase == CJ4_PHASE_KAKAN_RESOLVE)
+    if (state.phase == CJ4_PHASE_KAKAN_RESOLVE ||
+        (state.phase == CJ4_PHASE_ANKAN_RESOLVE &&
+         state.pending_ankan_tile != CJ4_TILE_ID_INVALID))
     {
         for (uint8_t other = 0; other < CJ4_PLAYER_COUNT; ++other)
         {
@@ -445,11 +444,16 @@ cj4_do_rinshan_draw(
     cj4_tile_id t = cj4_state_draw_dead_wall_tile(&next, player);
     next.draw_tile = t;
 
-    /* Increase dora indicator if possible */
-    cj4_state_add_dora_indicator(&next);
+    if (state.phase == CJ4_PHASE_KAKAN_RESOLVE ||
+        (state.phase == CJ4_PHASE_ANKAN_RESOLVE &&
+         state.pending_ankan_tile == CJ4_TILE_ID_INVALID))
+    {
+        next.pending_kan_dora = 1;
+    }
 
     next.winning_from_chankan = 0;
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    next.pending_ankan_tile = CJ4_TILE_ID_INVALID;
     next.phase = CJ4_PHASE_DRAW;
 
     return next;

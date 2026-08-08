@@ -134,6 +134,8 @@ cj4_do_pass(
             next.temporary_furiten[player] = 1;
     }
 
+    cj4_state_establish_pending_riichi(&next);
+
     if (rules &&
         rules->abortive_suufon_renda &&
         cj4_is_suufon_renda(&next))

@@ -88,7 +88,7 @@ cj4m_apply_single_action(
     switch (action->type)
     {
     case CJ4_ACTION_DISCARD:
-        return cj4_do_discard(*state, action->tile);
+        return cj4_do_discard_with_rules(*state, rules, action->tile);
     case CJ4_ACTION_CHI:
         return cj4_do_chi(*state, action->tiles[0], action->tiles[1]);
     case CJ4_ACTION_PON:
@@ -270,6 +270,51 @@ cj4m_step_kakan_resolve_phase(
     return cj4_do_rinshan_draw(*state, rules);
 }
 
+static cj4_mahjong
+cj4m_step_ankan_resolve_phase(
+    const cj4_mahjong *state,
+    const cj4_rules *rules,
+    const cj4m_player_delegate delegates[CJ4_PLAYER_COUNT])
+{
+    cj4_player ron_players[CJ4_PLAYER_COUNT];
+    uint8_t ron_count = 0;
+
+    if (state->pending_ankan_tile == CJ4_TILE_ID_INVALID)
+        return cj4_do_rinshan_draw(*state, rules);
+
+    for (cj4_player player = CJ4_PLAYER_0; player < CJ4_PLAYER_COUNT; ++player)
+    {
+        cj4_action actions[CJ4M_MAX_ACTIONS];
+        cj4_player_view view;
+        uint8_t action_count;
+        cj4_action selected;
+
+        if (player == state->current_player)
+            continue;
+
+        view = cj4m_make_player_view(state, player);
+        action_count = cj4m_collect_actions(
+            state,
+            rules,
+            player,
+            actions,
+            CJ4M_MAX_ACTIONS);
+        selected = cj4m_select_action(
+            &delegates[player],
+            &view,
+            actions,
+            action_count);
+
+        if (selected.type == CJ4_ACTION_RON)
+            ron_players[ron_count++] = player;
+    }
+
+    if (ron_count > 0)
+        return cj4_do_ron_multi(*state, ron_players, ron_count, rules);
+
+    return cj4_do_rinshan_draw(*state, rules);
+}
+
 cj4_mahjong
 cj4m_step(
     const cj4_mahjong *state,
@@ -286,7 +331,7 @@ cj4m_step(
     case CJ4_PHASE_DISCARD:
         return cj4m_step_discard_phase(state, rules, delegates);
     case CJ4_PHASE_ANKAN_RESOLVE:
-        return cj4_do_rinshan_draw(*state, rules);
+        return cj4m_step_ankan_resolve_phase(state, rules, delegates);
     case CJ4_PHASE_KAKAN_RESOLVE:
         return cj4m_step_kakan_resolve_phase(state, rules, delegates);
     case CJ4_PHASE_ROUND_END:

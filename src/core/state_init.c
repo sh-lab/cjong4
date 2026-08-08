@@ -70,6 +70,11 @@ cj4_state_create_round(
     state.first_turn_uninterrupted = 1;
     state.winning_from_chankan = 0;
     state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    state.pending_riichi = 0;
+    state.pending_riichi_player = CJ4_PLAYER_COUNT;
+    state.pending_riichi_declared_on_first_turn = 0;
+    state.pending_kan_dora = 0;
     state.winning_tile = CJ4_TILE_ID_INVALID;
     state.round_end_type = CJ4_ROUND_END_NONE;
     state.next_round_wind = CJ4_WIND_EAST;

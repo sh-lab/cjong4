@@ -32,7 +32,7 @@ cj4_can_riichi(
 
     player = state->current_player;
 
-    if (state->is_riichi[player])
+    if (state->is_riichi[player] || state->pending_riichi)
         return false;
 
     if (state->scores[player] < 1000)
@@ -64,20 +64,19 @@ cj4_do_riichi(
     cj4_mahjong next = state;
     cj4_player player = state.current_player;
 
-    next.is_riichi[player] = 1;
-    next.is_ippatsu[player] = 1;
-    next.riichi_sticks++;
-    next.scores[player] -= 1000;
-
     cj4_state_record_discard(&next, tile, (uint8_t)(tile == state.draw_tile));
     cj4_state_clear_draw_tile(&next);
     next.winning_from_chankan = 0;
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    next.pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    next.pending_riichi = 1;
+    next.pending_riichi_player = player;
+    next.pending_riichi_declared_on_first_turn = 0;
 
     if (state.first_turn_uninterrupted &&
         state.draw_turn_count[player] == 1)
     {
-        next.riichi_declared_on_first_turn[player] = 1;
+        next.pending_riichi_declared_on_first_turn = 1;
     }
 
     next.phase = CJ4_PHASE_DISCARD;

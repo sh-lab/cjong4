@@ -51,6 +51,15 @@ void
 cj4_state_clear_all_ippatsu(cj4_mahjong *state);
 
 void
+cj4_state_establish_pending_riichi(cj4_mahjong *state);
+
+void
+cj4_state_clear_pending_riichi(cj4_mahjong *state);
+
+void
+cj4_state_reveal_pending_kan_dora(cj4_mahjong *state);
+
+void
 cj4_state_record_discard(
     cj4_mahjong *state,
     cj4_tile_id tile,

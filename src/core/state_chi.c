@@ -161,6 +161,7 @@ cj4_do_chi(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2)
         3,
         state.current_player,
         0);
+    cj4_state_establish_pending_riichi(&next);
     cj4_state_finish_open_call(&next, next_player, CJ4_PHASE_AFTER_CALL);
     next.first_turn_uninterrupted = 0;
     next.winning_from_chankan = 0;

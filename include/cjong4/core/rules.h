@@ -2,6 +2,7 @@
 #define CJ4_RULES_H
 
 #include "tile.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -26,12 +27,15 @@ extern "C"
 
         /* general */
         uint8_t kuitan;
+        uint8_t kuikae_forbidden;
 
         /* riichi */
         uint8_t ippatsu;
 
         /* ron */
         uint8_t max_ron_players; /* 1=head bump, 2=double ron, 3=triple ron */
+        uint8_t kokushi_ron_on_ankan;
+        uint8_t triple_ron_abortive_draw;
 
         /* draw */
         uint8_t noten_penalty;
@@ -41,12 +45,33 @@ extern "C"
         uint8_t abortive_four_riichi;
         uint8_t nagashi_mangan;
 
+        /* scoring */
+        uint8_t kokushi_13_wait_double;
+        uint8_t suuankou_tanki_double;
+        uint8_t junsei_chuuren_double;
+        uint8_t daisuushii_double;
+        uint8_t kazoe_yakuman;
+        uint8_t kiriage_mangan;
+
         /* settlement */
         uint8_t pao;
+        uint8_t pao_liability_only;
 
         /* red tiles */
         uint8_t aka_tiles[136];
     } cj4_rules;
+
+    cj4_rules
+    cj4_rules_default(void);
+
+    cj4_rules
+    cj4_rules_tenhou(void);
+
+    cj4_rules
+    cj4_rules_mjsoul(void);
+
+    bool
+    cj4_rules_validate(const cj4_rules *rules);
 
 #ifdef __cplusplus
 }

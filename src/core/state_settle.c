@@ -75,6 +75,20 @@ cj4_settle_get_pao_player(
 }
 
 static uint8_t
+cj4_settle_pao_responsible_yakuman_count(
+    const cj4_rules *rules,
+    const cj4_hand_score *score)
+{
+    if (!rules || !rules->pao_liability_only ||
+        score->yakuman_count <= 1)
+    {
+        return score->yakuman_count;
+    }
+
+    return 1;
+}
+
+static uint8_t
 cj4_settle_any_negative_score(
     const cj4_mahjong *state)
 {
@@ -148,7 +162,45 @@ cj4_settle_apply_tsumo(
 
     if (cj4_settle_get_pao_player(state, rules, winner, &pao_player))
     {
+        uint8_t responsible_yakuman =
+            cj4_settle_pao_responsible_yakuman_count(rules, score);
         int32_t total;
+
+        if (rules && rules->pao_liability_only &&
+            score->yakuman_count > responsible_yakuman &&
+            responsible_yakuman > 0)
+        {
+            for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+            {
+                int32_t payment;
+                int32_t pao_part;
+
+                if (i == winner)
+                    continue;
+
+                if (winner == state->dealer)
+                    payment = score->tsumo_non_dealer_payment + honba_payment;
+                else if (i == state->dealer)
+                    payment = score->tsumo_dealer_payment + honba_payment;
+                else
+                    payment = score->tsumo_non_dealer_payment + honba_payment;
+
+                next->scores[i] -= payment;
+                next->scores[winner] += payment;
+
+                pao_part = (payment - honba_payment) *
+                           responsible_yakuman /
+                           score->yakuman_count;
+
+                if (i != pao_player)
+                {
+                    next->scores[i] += pao_part;
+                    next->scores[pao_player] -= pao_part;
+                }
+            }
+
+            return;
+        }
 
         if (winner == state->dealer)
         {
@@ -230,8 +282,24 @@ cj4_settle_apply_ron(
         if (cj4_settle_get_pao_player(state, rules, winner, &pao_player) &&
             pao_player != state->loser)
         {
-            int32_t loser_payment = score.ron_points / 2;
-            int32_t pao_payment = score.ron_points - loser_payment + honba_bonus;
+            int32_t loser_payment;
+            int32_t pao_payment;
+
+            if (rules && rules->pao_liability_only &&
+                score.yakuman_count > 0)
+            {
+                uint8_t responsible_yakuman =
+                    cj4_settle_pao_responsible_yakuman_count(rules, &score);
+                pao_payment = score.ron_points *
+                              responsible_yakuman /
+                              score.yakuman_count;
+                loser_payment = total - pao_payment;
+            }
+            else
+            {
+                loser_payment = score.ron_points / 2;
+                pao_payment = score.ron_points - loser_payment + honba_bonus;
+            }
 
             next->scores[state->loser] -= loser_payment;
             next->scores[pao_player] -= pao_payment;

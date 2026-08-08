@@ -258,12 +258,17 @@ cj4_yaku_detect_win_state(
         return;
     }
 
-    if (state->phase == CJ4_PHASE_KAKAN_RESOLVE &&
+    if ((state->phase == CJ4_PHASE_KAKAN_RESOLVE ||
+         state->phase == CJ4_PHASE_ANKAN_RESOLVE) &&
         state->winning_from_chankan &&
-        player != state->current_player &&
-        state->pending_kakan_tile != CJ4_TILE_ID_INVALID)
+        player != state->current_player)
     {
-        cj4_tile_id tile = state->pending_kakan_tile;
+        cj4_tile_id tile = state->phase == CJ4_PHASE_KAKAN_RESOLVE
+                                ? state->pending_kakan_tile
+                                : state->pending_ankan_tile;
+
+        if (tile == CJ4_TILE_ID_INVALID)
+            return;
 
         if (cj4_tile_location_const(state, tile)->zone == CJ4_ZONE_HAND &&
             cj4_tile_location_const(state, tile)->owner == player)
@@ -1466,28 +1471,41 @@ cj4_yaku_count_yakuhai_han(
 }
 
 static uint8_t
+cj4_yaku_rule_enabled(
+    const cj4_rules *rules,
+    uint8_t value,
+    uint8_t default_value)
+{
+    if (!rules)
+        return default_value;
+
+    return value != 0;
+}
+
+static uint8_t
 cj4_yaku_count_yakuman(
-    cj4_yaku_flags flags)
+    cj4_yaku_flags flags,
+    const cj4_rules *rules)
 {
     uint8_t count = 0;
 
     if (flags & CJ4_YAKU_KOKUSHI_13)
-        count += 2;
+        count += cj4_yaku_rule_enabled(rules, rules ? rules->kokushi_13_wait_double : 0, 1) ? 2 : 1;
     else if (flags & CJ4_YAKU_KOKUSHI)
         count++;
 
     if (flags & CJ4_YAKU_SUUANKOU_TANKI)
-        count += 2;
+        count += cj4_yaku_rule_enabled(rules, rules ? rules->suuankou_tanki_double : 0, 1) ? 2 : 1;
     else if (flags & CJ4_YAKU_SUUANKOU)
         count++;
 
     if (flags & CJ4_YAKU_JUNSEI_CHUUREN)
-        count += 2;
+        count += cj4_yaku_rule_enabled(rules, rules ? rules->junsei_chuuren_double : 0, 1) ? 2 : 1;
     else if (flags & CJ4_YAKU_CHUUREN)
         count++;
 
     if (flags & CJ4_YAKU_DAISUUSHII_DOUBLE)
-        count += 2;
+        count += cj4_yaku_rule_enabled(rules, rules ? rules->daisuushii_double : 0, 1) ? 2 : 1;
     else if (flags & CJ4_YAKU_DAISUUSHII)
         count++;
 
@@ -1721,6 +1739,7 @@ cj4_yaku_round_up_100(
 static void
 cj4_yaku_fill_basic_points(
     const cj4_yaku_context *ctx,
+    const cj4_rules *rules,
     uint8_t han,
     uint16_t fu,
     uint8_t yakuman_count,
@@ -1741,7 +1760,7 @@ cj4_yaku_fill_basic_points(
     {
         base_points = 8000 * yakuman_count;
     }
-    else if (han >= 13)
+    else if (han >= 13 && cj4_yaku_rule_enabled(rules, rules ? rules->kazoe_yakuman : 0, 1))
     {
         out->yakuman_count = 1;
         base_points = 8000;
@@ -1763,7 +1782,9 @@ cj4_yaku_fill_basic_points(
         base_points = fu * (1 << (han + 2));
         if (han >= 5 ||
             (han == 4 && fu >= 40) ||
-            (han == 3 && fu >= 70))
+            (han == 3 && fu >= 70) ||
+            (cj4_yaku_rule_enabled(rules, rules ? rules->kiriage_mangan : 0, 0) &&
+             ((han == 4 && fu == 30) || (han == 3 && fu == 60))))
         {
             base_points = 2000;
         }
@@ -1842,7 +1863,7 @@ cj4_yaku_consider_score(
     cj4_yaku_best_score *best)
 {
     cj4_hand_score candidate;
-    uint8_t yakuman_count = cj4_yaku_count_yakuman(flags);
+    uint8_t yakuman_count = cj4_yaku_count_yakuman(flags, rules);
     uint8_t han;
     uint16_t fu;
     int32_t value;
@@ -1855,7 +1876,7 @@ cj4_yaku_consider_score(
               : 0;
     fu = cj4_yaku_calculate_fu(state, player, ctx, decomp, flags);
 
-    cj4_yaku_fill_basic_points(ctx, han, fu, yakuman_count, &candidate);
+    cj4_yaku_fill_basic_points(ctx, rules, han, fu, yakuman_count, &candidate);
     cj4_yaku_finalize_points(ctx, state, player, &candidate);
     value = cj4_yaku_score_value(ctx, player, state, &candidate);
 
@@ -2401,6 +2422,16 @@ cj4_yaku_prepare_round_end_state(
         prepared->current_player = state->loser;
         prepared->winning_from_chankan = 1;
         prepared->pending_kakan_tile = state->winning_tile;
+        prepared->draw_tile = CJ4_TILE_ID_INVALID;
+        return 1;
+    }
+
+    if (state->pending_ankan_tile == state->winning_tile)
+    {
+        prepared->phase = CJ4_PHASE_ANKAN_RESOLVE;
+        prepared->current_player = state->loser;
+        prepared->winning_from_chankan = 1;
+        prepared->pending_ankan_tile = state->winning_tile;
         prepared->draw_tile = CJ4_TILE_ID_INVALID;
         return 1;
     }

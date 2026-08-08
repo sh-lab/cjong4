@@ -56,7 +56,8 @@ typedef enum
     CJ4_ABORTIVE_DRAW_KYUUSHU_KYUUHAI,
     CJ4_ABORTIVE_DRAW_SUUFON_RENDA,
     CJ4_ABORTIVE_DRAW_FOUR_RIICHI,
-    CJ4_ABORTIVE_DRAW_FOUR_KANS
+    CJ4_ABORTIVE_DRAW_FOUR_KANS,
+    CJ4_ABORTIVE_DRAW_TRIPLE_RON
 } cj4_abortive_draw_reason;
 
 typedef enum
@@ -93,6 +94,9 @@ typedef struct
     uint8_t is_riichi[CJ4_PLAYER_COUNT];
     uint8_t is_ippatsu[CJ4_PLAYER_COUNT];
     uint8_t riichi_declared_on_first_turn[CJ4_PLAYER_COUNT];
+    uint8_t pending_riichi;
+    cj4_player pending_riichi_player;
+    uint8_t pending_riichi_declared_on_first_turn;
     uint8_t draw_turn_count[CJ4_PLAYER_COUNT];
     uint8_t temporary_furiten[CJ4_PLAYER_COUNT];
     uint8_t riichi_furiten[CJ4_PLAYER_COUNT];
@@ -105,6 +109,8 @@ typedef struct
 
     cj4_tile_id draw_tile;          // valid only when phase == CJ4_PHASE_DRAW
     cj4_tile_id pending_kakan_tile; /* valid only when phase == CJ4_PHASE_KAKAN_RESOLVE */
+    cj4_tile_id pending_ankan_tile; /* valid only when phase == CJ4_PHASE_ANKAN_RESOLVE */
+    uint8_t pending_kan_dora;
 
     /* Round result (set when the round ends). */
     cj4_player winner;                    /* winning player (first winner, for compatibility) */

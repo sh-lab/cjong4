@@ -232,6 +232,46 @@ cj4_state_clear_all_ippatsu(
 }
 
 void
+cj4_state_establish_pending_riichi(cj4_mahjong *state)
+{
+    cj4_player player = state->pending_riichi_player;
+
+    if (!state->pending_riichi || player >= CJ4_PLAYER_COUNT)
+        return;
+
+    if (!state->is_riichi[player])
+    {
+        state->is_riichi[player] = 1;
+        state->is_ippatsu[player] = 1;
+        state->riichi_sticks++;
+        state->scores[player] -= 1000;
+
+        if (state->pending_riichi_declared_on_first_turn)
+            state->riichi_declared_on_first_turn[player] = 1;
+    }
+
+    cj4_state_clear_pending_riichi(state);
+}
+
+void
+cj4_state_clear_pending_riichi(cj4_mahjong *state)
+{
+    state->pending_riichi_player = CJ4_PLAYER_COUNT;
+    state->pending_riichi = 0;
+    state->pending_riichi_declared_on_first_turn = 0;
+}
+
+void
+cj4_state_reveal_pending_kan_dora(cj4_mahjong *state)
+{
+    if (!state->pending_kan_dora)
+        return;
+
+    cj4_state_add_dora_indicator(state);
+    state->pending_kan_dora = 0;
+}
+
+void
 cj4_state_record_discard(
     cj4_mahjong *state,
     cj4_tile_id tile,
@@ -318,6 +358,9 @@ cj4_state_finish_tsumo(
     state->winning_tile = winning_tile;
     state->round_end_type = CJ4_ROUND_END_TSUMO;
     state->abortive_draw_reason = CJ4_ABORTIVE_DRAW_NONE;
+    cj4_state_clear_pending_riichi(state);
+    state->pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    state->pending_kan_dora = 0;
     state->phase = CJ4_PHASE_ROUND_END;
 }
 
@@ -341,6 +384,8 @@ cj4_state_finish_multi_ron(
     state->winning_tile = winning_tile;
     state->round_end_type = CJ4_ROUND_END_RON;
     state->abortive_draw_reason = CJ4_ABORTIVE_DRAW_NONE;
+    cj4_state_clear_pending_riichi(state);
+    state->pending_kan_dora = 0;
     state->phase = CJ4_PHASE_ROUND_END;
 }
 
@@ -354,6 +399,10 @@ cj4_state_finish_draw_round(
     state->round_end_type = round_end_type;
     if (round_end_type != CJ4_ROUND_END_ABORTIVE_DRAW)
         state->abortive_draw_reason = CJ4_ABORTIVE_DRAW_NONE;
+    cj4_state_clear_pending_riichi(state);
+    state->pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    state->pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    state->pending_kan_dora = 0;
     state->phase = CJ4_PHASE_ROUND_END;
 }
 
