@@ -152,7 +152,7 @@ cj4_do_pass(
         return next;
     }
 
-    if (next.discard_count >= CJ4_MAX_DRAWS)
+    if (cj4_state_live_wall_remaining(&next) == 0)
     {
         cj4_mark_nagashi_mangan(&next, rules);
         cj4_state_finish_draw_round(&next, CJ4_ROUND_END_EXHAUSTIVE_DRAW);

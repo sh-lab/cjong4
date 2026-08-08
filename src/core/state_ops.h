@@ -21,6 +21,9 @@ cj4_state_tile_is_in_hand(
     cj4_player player,
     cj4_tile_id tile);
 
+uint8_t
+cj4_state_live_wall_remaining(const cj4_mahjong *state);
+
 cj4_tile_id
 cj4_state_draw_tile(
     cj4_mahjong *state,

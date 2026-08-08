@@ -1,6 +1,7 @@
 #include "state_yaku.h"
 #include "hand_check.h"
 #include "state_internal.h"
+#include "state_ops.h"
 #include "state_query.h"
 #include "state_score.h"
 #include "tile.h"
@@ -9,8 +10,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
-#define CJ4_LIVE_WALL_END 122
 
 typedef uint64_t cj4_yaku_flags;
 
@@ -230,7 +229,7 @@ cj4_yaku_detect_win_state(
             }
         }
 
-        if (!ctx->is_rinshan && state->wall_pos == CJ4_LIVE_WALL_END)
+        if (!ctx->is_rinshan && cj4_state_live_wall_remaining(state) == 0)
             ctx->is_haitei = 1;
 
         return;
@@ -251,7 +250,7 @@ cj4_yaku_detect_win_state(
             ctx->winning_type_id = cj4_tile_get_type(last);
             ctx->has_winning_tile = 1;
 
-            if (state->wall_pos == CJ4_LIVE_WALL_END)
+            if (cj4_state_live_wall_remaining(state) == 0)
                 ctx->is_houtei = 1;
         }
 

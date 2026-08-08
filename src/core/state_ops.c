@@ -36,6 +36,23 @@ cj4_state_tile_is_in_hand(
     return loc->zone == CJ4_ZONE_HAND && loc->owner == player;
 }
 
+uint8_t
+cj4_state_live_wall_remaining(const cj4_mahjong *state)
+{
+    uint8_t dead_wall_draws = state->dead_wall_draw_count;
+    uint8_t live_wall_end;
+
+    if (dead_wall_draws > 4)
+        dead_wall_draws = 4;
+
+    live_wall_end = (uint8_t)(CJ4_LIVE_WALL_END - dead_wall_draws);
+
+    if (state->wall_pos >= live_wall_end)
+        return 0;
+
+    return (uint8_t)(live_wall_end - state->wall_pos);
+}
+
 void
 cj4_state_set_location(
     cj4_mahjong *state,
@@ -191,6 +208,7 @@ cj4_state_draw_tile(
     cj4_mahjong *state,
     cj4_player player)
 {
+    assert(cj4_state_live_wall_remaining(state) > 0);
     cj4_tile_id t = state->wall[state->wall_pos++];
 
     cj4_state_set_location(state, t, CJ4_ZONE_HAND, player);

@@ -12,7 +12,9 @@ static uint8_t
 cj4_state_can_declare_more_kans(
     const cj4_mahjong *state)
 {
-    return cj4_state_count_total_kans(state) < 4;
+    return cj4_state_count_total_kans(state) < 4 &&
+           state->dead_wall_draw_count < 4 &&
+           cj4_state_live_wall_remaining(state) > 0;
 }
 
 static uint8_t
@@ -417,7 +419,8 @@ cj4_can_rinshan_draw(
 {
     return (state->phase == CJ4_PHASE_ANKAN_RESOLVE ||
             state->phase == CJ4_PHASE_KAKAN_RESOLVE) &&
-           state->dead_wall_draw_count < 4;
+           state->dead_wall_draw_count < 4 &&
+           cj4_state_live_wall_remaining(state) > 0;
 }
 
 /* Kan resolution: run once after any kan that defers draw/dora */

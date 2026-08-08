@@ -38,6 +38,9 @@ cj4_can_riichi(
     if (state->scores[player] < 1000)
         return false;
 
+    if (cj4_state_live_wall_remaining(state) < CJ4_PLAYER_COUNT)
+        return false;
+
     if (!cj4_state_is_closed_for_riichi(state, player))
         return false;
 

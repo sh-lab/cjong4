@@ -8,6 +8,9 @@ cj4_can_chi(const cj4_mahjong *state)
 {
     cj4_player next_player = cj4_next_player(state);
 
+    if (cj4_state_live_wall_remaining(state) == 0)
+        return false;
+
     if (state->is_riichi[next_player])
     {
         return false;
