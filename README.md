@@ -172,8 +172,8 @@ tests/manager/            manager tests
 
 ## ステータス / Status
 
-1.0 リリース準備完了  
-Ready for 1.0 release
+1.0 リリース  
+1.0 release
 
 ---
 
