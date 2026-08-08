@@ -264,10 +264,11 @@ cj4_state_clear_pending_riichi(cj4_mahjong *state)
 void
 cj4_state_reveal_pending_kan_dora(cj4_mahjong *state)
 {
-    if (!state->pending_kan_dora)
-        return;
-
-    cj4_state_add_dora_indicator(state);
+    while (state->pending_kan_dora)
+    {
+        cj4_state_add_dora_indicator(state);
+        state->pending_kan_dora--;
+    }
     state->pending_kan_dora = 0;
 }
 
@@ -360,6 +361,8 @@ cj4_state_finish_tsumo(
     state->abortive_draw_reason = CJ4_ABORTIVE_DRAW_NONE;
     cj4_state_clear_pending_riichi(state);
     state->pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    for (uint8_t i = 0; i < 4; ++i)
+        state->pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
     state->pending_kan_dora = 0;
     state->phase = CJ4_PHASE_ROUND_END;
 }
@@ -402,6 +405,8 @@ cj4_state_finish_draw_round(
     cj4_state_clear_pending_riichi(state);
     state->pending_kakan_tile = CJ4_TILE_ID_INVALID;
     state->pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    for (uint8_t i = 0; i < 4; ++i)
+        state->pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
     state->pending_kan_dora = 0;
     state->phase = CJ4_PHASE_ROUND_END;
 }

@@ -58,6 +58,37 @@ cj4_settle_first_nagashi_mangan_player(
 }
 
 static uint8_t
+cj4_settle_rule_bool(
+    const cj4_rules *rules,
+    uint8_t value,
+    uint8_t default_value)
+{
+    if (!rules || rules->version == 0)
+        return default_value;
+
+    return value != 0;
+}
+
+static uint8_t
+cj4_settle_pao_type_enabled(
+    const cj4_rules *rules,
+    cj4_pao_type type)
+{
+    switch (type)
+    {
+    case CJ4_PAO_DAISANGEN:
+        return cj4_settle_rule_bool(rules, rules ? rules->pao_daisangen : 0, 1);
+    case CJ4_PAO_DAISUUSHII:
+        return cj4_settle_rule_bool(rules, rules ? rules->pao_daisuushii : 0, 1);
+    case CJ4_PAO_SUUKANTSU:
+        return cj4_settle_rule_bool(rules, rules ? rules->pao_suukantsu : 0, 1);
+    case CJ4_PAO_NONE:
+    default:
+        return 0;
+    }
+}
+
+static uint8_t
 cj4_settle_get_pao_player(
     const cj4_mahjong *state,
     const cj4_rules *rules,
@@ -65,6 +96,9 @@ cj4_settle_get_pao_player(
     cj4_player *out_player)
 {
     if (!rules || !rules->pao || !state->pao_owner[winner])
+        return 0;
+
+    if (!cj4_settle_pao_type_enabled(rules, state->pao_type[winner]))
         return 0;
 
     if (state->pao_player[winner] >= CJ4_PLAYER_COUNT)
@@ -76,16 +110,26 @@ cj4_settle_get_pao_player(
 
 static uint8_t
 cj4_settle_pao_responsible_yakuman_count(
+    const cj4_mahjong *state,
     const cj4_rules *rules,
+    cj4_player winner,
     const cj4_hand_score *score)
 {
+    uint8_t responsible = 1;
+
     if (!rules || !rules->pao_liability_only ||
         score->yakuman_count <= 1)
     {
         return score->yakuman_count;
     }
 
-    return 1;
+    if (state->pao_type[winner] == CJ4_PAO_DAISUUSHII &&
+        cj4_settle_rule_bool(rules, rules->daisuushii_double, 1))
+    {
+        responsible = 2;
+    }
+
+    return responsible > score->yakuman_count ? score->yakuman_count : responsible;
 }
 
 static uint8_t
@@ -163,7 +207,7 @@ cj4_settle_apply_tsumo(
     if (cj4_settle_get_pao_player(state, rules, winner, &pao_player))
     {
         uint8_t responsible_yakuman =
-            cj4_settle_pao_responsible_yakuman_count(rules, score);
+            cj4_settle_pao_responsible_yakuman_count(state, rules, winner, score);
         int32_t total;
 
         if (rules && rules->pao_liability_only &&
@@ -289,7 +333,7 @@ cj4_settle_apply_ron(
                 score.yakuman_count > 0)
             {
                 uint8_t responsible_yakuman =
-                    cj4_settle_pao_responsible_yakuman_count(rules, &score);
+                    cj4_settle_pao_responsible_yakuman_count(state, rules, winner, &score);
                 pao_payment = score.ron_points *
                               responsible_yakuman /
                               score.yakuman_count;

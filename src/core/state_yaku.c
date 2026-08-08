@@ -1479,6 +1479,9 @@ cj4_yaku_rule_enabled(
     if (!rules)
         return default_value;
 
+    if (rules->version == 0)
+        return default_value;
+
     return value != 0;
 }
 

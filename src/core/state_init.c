@@ -71,6 +71,8 @@ cj4_state_create_round(
     state.winning_from_chankan = 0;
     state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    for (int i = 0; i < 4; ++i)
+        state.pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
     state.pending_riichi = 0;
     state.pending_riichi_player = CJ4_PLAYER_COUNT;
     state.pending_riichi_declared_on_first_turn = 0;

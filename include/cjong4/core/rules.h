@@ -10,6 +10,8 @@ extern "C"
 {
 #endif
 
+#define CJ4_RULES_VERSION 1u
+
     typedef enum
     {
         CJ4_GAME_TONPUU,
@@ -19,6 +21,8 @@ extern "C"
 
     typedef struct
     {
+        uint32_t version;
+
         /* score / structure */
         int32_t initial_score;
         int32_t target_score;
@@ -56,6 +60,9 @@ extern "C"
         /* settlement */
         uint8_t pao;
         uint8_t pao_liability_only;
+        uint8_t pao_daisangen;
+        uint8_t pao_daisuushii;
+        uint8_t pao_suukantsu;
 
         /* red tiles */
         uint8_t aka_tiles[136];

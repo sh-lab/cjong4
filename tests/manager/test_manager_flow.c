@@ -32,6 +32,8 @@ make_empty_state(
     state.draw_tile = CJ4_TILE_ID_INVALID;
     state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    for (uint8_t i = 0; i < 4; ++i)
+        state.pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
     state.pending_riichi_player = CJ4_PLAYER_COUNT;
     state.winning_tile = CJ4_TILE_ID_INVALID;
     state.round_end_type = CJ4_ROUND_END_NONE;
@@ -611,6 +613,58 @@ test_step_allows_kokushi_ron_on_ankan(
     assert(next.winners[0] == CJ4_PLAYER_1);
 }
 
+static void
+test_collect_actions_hides_ankan_ron_when_rule_disabled(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong ankan;
+    cj4_action actions[CJ4M_MAX_ACTIONS];
+    uint8_t action_count;
+    const cj4_tile_id ankan_tiles[] = {
+        tile(0, 0),
+        tile(0, 1),
+        tile(0, 2),
+        tile(0, 3)};
+    const cj4_tile_id kokushi[] = {
+        tile(8, 0),
+        tile(8, 1),
+        tile(9, 0),
+        tile(17, 0),
+        tile(18, 0),
+        tile(26, 0),
+        tile(27, 0),
+        tile(28, 0),
+        tile(29, 0),
+        tile(30, 0),
+        tile(31, 0),
+        tile(32, 0),
+        tile(33, 0)};
+
+    set_hand(&state, CJ4_PLAYER_0, ankan_tiles, 4);
+    set_hand(&state, CJ4_PLAYER_1, kokushi, (uint8_t)(sizeof(kokushi) / sizeof(kokushi[0])));
+    state.phase = CJ4_PHASE_DRAW;
+    state.current_player = CJ4_PLAYER_0;
+    state.draw_tile = ankan_tiles[3];
+
+    ankan = cj4_do_ankan(
+        state,
+        ankan_tiles[0],
+        ankan_tiles[1],
+        ankan_tiles[2],
+        ankan_tiles[3]);
+    action_count = cj4m_collect_actions(
+        &ankan,
+        &rules,
+        CJ4_PLAYER_1,
+        actions,
+        CJ4M_MAX_ACTIONS);
+
+    assert(contains_action_type(actions, action_count, CJ4_ACTION_PASS));
+    assert(!contains_action_type(actions, action_count, CJ4_ACTION_RON));
+}
+
 int
 manager_tests_main(
     void)
@@ -625,5 +679,6 @@ manager_tests_main(
     test_step_prioritizes_ron_and_respects_limit();
     test_step_advances_after_all_pass();
     test_step_allows_kokushi_ron_on_ankan();
+    test_collect_actions_hides_ankan_ron_when_rule_disabled();
     return 0;
 }

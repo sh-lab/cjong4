@@ -66,6 +66,34 @@ cj4_find_hand_tiles_of_type(
     return count;
 }
 
+static void
+cj4_state_commit_pending_ankan(cj4_mahjong *state)
+{
+    cj4_player player = state->current_player;
+    const cj4_tile_id meld_tiles[4] = {
+        state->pending_ankan_tiles[0],
+        state->pending_ankan_tiles[1],
+        state->pending_ankan_tiles[2],
+        state->pending_ankan_tiles[3]};
+
+    if (state->pending_ankan_tile == CJ4_TILE_ID_INVALID)
+        return;
+
+    cj4_state_add_meld(
+        state,
+        player,
+        CJ4_MELD_ANKAN,
+        meld_tiles,
+        4,
+        player,
+        CJ4_CALLED_INDEX_NONE);
+
+    cj4_state_add_dora_indicator(state);
+    state->pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    for (uint8_t i = 0; i < 4; ++i)
+        state->pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
+}
+
 static uint8_t
 cj4_can_ankan_after_riichi(
     const cj4_mahjong *state,
@@ -266,27 +294,16 @@ cj4_do_ankan(
     assert(cj4_can_ankan_with_tile(&state, tile1, tile2, tile3, tile4));
     cj4_mahjong next = state;
     cj4_player player = state.current_player;
-    const cj4_tile_id meld_tiles[4] = {tile1, tile2, tile3, tile4};
-
-    cj4_state_add_meld(
-        &next,
-        player,
-        CJ4_MELD_ANKAN,
-        meld_tiles,
-        4,
-        player,
-        CJ4_CALLED_INDEX_NONE);
-    cj4_state_clear_draw_tile(&next);
-    cj4_state_clear_all_ippatsu(&next);
 
     next.current_player = player;
     next.first_turn_uninterrupted = 0;
     next.winning_from_chankan = 0;
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     next.pending_ankan_tile = tile1;
-    next.pending_kan_dora = 0;
-
-    cj4_state_add_dora_indicator(&next);
+    next.pending_ankan_tiles[0] = tile1;
+    next.pending_ankan_tiles[1] = tile2;
+    next.pending_ankan_tiles[2] = tile3;
+    next.pending_ankan_tiles[3] = tile4;
 
     next.phase = CJ4_PHASE_ANKAN_RESOLVE;
 
@@ -440,6 +457,22 @@ cj4_do_rinshan_draw(
         return next;
     }
 
+    if (state.phase == CJ4_PHASE_ANKAN_RESOLVE &&
+        next.pending_ankan_tile != CJ4_TILE_ID_INVALID)
+    {
+        cj4_state_commit_pending_ankan(&next);
+        cj4_state_clear_draw_tile(&next);
+        cj4_state_clear_all_ippatsu(&next);
+    }
+
+    if (cj4_state_should_abort_on_four_kans(&next))
+    {
+        next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+        next.winning_from_chankan = 0;
+        cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_FOUR_KANS);
+        return next;
+    }
+
     /* Draw rinshan tile to hand of current player */
     cj4_tile_id t = cj4_state_draw_dead_wall_tile(&next, player);
     next.draw_tile = t;
@@ -448,7 +481,8 @@ cj4_do_rinshan_draw(
         (state.phase == CJ4_PHASE_ANKAN_RESOLVE &&
          state.pending_ankan_tile == CJ4_TILE_ID_INVALID))
     {
-        next.pending_kan_dora = 1;
+        if (next.pending_kan_dora < CJ4_MAX_DORA)
+            next.pending_kan_dora++;
     }
 
     next.winning_from_chankan = 0;

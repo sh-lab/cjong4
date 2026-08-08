@@ -32,7 +32,10 @@ cj4_rules_booleans_are_valid(const cj4_rules *rules)
         rules->kazoe_yakuman,
         rules->kiriage_mangan,
         rules->pao,
-        rules->pao_liability_only};
+        rules->pao_liability_only,
+        rules->pao_daisangen,
+        rules->pao_daisuushii,
+        rules->pao_suukantsu};
 
     for (uint8_t i = 0; i < (uint8_t)(sizeof(values) / sizeof(values[0])); ++i)
     {
@@ -57,6 +60,8 @@ cj4_rules_default(void)
     cj4_rules rules;
 
     memset(&rules, 0, sizeof(rules));
+
+    rules.version = CJ4_RULES_VERSION;
 
     rules.initial_score = 25000;
     rules.target_score = 30000;
@@ -87,6 +92,9 @@ cj4_rules_default(void)
 
     rules.pao = 1;
     rules.pao_liability_only = 0;
+    rules.pao_daisangen = 1;
+    rules.pao_daisuushii = 1;
+    rules.pao_suukantsu = 1;
 
     cj4_rules_set_common_red_fives(&rules);
 
@@ -99,7 +107,16 @@ cj4_rules_tenhou(void)
     cj4_rules rules = cj4_rules_default();
 
     rules.triple_ron_abortive_draw = 1;
-    rules.pao_liability_only = 1;
+    rules.pao_liability_only = 0;
+    rules.kiriage_mangan = 0;
+    rules.kokushi_ron_on_ankan = 0;
+    rules.kokushi_13_wait_double = 0;
+    rules.suuankou_tanki_double = 0;
+    rules.junsei_chuuren_double = 0;
+    rules.daisuushii_double = 0;
+    rules.pao_daisangen = 1;
+    rules.pao_daisuushii = 1;
+    rules.pao_suukantsu = 0;
 
     return rules;
 }
@@ -119,6 +136,9 @@ bool
 cj4_rules_validate(const cj4_rules *rules)
 {
     if (!rules)
+        return false;
+
+    if (rules->version != 0 && rules->version != CJ4_RULES_VERSION)
         return false;
 
     if (rules->initial_score <= 0 || rules->target_score <= 0)

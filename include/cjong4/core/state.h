@@ -110,6 +110,7 @@ typedef struct
     cj4_tile_id draw_tile;          // valid only when phase == CJ4_PHASE_DRAW
     cj4_tile_id pending_kakan_tile; /* valid only when phase == CJ4_PHASE_KAKAN_RESOLVE */
     cj4_tile_id pending_ankan_tile; /* valid only when phase == CJ4_PHASE_ANKAN_RESOLVE */
+    cj4_tile_id pending_ankan_tiles[4];
     uint8_t pending_kan_dora;
 
     /* Round result (set when the round ends). */
