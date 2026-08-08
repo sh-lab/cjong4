@@ -5,7 +5,8 @@
 #include <string.h>
 
 /* Recursive meld partitioning using type counts. */
-static bool remove_melds(int counts[CJ4_TILE_TYPE_COUNT], int melds_needed)
+static bool
+remove_melds(int counts[CJ4_TILE_TYPE_COUNT], int melds_needed)
 {
     if (melds_needed == 0)
         return true;
@@ -60,7 +61,8 @@ static bool remove_melds(int counts[CJ4_TILE_TYPE_COUNT], int melds_needed)
     return false;
 }
 
-static bool check_standard(int counts_orig[CJ4_TILE_TYPE_COUNT], int melds_needed)
+static bool
+check_standard(int counts_orig[CJ4_TILE_TYPE_COUNT], int melds_needed)
 {
     int counts[CJ4_TILE_TYPE_COUNT];
     for (int i = 0; i < CJ4_TILE_TYPE_COUNT; ++i)
@@ -90,7 +92,8 @@ static bool check_standard(int counts_orig[CJ4_TILE_TYPE_COUNT], int melds_neede
     return false;
 }
 
-static bool check_seven_pairs(int counts[CJ4_TILE_TYPE_COUNT])
+static bool
+check_seven_pairs(int counts[CJ4_TILE_TYPE_COUNT])
 {
     int pair_count = 0;
     int tiles = 0;
@@ -111,14 +114,24 @@ static bool check_seven_pairs(int counts[CJ4_TILE_TYPE_COUNT])
     return (tiles == 14 && pair_count == 7);
 }
 
-static bool check_kokushi(int counts[CJ4_TILE_TYPE_COUNT])
+static bool
+check_kokushi(int counts[CJ4_TILE_TYPE_COUNT])
 {
     /* Kokushi (thirteen orphans) set of types */
     const int terminals[13] = {
-        0, 8,                      /* manzu 1,9 */
-        9, 17,                     /* pinzu 1,9 */
-        18, 26,                    /* souzu 1,9 */
-        27, 28, 29, 30, 31, 32, 33 /* honors */
+        0,
+        8, /* manzu 1,9 */
+        9,
+        17, /* pinzu 1,9 */
+        18,
+        26, /* souzu 1,9 */
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33 /* honors */
     };
 
     int found = 0;
@@ -138,7 +151,8 @@ static bool check_kokushi(int counts[CJ4_TILE_TYPE_COUNT])
     return (found == 13 && duplicates == 1);
 }
 
-bool cj4_is_complete_hand(const cj4_mahjong *state, cj4_player player)
+bool
+cj4_is_complete_hand(const cj4_mahjong *state, cj4_player player)
 {
     int counts[34] = {0};
     int tiles = 0;

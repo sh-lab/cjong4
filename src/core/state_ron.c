@@ -90,7 +90,8 @@ cj4_state_player_has_permanent_furiten(
     return 0;
 }
 
-bool cj4_can_ron(
+bool
+cj4_can_ron(
     const cj4_mahjong *state,
     cj4_player player,
     const cj4_rules *rules)

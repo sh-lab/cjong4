@@ -3,7 +3,10 @@
 #include "state_query.h"
 #include "state_ron.h"
 
-bool cj4_can_pass(const cj4_mahjong state)
+#include <assert.h>
+
+bool
+cj4_can_pass(const cj4_mahjong state)
 {
     if (state.phase != CJ4_PHASE_DISCARD)
     {
@@ -18,6 +21,8 @@ cj4_do_pass(
     const cj4_mahjong state,
     const cj4_rules *rules)
 {
+    assert(cj4_can_pass(state));
+
     cj4_mahjong next = state;
 
     for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)

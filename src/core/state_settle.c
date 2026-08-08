@@ -140,11 +140,15 @@ cj4_settle_apply_ron(
 
     for (uint8_t i = 0; i < state->winner_count; ++i)
     {
-        cj4_hand_score score;
+        cj4_hand_score score = {0};
         cj4_player winner = state->winners[i];
         int32_t total;
+        bool calculated =
+            cj4_calculate_hand_score(state, winner, rules, &score);
 
-        assert(cj4_calculate_hand_score(state, winner, rules, &score));
+        assert(calculated);
+        if (!calculated)
+            continue;
         total = score.ron_points + honba_bonus;
 
         next->scores[state->loser] -= total;
@@ -256,7 +260,8 @@ cj4_settle_determine_progress(
     }
 }
 
-bool cj4_can_settle(const cj4_mahjong state)
+bool
+cj4_can_settle(const cj4_mahjong state)
 {
     return state.phase == CJ4_PHASE_ROUND_END;
 }
@@ -276,9 +281,13 @@ cj4_do_settle(const cj4_mahjong state, const cj4_rules *rules)
             state.winner == state.current_player &&
             state.draw_tile == state.winning_tile)
         {
-            cj4_hand_score score;
-            assert(cj4_calculate_hand_score(&state, state.winner, rules, &score));
-            cj4_settle_apply_tsumo(&next, &state, &score);
+            cj4_hand_score score = {0};
+            bool calculated = cj4_calculate_hand_score(
+                &state, state.winner, rules, &score);
+
+            assert(calculated);
+            if (calculated)
+                cj4_settle_apply_tsumo(&next, &state, &score);
         }
         else
         {

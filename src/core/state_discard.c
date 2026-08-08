@@ -1,7 +1,10 @@
 #include "state_discard.h"
 #include "state_ops.h"
 
-bool cj4_can_discard(
+#include <assert.h>
+
+bool
+cj4_can_discard(
     const cj4_mahjong state,
     cj4_tile_id tile)
 {
@@ -35,6 +38,8 @@ cj4_do_discard(
     const cj4_mahjong state,
     cj4_tile_id tile)
 {
+    assert(cj4_can_discard(state, tile));
+
     cj4_mahjong next = state;
 
     cj4_state_record_discard(&next, tile, (uint8_t)(tile == state.draw_tile));

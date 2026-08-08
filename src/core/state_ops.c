@@ -4,13 +4,15 @@
 
 #include <assert.h>
 
-bool cj4_state_has_last_discard(const cj4_mahjong *state)
+bool
+cj4_state_has_last_discard(const cj4_mahjong *state)
 {
     return state->discard_count > 0 &&
            cj4_get_last_discard_tile(state) != CJ4_TILE_ID_INVALID;
 }
 
-bool cj4_state_can_claim_discard(
+bool
+cj4_state_can_claim_discard(
     const cj4_mahjong *state,
     cj4_player player)
 {
@@ -19,7 +21,8 @@ bool cj4_state_can_claim_discard(
            cj4_state_has_last_discard(state);
 }
 
-bool cj4_state_tile_is_in_hand(
+bool
+cj4_state_tile_is_in_hand(
     const cj4_mahjong *state,
     cj4_player player,
     cj4_tile_id tile)
@@ -31,7 +34,8 @@ bool cj4_state_tile_is_in_hand(
     return loc->zone == CJ4_ZONE_HAND && loc->owner == player;
 }
 
-void cj4_state_set_location(
+void
+cj4_state_set_location(
     cj4_mahjong *state,
     cj4_tile_id tile,
     cj4_zone zone,
@@ -120,18 +124,21 @@ cj4_state_draw_dead_wall_tile(
     return t;
 }
 
-void cj4_state_clear_draw_tile(cj4_mahjong *state)
+void
+cj4_state_clear_draw_tile(cj4_mahjong *state)
 {
     state->draw_tile = CJ4_TILE_ID_INVALID;
 }
 
-void cj4_state_clear_all_ippatsu(cj4_mahjong *state)
+void
+cj4_state_clear_all_ippatsu(cj4_mahjong *state)
 {
     for (int i = 0; i < CJ4_PLAYER_COUNT; ++i)
         state->is_ippatsu[i] = 0;
 }
 
-void cj4_state_record_discard(
+void
+cj4_state_record_discard(
     cj4_mahjong *state,
     cj4_tile_id tile,
     uint8_t is_tsumogiri)
@@ -146,7 +153,8 @@ void cj4_state_record_discard(
     d->is_tsumogiri = is_tsumogiri;
 }
 
-void cj4_state_consume_last_discard(cj4_mahjong *state)
+void
+cj4_state_consume_last_discard(cj4_mahjong *state)
 {
     if (state->discard_count == 0)
         return;
@@ -154,7 +162,8 @@ void cj4_state_consume_last_discard(cj4_mahjong *state)
     state->discards[state->discard_count - 1].is_active = 0;
 }
 
-void cj4_state_add_meld(
+void
+cj4_state_add_meld(
     cj4_mahjong *state,
     cj4_player player,
     cj4_meld_type type,
@@ -179,7 +188,8 @@ void cj4_state_add_meld(
     }
 }
 
-void cj4_state_finish_open_call(
+void
+cj4_state_finish_open_call(
     cj4_mahjong *state,
     cj4_player player,
     cj4_phase next_phase)
@@ -191,13 +201,15 @@ void cj4_state_finish_open_call(
     state->phase = next_phase;
 }
 
-void cj4_state_add_dora_indicator(cj4_mahjong *state)
+void
+cj4_state_add_dora_indicator(cj4_mahjong *state)
 {
     if (state->dora_indicators_count < CJ4_MAX_DORA)
         state->dora_indicators_count++;
 }
 
-void cj4_state_finish_tsumo(
+void
+cj4_state_finish_tsumo(
     cj4_mahjong *state,
     cj4_player winner,
     cj4_tile_id winning_tile)
@@ -210,7 +222,8 @@ void cj4_state_finish_tsumo(
     state->phase = CJ4_PHASE_ROUND_END;
 }
 
-void cj4_state_finish_multi_ron(
+void
+cj4_state_finish_multi_ron(
     cj4_mahjong *state,
     const cj4_player *players,
     uint8_t count,
@@ -231,7 +244,8 @@ void cj4_state_finish_multi_ron(
     state->phase = CJ4_PHASE_ROUND_END;
 }
 
-void cj4_state_finish_draw_round(
+void
+cj4_state_finish_draw_round(
     cj4_mahjong *state,
     cj4_round_end_type round_end_type)
 {

@@ -18,11 +18,13 @@ typedef struct
     int32_t tsumo_non_dealer_payment;
 } cj4_hand_score;
 
-bool cj4_player_is_shape_tenpai(
+bool
+cj4_player_is_shape_tenpai(
     const cj4_mahjong *state,
     cj4_player player);
 
-bool cj4_calculate_hand_score(
+bool
+cj4_calculate_hand_score(
     const cj4_mahjong *state,
     cj4_player player,
     const cj4_rules *rules,

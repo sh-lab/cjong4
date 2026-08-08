@@ -14,7 +14,8 @@ extern "C"
      * is a complete winning hand shape (standard 4 melds + pair, seven pairs,
      * or kokushi). This does NOT validate yaku.
      */
-    bool cj4_is_complete_hand(const cj4_mahjong *state, cj4_player player);
+    bool
+    cj4_is_complete_hand(const cj4_mahjong *state, cj4_player player);
 
     uint8_t
     cj4_collect_waiting_tile_types(

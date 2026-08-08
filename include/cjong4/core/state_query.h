@@ -100,7 +100,8 @@ extern "C"
 
     uint8_t
     cj4_count_hand(
-        const cj4_mahjong *state, cj4_player player,
+        const cj4_mahjong *state,
+        cj4_player player,
         cj4_tile_type type);
 
     cj4_tile_id

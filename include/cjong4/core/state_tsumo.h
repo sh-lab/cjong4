@@ -10,9 +10,11 @@ extern "C"
 {
 #endif
 
-    bool cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules);
+    bool
+    cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules);
 
-    cj4_mahjong cj4_do_tsumo(const cj4_mahjong state);
+    cj4_mahjong
+    cj4_do_tsumo(const cj4_mahjong state);
 
 #ifdef __cplusplus
 }
