@@ -473,6 +473,11 @@ cj4_do_rinshan_draw(
         return next;
     }
 
+    /* Delayed dora from an earlier open/added kan is revealed before a
+     * following rinshan draw.  The kan currently being resolved is queued
+     * below only after its rinshan tile has been drawn. */
+    cj4_state_reveal_pending_kan_dora(&next);
+
     /* Draw rinshan tile to hand of current player */
     cj4_tile_id t = cj4_state_draw_dead_wall_tile(&next, player);
     next.draw_tile = t;

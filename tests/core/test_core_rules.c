@@ -826,7 +826,7 @@ test_kan_dora_timing_for_ankan_and_kakan(
 }
 
 static void
-test_consecutive_kakan_accumulates_pending_dora(
+test_consecutive_kakan_reveals_previous_dora_before_rinshan(
     void)
 {
     cj4_mahjong state = make_empty_state();
@@ -848,8 +848,8 @@ test_consecutive_kakan_accumulates_pending_dora(
     after_first.phase = CJ4_PHASE_KAKAN_RESOLVE;
     after_first.pending_kakan_tile = tile(6, 0);
     after_second = cj4_do_rinshan_draw(after_first, NULL);
-    assert(after_second.pending_kan_dora == 2);
-    assert(after_second.dora_indicators_count == 1);
+    assert(after_second.pending_kan_dora == 1);
+    assert(after_second.dora_indicators_count == 2);
 
     after_discard = cj4_do_discard(after_second, after_second.draw_tile);
     assert(after_discard.pending_kan_dora == 0);
@@ -893,12 +893,83 @@ test_minkan_then_ankan_preserves_pending_dora(
     assert(after_ankan_declared.dora_indicators_count == 1);
 
     after_ankan_draw = cj4_do_rinshan_draw(after_ankan_declared, NULL);
-    assert(after_ankan_draw.pending_kan_dora == 1);
-    assert(after_ankan_draw.dora_indicators_count == 2);
+    assert(after_ankan_draw.pending_kan_dora == 0);
+    assert(after_ankan_draw.dora_indicators_count == 3);
 
     after_discard = cj4_do_discard(after_ankan_draw, after_ankan_draw.draw_tile);
     assert(after_discard.pending_kan_dora == 0);
     assert(after_discard.dora_indicators_count == 3);
+}
+
+static void
+test_previous_kan_dora_counts_on_following_rinshan_tsumo(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong after_rinshan;
+    cj4_mahjong without_previous_dora;
+    cj4_mahjong won;
+    cj4_hand_score score;
+    cj4_hand_score score_without_previous_dora;
+    cj4_hand_score won_score;
+    cj4_tile_id draw = tile(5, 0);
+    const cj4_tile_id hand[] = {
+        tile(0, 0),
+        tile(1, 0),
+        tile(2, 0),
+        tile(9, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(18, 0),
+        tile(19, 0),
+        tile(20, 0),
+        tile(3, 0),
+        tile(4, 0),
+        tile(15, 0),
+        tile(15, 1)};
+
+    set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
+    state.phase = CJ4_PHASE_KAKAN_RESOLVE;
+    state.current_player = CJ4_PLAYER_0;
+    state.dealer = CJ4_PLAYER_1;
+    state.pending_kakan_tile = tile(6, 0);
+    state.pending_kan_dora = 1;
+    state.dora_indicators_count = 1;
+    state.wall[130] = tile(30, 0);
+    state.wall[128] = tile(4, 1);
+    state.wall[134] = draw;
+
+    after_rinshan = cj4_do_rinshan_draw(state, &rules);
+
+    assert(after_rinshan.phase == CJ4_PHASE_DRAW);
+    assert(after_rinshan.draw_tile == draw);
+    assert(after_rinshan.dora_indicators_count == 2);
+    assert(after_rinshan.pending_kan_dora == 1);
+    assert(cj4_calculate_hand_score(
+        &after_rinshan,
+        CJ4_PLAYER_0,
+        &rules,
+        &score));
+
+    without_previous_dora = after_rinshan;
+    without_previous_dora.dora_indicators_count = 1;
+    assert(cj4_calculate_hand_score(
+        &without_previous_dora,
+        CJ4_PLAYER_0,
+        &rules,
+        &score_without_previous_dora));
+    assert(score.han == score_without_previous_dora.han + 1);
+
+    won = cj4_do_tsumo(after_rinshan);
+    assert(won.dora_indicators_count == 2);
+    assert(won.pending_kan_dora == 0);
+    assert(cj4_calculate_hand_score(
+        &won,
+        CJ4_PLAYER_0,
+        &rules,
+        &won_score));
+    assert(won_score.han == score.han);
 }
 
 static void
@@ -2519,8 +2590,9 @@ main(
     test_kan_flow_aborts_on_fourth_kakan_without_noten_penalty();
     test_kan_flow_aborts_on_fourth_ankan();
     test_kan_dora_timing_for_ankan_and_kakan();
-    test_consecutive_kakan_accumulates_pending_dora();
+    test_consecutive_kakan_reveals_previous_dora_before_rinshan();
     test_minkan_then_ankan_preserves_pending_dora();
+    test_previous_kan_dora_counts_on_following_rinshan_tsumo();
     test_pending_kan_dora_is_discarded_on_win_and_capped();
     test_kokushi_ron_on_ankan_rule();
     test_ankan_kokushi_ron_leaves_no_committed_kan();
