@@ -172,8 +172,8 @@ tests/manager/            manager tests
 
 ## ステータス / Status
 
-開発中（v1 機能は概ね完成）  
-Work in progress (core functionality mostly complete)
+1.0 リリース準備完了  
+Ready for 1.0 release
 
 ---
 

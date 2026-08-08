@@ -487,7 +487,6 @@ test_claim_tile_arguments_must_be_distinct(void)
 static void
 test_kan_flow_aborts_on_fourth_ankan(void)
 {
-    cj4_rules rules = {0};
     cj4_mahjong state = make_empty_state();
     cj4_mahjong round_end;
     const cj4_tile_id ankan_tiles[] = {

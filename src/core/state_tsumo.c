@@ -19,6 +19,8 @@ cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules)
 cj4_mahjong
 cj4_do_tsumo(const cj4_mahjong state)
 {
+    assert(state.phase == CJ4_PHASE_DRAW);
+    assert(state.draw_tile != CJ4_TILE_ID_INVALID);
 
     cj4_mahjong next = state;
     cj4_state_finish_tsumo(&next, state.current_player, state.draw_tile);
