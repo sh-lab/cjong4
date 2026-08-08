@@ -1304,6 +1304,55 @@ test_collect_winning_results_returns_multi_ron_details(void)
 }
 
 static void
+test_release_settle_skips_uncalculable_win_scores(void)
+{
+#ifdef NDEBUG
+    cj4_rules rules = {0};
+    cj4_mahjong ron_state = make_empty_state();
+    cj4_mahjong tsumo_state = make_empty_state();
+    cj4_mahjong settled;
+
+    rules.target_score = 30000;
+
+    ron_state.phase = CJ4_PHASE_ROUND_END;
+    ron_state.round_end_type = CJ4_ROUND_END_RON;
+    ron_state.current_player = CJ4_PLAYER_0;
+    ron_state.dealer = CJ4_PLAYER_0;
+    ron_state.winner = CJ4_PLAYER_2;
+    ron_state.winners[0] = CJ4_PLAYER_2;
+    ron_state.winner_count = 1;
+    ron_state.loser = CJ4_PLAYER_0;
+    ron_state.winning_tile = CJ4_TILE_ID_INVALID;
+
+    settled = cj4_do_settle(ron_state, &rules);
+
+    assert(settled.phase == CJ4_PHASE_SETTLE);
+    assert(settled.scores[CJ4_PLAYER_0] == 25000);
+    assert(settled.scores[CJ4_PLAYER_1] == 25000);
+    assert(settled.scores[CJ4_PLAYER_2] == 25000);
+    assert(settled.scores[CJ4_PLAYER_3] == 25000);
+
+    tsumo_state.phase = CJ4_PHASE_ROUND_END;
+    tsumo_state.round_end_type = CJ4_ROUND_END_TSUMO;
+    tsumo_state.current_player = CJ4_PLAYER_1;
+    tsumo_state.dealer = CJ4_PLAYER_0;
+    tsumo_state.winner = CJ4_PLAYER_1;
+    tsumo_state.winners[0] = CJ4_PLAYER_1;
+    tsumo_state.winner_count = 1;
+    tsumo_state.draw_tile = CJ4_TILE_ID_INVALID;
+    tsumo_state.winning_tile = CJ4_TILE_ID_INVALID;
+
+    settled = cj4_do_settle(tsumo_state, &rules);
+
+    assert(settled.phase == CJ4_PHASE_SETTLE);
+    assert(settled.scores[CJ4_PLAYER_0] == 25000);
+    assert(settled.scores[CJ4_PLAYER_1] == 25000);
+    assert(settled.scores[CJ4_PLAYER_2] == 25000);
+    assert(settled.scores[CJ4_PLAYER_3] == 25000);
+#endif
+}
+
+static void
 test_max_ron_players_uses_head_bump_order(void)
 {
     cj4_rules rules = {0};
@@ -1394,6 +1443,7 @@ main(void)
     test_collect_winning_results_returns_ron_details();
     test_collect_winning_results_hides_ura_dora_without_riichi();
     test_collect_winning_results_returns_multi_ron_details();
+    test_release_settle_skips_uncalculable_win_scores();
     test_max_ron_players_uses_head_bump_order();
     test_riichi_ankan_keeps_waits();
     manager_tests_main();
