@@ -11,8 +11,10 @@
 #include "state_round.h"
 #include "state_settle.h"
 #include "state_tsumo.h"
+#include "state_ops.h"
 
 #include <assert.h>
+#include <string.h>
 
 static uint8_t
 cj4m_action_equals(
@@ -150,6 +152,115 @@ cj4m_step_turn_phase(
         action_count);
 
     return cj4m_apply_single_action(state, rules, &selected);
+}
+
+static uint8_t
+cj4m_find_action(
+    const cj4_action *actions,
+    uint8_t action_count,
+    cj4_action_type type,
+    cj4_action *out)
+{
+    for (uint8_t i = 0; i < action_count; ++i)
+    {
+        if (actions[i].type != type)
+            continue;
+
+        if (out != 0)
+            *out = actions[i];
+
+        return 1;
+    }
+
+    return 0;
+}
+
+static cj4_action
+cj4m_make_pass_action(
+    cj4_player player)
+{
+    cj4_action action;
+
+    memset(&action, 0, sizeof(action));
+    action.type = CJ4_ACTION_PASS;
+    action.player = player;
+    action.tile = CJ4_TILE_ID_INVALID;
+
+    return action;
+}
+
+static cj4_mahjong
+cj4m_step_pending_kan_dora_turn(
+    const cj4_mahjong *state,
+    const cj4_rules *rules,
+    const cj4m_player_delegate delegates[CJ4_PLAYER_COUNT])
+{
+    cj4_action actions[CJ4M_MAX_ACTIONS];
+    cj4_action tsumo_action;
+    cj4_player player = state->current_player;
+    uint8_t action_count = cj4m_collect_actions(
+        state,
+        rules,
+        player,
+        actions,
+        CJ4M_MAX_ACTIONS);
+    uint8_t can_tsumo = cj4m_find_action(
+        actions,
+        action_count,
+        CJ4_ACTION_TSUMO,
+        &tsumo_action);
+
+    if (can_tsumo)
+    {
+        cj4_action win_actions[2];
+        cj4_player_view view = cj4m_make_player_view(state, player);
+        cj4_action selected;
+
+        win_actions[0] = cj4m_make_pass_action(player);
+        win_actions[1] = tsumo_action;
+        selected = cj4m_select_action(
+            &delegates[player],
+            &view,
+            win_actions,
+            2);
+
+        if (selected.type == CJ4_ACTION_TSUMO)
+            return cj4m_apply_single_action(state, rules, &selected);
+    }
+
+    cj4_mahjong visible_state = *state;
+    cj4_state_reveal_pending_kan_dora(&visible_state);
+
+    action_count = cj4m_collect_actions(
+        &visible_state,
+        rules,
+        player,
+        actions,
+        CJ4M_MAX_ACTIONS);
+
+    if (can_tsumo)
+    {
+        uint8_t write = 0;
+
+        for (uint8_t read = 0; read < action_count; ++read)
+        {
+            if (actions[read].type == CJ4_ACTION_TSUMO)
+                continue;
+
+            actions[write++] = actions[read];
+        }
+
+        action_count = write;
+    }
+
+    cj4_player_view view = cj4m_make_player_view(&visible_state, player);
+    cj4_action selected = cj4m_select_action(
+        &delegates[player],
+        &view,
+        actions,
+        action_count);
+
+    return cj4m_apply_single_action(&visible_state, rules, &selected);
 }
 
 static cj4_mahjong
@@ -326,6 +437,9 @@ cj4m_step(
     switch (state->phase)
     {
     case CJ4_PHASE_DRAW:
+        if (state->pending_kan_dora > 0)
+            return cj4m_step_pending_kan_dora_turn(state, rules, delegates);
+        return cj4m_step_turn_phase(state, rules, delegates);
     case CJ4_PHASE_AFTER_CALL:
         return cj4m_step_turn_phase(state, rules, delegates);
     case CJ4_PHASE_DISCARD:

@@ -29,6 +29,12 @@ extern "C"
         cj4_action *actions,
         uint8_t capacity);
 
+    /*
+     * A player delegate may be called twice in one step after a minkan or
+     * kakan rinshan draw.  When tsumo is available, the first call offers
+     * PASS/TSUMO before the new kan dora is revealed.  After PASS, the second
+     * call exposes the new indicator and offers the remaining turn actions.
+     */
     cj4_mahjong
     cj4m_step(
         const cj4_mahjong *state,
