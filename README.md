@@ -198,6 +198,7 @@ while (state.phase != CJ4_PHASE_GAME_END)
 - 三人麻雀（別実装想定）
 - 人和、途中流局の詳細差分、ローカル役
 - 供託・順位点を含む最終精算
+- 複合役満で役満ごとに責任者が異なる責任払い
 
 ---
 
@@ -243,8 +244,8 @@ tests/manager/            manager tests
 
 ## ステータス / Status
 
-1.0 リリース  
-1.0 release
+1.1.0 リリース<br>
+1.1.0 release
 
 ---
 
