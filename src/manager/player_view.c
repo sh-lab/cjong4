@@ -1,5 +1,6 @@
 #include "cjong4/manager/manager.h"
 
+#include "state_internal.h"
 #include "state_query.h"
 
 #include <string.h>
@@ -29,6 +30,14 @@ cj4m_make_player_view(
 
     memcpy(view.scores, state->scores, sizeof(view.scores));
     memcpy(view.is_riichi, state->is_riichi, sizeof(view.is_riichi));
+
+    view.dora_indicators_count = state->dora_indicators_count;
+    if (view.dora_indicators_count > CJ4M_MAX_DORA_INDICATORS)
+        view.dora_indicators_count = CJ4M_MAX_DORA_INDICATORS;
+
+    for (uint8_t i = 0; i < view.dora_indicators_count; ++i)
+        view.dora_indicators[i] = state->wall[CJ4_DORA_INDICES[i]];
+
     memcpy(view.discards, state->discards, sizeof(view.discards));
     view.discard_count = state->discard_count;
     memcpy(view.melds, state->melds, sizeof(view.melds));

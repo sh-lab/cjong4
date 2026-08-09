@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cjong4 VERSION 1.1.0 LANGUAGES C)
+project(cjong4 VERSION 1.1.1 LANGUAGES C)
 
 # Use C11
 set(CMAKE_C_STANDARD 11)

@@ -6,6 +6,7 @@
 #include "cjong4/core/state.h"
 #include "cjong4/core/state_kan.h"
 #include "cjong4/core/state_query.h"
+#include "cjong4/core/state_tsumo.h"
 #include "cjong4/core/tile.h"
 #include "cjong4/core/wind.h"
 #include "cjong4/manager/manager.h"
@@ -127,6 +128,20 @@ typedef struct
     cj4_player last_view_player;
 } chooser_ctx;
 
+typedef struct
+{
+    uint8_t choose_tsumo;
+    uint8_t choose_minkan;
+    cj4_tile_id discard;
+    uint8_t call_count;
+    uint8_t dora_count[3];
+    cj4_tile_id dora_indicators[3][CJ4M_MAX_DORA_INDICATORS];
+    uint8_t saw_pass[3];
+    uint8_t saw_tsumo[3];
+    uint8_t saw_discard[3];
+    uint8_t saw_minkan[3];
+} pending_kan_dora_ctx;
+
 static cj4_action
 choose_preferred_action(
     void *opaque,
@@ -164,6 +179,108 @@ make_delegate(
         .decide = choose_preferred_action};
 }
 
+static cj4_action
+choose_pending_kan_dora_action(
+    void *opaque,
+    const cj4_player_view *view,
+    const cj4_action *actions,
+    uint8_t action_count)
+{
+    pending_kan_dora_ctx *ctx = (pending_kan_dora_ctx *)opaque;
+    uint8_t call = ctx->call_count++;
+
+    assert(call < 3);
+    ctx->dora_count[call] = view->dora_indicators_count;
+    memcpy(
+        ctx->dora_indicators[call],
+        view->dora_indicators,
+        sizeof(ctx->dora_indicators[call]));
+
+    for (uint8_t i = 0; i < action_count; ++i)
+    {
+        if (actions[i].type == CJ4_ACTION_PASS)
+            ctx->saw_pass[call] = 1;
+        if (actions[i].type == CJ4_ACTION_TSUMO)
+            ctx->saw_tsumo[call] = 1;
+        if (actions[i].type == CJ4_ACTION_DISCARD)
+            ctx->saw_discard[call] = 1;
+        if (actions[i].type == CJ4_ACTION_MINKAN)
+            ctx->saw_minkan[call] = 1;
+    }
+
+    if (ctx->choose_minkan)
+    {
+        for (uint8_t i = 0; i < action_count; ++i)
+        {
+            if (actions[i].type == CJ4_ACTION_MINKAN)
+                return actions[i];
+        }
+    }
+
+    if (ctx->choose_tsumo)
+    {
+        for (uint8_t i = 0; i < action_count; ++i)
+        {
+            if (actions[i].type == CJ4_ACTION_TSUMO)
+                return actions[i];
+        }
+    }
+
+    for (uint8_t i = 0; i < action_count; ++i)
+    {
+        if (actions[i].type == CJ4_ACTION_PASS)
+            return actions[i];
+    }
+
+    for (uint8_t i = 0; i < action_count; ++i)
+    {
+        if (actions[i].type == CJ4_ACTION_DISCARD &&
+            actions[i].tile == ctx->discard)
+        {
+            return actions[i];
+        }
+    }
+
+    return actions[0];
+}
+
+static cj4_mahjong
+make_pending_kan_dora_win_state(
+    const cj4_rules *rules)
+{
+    cj4_mahjong state = make_empty_state();
+    const cj4_tile_id hand[] = {
+        tile(0, 0),
+        tile(1, 0),
+        tile(2, 0),
+        tile(9, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(18, 0),
+        tile(19, 0),
+        tile(20, 0),
+        tile(3, 0),
+        tile(4, 0),
+        tile(15, 0),
+        tile(15, 1)};
+
+    set_hand(
+        &state,
+        CJ4_PLAYER_0,
+        hand,
+        (uint8_t)(sizeof(hand) / sizeof(hand[0])));
+    state.phase = CJ4_PHASE_KAKAN_RESOLVE;
+    state.current_player = CJ4_PLAYER_0;
+    state.dealer = CJ4_PLAYER_1;
+    state.pending_kakan_tile = tile(6, 0);
+    state.dora_indicators_count = 1;
+    state.wall[130] = tile(30, 0);
+    state.wall[128] = tile(4, 1);
+    state.wall[134] = tile(5, 0);
+
+    return cj4_do_rinshan_draw(state, rules);
+}
+
 static void
 test_player_view_hides_hidden_information(
     void)
@@ -187,6 +304,9 @@ test_player_view_hides_hidden_information(
     state.draw_tile = hand0[3];
     state.is_riichi[CJ4_PLAYER_1] = 1;
     state.temporary_furiten[CJ4_PLAYER_0] = 1;
+    state.dora_indicators_count = 2;
+    state.wall[130] = tile(27, 0);
+    state.wall[128] = tile(31, 0);
     add_discard(&state, CJ4_PLAYER_2, tile(20, 0));
 
     view = cj4m_make_player_view(&state, CJ4_PLAYER_0);
@@ -202,6 +322,174 @@ test_player_view_hides_hidden_information(
     assert(view.discards[0].tile == tile(20, 0));
     assert(view.is_riichi[CJ4_PLAYER_1] == 1);
     assert(view.temporary_furiten == 1);
+    assert(view.dora_indicators_count == 2);
+    assert(view.dora_indicators[0] == tile(27, 0));
+    assert(view.dora_indicators[1] == tile(31, 0));
+}
+
+static void
+test_step_reveals_pending_kan_dora_between_delegate_calls(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_pending_kan_dora_win_state(&rules);
+    cj4_mahjong next;
+    chooser_ctx other_contexts[CJ4_PLAYER_COUNT];
+    pending_kan_dora_ctx context;
+    cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
+
+    memset(&context, 0, sizeof(context));
+    context.discard = state.draw_tile;
+
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+        delegates[i] = make_delegate(&other_contexts[i], CJ4_ACTION_PASS);
+    delegates[CJ4_PLAYER_0] = (cj4m_player_delegate){
+        .ctx = &context,
+        .decide = choose_pending_kan_dora_action};
+
+    assert(state.phase == CJ4_PHASE_DRAW);
+    assert(state.dora_indicators_count == 1);
+    assert(state.pending_kan_dora == 1);
+    assert(cj4_can_tsumo(&state, &rules));
+
+    next = cj4m_step(&state, &rules, delegates);
+
+    assert(context.call_count == 2);
+    assert(context.saw_pass[0]);
+    assert(context.saw_tsumo[0]);
+    assert(!context.saw_discard[0]);
+    assert(context.dora_count[0] == 1);
+    assert(context.dora_indicators[0][0] == tile(30, 0));
+    assert(!context.saw_pass[1]);
+    assert(!context.saw_tsumo[1]);
+    assert(context.saw_discard[1]);
+    assert(context.dora_count[1] == 2);
+    assert(context.dora_indicators[1][0] == tile(30, 0));
+    assert(context.dora_indicators[1][1] == tile(4, 1));
+    assert(next.phase == CJ4_PHASE_DISCARD);
+    assert(next.dora_indicators_count == 2);
+    assert(next.pending_kan_dora == 0);
+}
+
+static void
+test_step_does_not_reveal_current_kan_dora_on_rinshan_tsumo(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_pending_kan_dora_win_state(&rules);
+    cj4_mahjong next;
+    chooser_ctx other_contexts[CJ4_PLAYER_COUNT];
+    pending_kan_dora_ctx context;
+    cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
+
+    memset(&context, 0, sizeof(context));
+    context.choose_tsumo = 1;
+
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+        delegates[i] = make_delegate(&other_contexts[i], CJ4_ACTION_PASS);
+    delegates[CJ4_PLAYER_0] = (cj4m_player_delegate){
+        .ctx = &context,
+        .decide = choose_pending_kan_dora_action};
+
+    next = cj4m_step(&state, &rules, delegates);
+
+    assert(context.call_count == 1);
+    assert(context.saw_pass[0]);
+    assert(context.saw_tsumo[0]);
+    assert(!context.saw_discard[0]);
+    assert(context.dora_count[0] == 1);
+    assert(next.phase == CJ4_PHASE_ROUND_END);
+    assert(next.round_end_type == CJ4_ROUND_END_TSUMO);
+    assert(next.dora_indicators_count == 1);
+    assert(next.pending_kan_dora == 0);
+}
+
+static void
+test_step_minkan_flow_reveals_dora_before_discard_choice(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong after_minkan;
+    cj4_mahjong after_rinshan;
+    cj4_mahjong after_discard;
+    chooser_ctx other_contexts[CJ4_PLAYER_COUNT];
+    pending_kan_dora_ctx context;
+    cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
+    const cj4_tile_id hand[] = {
+        tile(27, 0),
+        tile(27, 1),
+        tile(27, 2),
+        tile(0, 0),
+        tile(1, 0),
+        tile(2, 0),
+        tile(9, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(18, 0),
+        tile(19, 0),
+        tile(15, 0),
+        tile(15, 1)};
+
+    memset(&context, 0, sizeof(context));
+    context.choose_minkan = 1;
+    context.discard = tile(20, 0);
+
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+        delegates[i] = make_delegate(&other_contexts[i], CJ4_ACTION_PASS);
+    delegates[CJ4_PLAYER_1] = (cj4m_player_delegate){
+        .ctx = &context,
+        .decide = choose_pending_kan_dora_action};
+
+    set_hand(
+        &state,
+        CJ4_PLAYER_1,
+        hand,
+        (uint8_t)(sizeof(hand) / sizeof(hand[0])));
+    state.phase = CJ4_PHASE_DISCARD;
+    state.current_player = CJ4_PLAYER_0;
+    state.dora_indicators_count = 1;
+    state.wall[130] = tile(30, 0);
+    state.wall[128] = tile(4, 1);
+    state.wall[134] = tile(20, 0);
+    add_discard(&state, CJ4_PLAYER_0, tile(27, 3));
+
+    after_minkan = cj4m_step(&state, &rules, delegates);
+
+    assert(context.call_count == 1);
+    assert(context.saw_minkan[0]);
+    assert(context.dora_count[0] == 1);
+    assert(after_minkan.phase == CJ4_PHASE_ANKAN_RESOLVE);
+    assert(after_minkan.current_player == CJ4_PLAYER_1);
+    assert(after_minkan.meld_count[CJ4_PLAYER_1] == 1);
+    assert(after_minkan.melds[CJ4_PLAYER_1][0].type == CJ4_MELD_MINKAN);
+
+    after_rinshan = cj4m_step(&after_minkan, &rules, delegates);
+
+    assert(context.call_count == 1);
+    assert(after_rinshan.phase == CJ4_PHASE_DRAW);
+    assert(after_rinshan.draw_tile == tile(20, 0));
+    assert(after_rinshan.dora_indicators_count == 1);
+    assert(after_rinshan.pending_kan_dora == 1);
+    assert(cj4_can_tsumo(&after_rinshan, &rules));
+
+    after_discard = cj4m_step(&after_rinshan, &rules, delegates);
+
+    assert(context.call_count == 3);
+    assert(context.saw_pass[1]);
+    assert(context.saw_tsumo[1]);
+    assert(!context.saw_discard[1]);
+    assert(context.dora_count[1] == 1);
+    assert(!context.saw_pass[2]);
+    assert(!context.saw_tsumo[2]);
+    assert(context.saw_discard[2]);
+    assert(context.dora_count[2] == 2);
+    assert(context.dora_indicators[2][0] == tile(30, 0));
+    assert(context.dora_indicators[2][1] == tile(4, 1));
+    assert(after_discard.phase == CJ4_PHASE_DISCARD);
+    assert(after_discard.current_player == CJ4_PLAYER_1);
+    assert(after_discard.dora_indicators_count == 2);
+    assert(after_discard.pending_kan_dora == 0);
 }
 
 static void
@@ -670,6 +958,9 @@ manager_tests_main(
     void)
 {
     test_player_view_hides_hidden_information();
+    test_step_reveals_pending_kan_dora_between_delegate_calls();
+    test_step_does_not_reveal_current_kan_dora_on_rinshan_tsumo();
+    test_step_minkan_flow_reveals_dora_before_discard_choice();
     test_collect_actions_includes_pass_and_claims();
     test_step_uses_delegate_for_draw_phase();
     test_collect_actions_respects_riichi_restrictions();

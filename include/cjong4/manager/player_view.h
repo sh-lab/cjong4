@@ -12,7 +12,8 @@ extern "C"
 
     enum
     {
-        CJ4M_MAX_HAND_TILES = 14
+        CJ4M_MAX_HAND_TILES = 14,
+        CJ4M_MAX_DORA_INDICATORS = 5
     };
 
     typedef struct
@@ -33,6 +34,11 @@ extern "C"
         cj4_tile_id draw_tile;
         cj4_tile_id last_discard;
         cj4_tile_id pending_kakan_tile;
+
+        /* Currently visible front-side dora indicators only.
+         * Pending kan dora and ura dora are not included. */
+        cj4_tile_id dora_indicators[CJ4M_MAX_DORA_INDICATORS];
+        uint8_t dora_indicators_count;
 
         cj4_discard discards[CJ4_MAX_DISCARDS];
         uint8_t discard_count;
