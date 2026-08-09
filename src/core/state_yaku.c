@@ -1,6 +1,7 @@
 #include "state_yaku.h"
 #include "hand_check.h"
 #include "state_internal.h"
+#include "state_ops.h"
 #include "state_query.h"
 #include "state_score.h"
 #include "tile.h"
@@ -9,8 +10,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
-#define CJ4_LIVE_WALL_END 122
 
 typedef uint64_t cj4_yaku_flags;
 
@@ -112,7 +111,9 @@ typedef struct
 } cj4_yaku_context;
 
 static uint8_t
-cj4_yaku_is_closed_hand(const cj4_mahjong *state, cj4_player player)
+cj4_yaku_is_closed_hand(
+    const cj4_mahjong *state,
+    cj4_player player)
 {
     for (uint8_t i = 0; i < state->meld_count[player]; ++i)
     {
@@ -124,19 +125,23 @@ cj4_yaku_is_closed_hand(const cj4_mahjong *state, cj4_player player)
 }
 
 static cj4_wind
-cj4_yaku_seat_wind(const cj4_mahjong *state, cj4_player player)
+cj4_yaku_seat_wind(
+    const cj4_mahjong *state,
+    cj4_player player)
 {
     return (cj4_wind)((player + CJ4_WIND_COUNT - state->dealer) % CJ4_WIND_COUNT);
 }
 
 static cj4_tile_type
-cj4_yaku_wind_tile_type(cj4_wind wind)
+cj4_yaku_wind_tile_type(
+    cj4_wind wind)
 {
     return (cj4_tile_type)(CJ4_TILE_TYPE_EAST + wind);
 }
 
 static uint8_t
-cj4_yaku_tile_count(const int counts[CJ4_TILE_TYPE_COUNT])
+cj4_yaku_tile_count(
+    const int counts[CJ4_TILE_TYPE_COUNT])
 {
     int total = 0;
 
@@ -147,7 +152,9 @@ cj4_yaku_tile_count(const int counts[CJ4_TILE_TYPE_COUNT])
 }
 
 static void
-cj4_yaku_note_type(cj4_yaku_context *ctx, cj4_tile_type type)
+cj4_yaku_note_type(
+    cj4_yaku_context *ctx,
+    cj4_tile_type type)
 {
     cj4_tile_suit suit = cj4_tile_type_get_suit(type);
 
@@ -167,7 +174,9 @@ cj4_yaku_note_type(cj4_yaku_context *ctx, cj4_tile_type type)
 }
 
 static uint8_t
-cj4_yaku_find_tile_wall_index(const cj4_mahjong *state, cj4_tile_id tile)
+cj4_yaku_find_tile_wall_index(
+    const cj4_mahjong *state,
+    cj4_tile_id tile)
 {
     for (uint8_t i = 0; i < CJ4_TILE_ID_COUNT; ++i)
     {
@@ -220,7 +229,7 @@ cj4_yaku_detect_win_state(
             }
         }
 
-        if (!ctx->is_rinshan && state->wall_pos == CJ4_LIVE_WALL_END)
+        if (!ctx->is_rinshan && cj4_state_live_wall_remaining(state) == 0)
             ctx->is_haitei = 1;
 
         return;
@@ -241,19 +250,24 @@ cj4_yaku_detect_win_state(
             ctx->winning_type_id = cj4_tile_get_type(last);
             ctx->has_winning_tile = 1;
 
-            if (state->wall_pos == CJ4_LIVE_WALL_END)
+            if (cj4_state_live_wall_remaining(state) == 0)
                 ctx->is_houtei = 1;
         }
 
         return;
     }
 
-    if (state->phase == CJ4_PHASE_KAKAN_RESOLVE &&
+    if ((state->phase == CJ4_PHASE_KAKAN_RESOLVE ||
+         state->phase == CJ4_PHASE_ANKAN_RESOLVE) &&
         state->winning_from_chankan &&
-        player != state->current_player &&
-        state->pending_kakan_tile != CJ4_TILE_ID_INVALID)
+        player != state->current_player)
     {
-        cj4_tile_id tile = state->pending_kakan_tile;
+        cj4_tile_id tile = state->phase == CJ4_PHASE_KAKAN_RESOLVE
+                                ? state->pending_kakan_tile
+                                : state->pending_ankan_tile;
+
+        if (tile == CJ4_TILE_ID_INVALID)
+            return;
 
         if (cj4_tile_location_const(state, tile)->zone == CJ4_ZONE_HAND &&
             cj4_tile_location_const(state, tile)->owner == player)
@@ -311,7 +325,8 @@ cj4_yaku_collect_context(
 }
 
 static uint8_t
-cj4_yaku_is_chiitoi(const int counts[CJ4_TILE_TYPE_COUNT])
+cj4_yaku_is_chiitoi(
+    const int counts[CJ4_TILE_TYPE_COUNT])
 {
     int pair_count = 0;
 
@@ -331,7 +346,8 @@ cj4_yaku_is_chiitoi(const int counts[CJ4_TILE_TYPE_COUNT])
 }
 
 static uint8_t
-cj4_yaku_is_kokushi(const int counts[CJ4_TILE_TYPE_COUNT])
+cj4_yaku_is_kokushi(
+    const int counts[CJ4_TILE_TYPE_COUNT])
 {
     static const int terminals[13] = {
         CJ4_TILE_TYPE_1M,
@@ -384,7 +400,8 @@ cj4_yaku_is_kokushi(const int counts[CJ4_TILE_TYPE_COUNT])
 }
 
 static uint8_t
-cj4_yaku_is_kokushi_13_wait(const cj4_yaku_context *ctx)
+cj4_yaku_is_kokushi_13_wait(
+    const cj4_yaku_context *ctx)
 {
     int counts[CJ4_TILE_TYPE_COUNT];
     static const int terminals[13] = {
@@ -439,7 +456,8 @@ cj4_yaku_is_kokushi_13_wait(const cj4_yaku_context *ctx)
 }
 
 static uint8_t
-cj4_yaku_is_chuuren(const cj4_yaku_context *ctx)
+cj4_yaku_is_chuuren(
+    const cj4_yaku_context *ctx)
 {
     int base;
     const int *counts = ctx->concealed_counts;
@@ -468,7 +486,8 @@ cj4_yaku_is_chuuren(const cj4_yaku_context *ctx)
 }
 
 static uint8_t
-cj4_yaku_is_junsei_chuuren(const cj4_yaku_context *ctx)
+cj4_yaku_is_junsei_chuuren(
+    const cj4_yaku_context *ctx)
 {
     int counts[CJ4_TILE_TYPE_COUNT];
     int base;
@@ -502,7 +521,9 @@ cj4_yaku_is_junsei_chuuren(const cj4_yaku_context *ctx)
 }
 
 static uint8_t
-cj4_yaku_is_tanyao(const cj4_yaku_context *ctx, const cj4_rules *rules)
+cj4_yaku_is_tanyao(
+    const cj4_yaku_context *ctx,
+    const cj4_rules *rules)
 {
     if (ctx->has_honor || ctx->has_terminal || !ctx->has_simple)
         return 0;
@@ -539,13 +560,15 @@ cj4_yaku_has_yakuhai(
 }
 
 static uint8_t
-cj4_yaku_is_honroutou(const cj4_yaku_context *ctx)
+cj4_yaku_is_honroutou(
+    const cj4_yaku_context *ctx)
 {
     return (ctx->has_terminal || ctx->has_honor) && !ctx->has_simple;
 }
 
 static uint8_t
-cj4_yaku_is_honitsu(const cj4_yaku_context *ctx)
+cj4_yaku_is_honitsu(
+    const cj4_yaku_context *ctx)
 {
     return ctx->has_honor &&
            ctx->suit_mask != 0 &&
@@ -553,7 +576,8 @@ cj4_yaku_is_honitsu(const cj4_yaku_context *ctx)
 }
 
 static uint8_t
-cj4_yaku_is_chinitsu(const cj4_yaku_context *ctx)
+cj4_yaku_is_chinitsu(
+    const cj4_yaku_context *ctx)
 {
     return !ctx->has_honor &&
            ctx->suit_mask != 0 &&
@@ -561,13 +585,15 @@ cj4_yaku_is_chinitsu(const cj4_yaku_context *ctx)
 }
 
 static uint8_t
-cj4_yaku_is_tsuuiisou(const cj4_yaku_context *ctx)
+cj4_yaku_is_tsuuiisou(
+    const cj4_yaku_context *ctx)
 {
     return ctx->has_honor && ctx->suit_mask == 0;
 }
 
 static uint8_t
-cj4_yaku_is_ryuuiisou(const cj4_yaku_context *ctx)
+cj4_yaku_is_ryuuiisou(
+    const cj4_yaku_context *ctx)
 {
     static const uint8_t green[CJ4_TILE_TYPE_COUNT] = {
         0,
@@ -615,7 +641,8 @@ cj4_yaku_is_ryuuiisou(const cj4_yaku_context *ctx)
 }
 
 static uint8_t
-cj4_yaku_is_chinroutou(const cj4_yaku_context *ctx)
+cj4_yaku_is_chinroutou(
+    const cj4_yaku_context *ctx)
 {
     return ctx->has_terminal && !ctx->has_simple && !ctx->has_honor;
 }
@@ -638,13 +665,15 @@ cj4_yaku_count_triplets_in_range(
 }
 
 static uint8_t
-cj4_yaku_count_quads(const cj4_yaku_context *ctx)
+cj4_yaku_count_quads(
+    const cj4_yaku_context *ctx)
 {
     return ctx->quad_count;
 }
 
 static uint8_t
-cj4_yaku_dragon_pair_type(const cj4_yaku_decomposition *decomp)
+cj4_yaku_dragon_pair_type(
+    const cj4_yaku_decomposition *decomp)
 {
     return decomp->has_pair &&
            decomp->pair_type >= CJ4_TILE_TYPE_HAKU &&
@@ -652,7 +681,8 @@ cj4_yaku_dragon_pair_type(const cj4_yaku_decomposition *decomp)
 }
 
 static uint8_t
-cj4_yaku_wind_pair_type(const cj4_yaku_decomposition *decomp)
+cj4_yaku_wind_pair_type(
+    const cj4_yaku_decomposition *decomp)
 {
     return decomp->has_pair &&
            decomp->pair_type >= CJ4_TILE_TYPE_EAST &&
@@ -660,7 +690,8 @@ cj4_yaku_wind_pair_type(const cj4_yaku_decomposition *decomp)
 }
 
 static uint8_t
-cj4_yaku_group_has_yaochu(const cj4_yaku_group *group)
+cj4_yaku_group_has_yaochu(
+    const cj4_yaku_group *group)
 {
     if (group->kind == CJ4_GROUP_SEQUENCE)
     {
@@ -690,7 +721,8 @@ cj4_yaku_is_value_pair(
 }
 
 static uint8_t
-cj4_yaku_is_ryanmen_wait(const cj4_yaku_group *group)
+cj4_yaku_is_ryanmen_wait(
+    const cj4_yaku_group *group)
 {
     uint8_t number;
 
@@ -709,7 +741,8 @@ cj4_yaku_is_ryanmen_wait(const cj4_yaku_group *group)
 }
 
 static uint8_t
-cj4_yaku_open_meld_base_type(const cj4_meld *meld)
+cj4_yaku_open_meld_base_type(
+    const cj4_meld *meld)
 {
     cj4_tile_type base = cj4_tile_get_type(meld->tiles[0]);
 
@@ -1308,7 +1341,9 @@ cj4_yaku_prepare_round_end_state(
     cj4_mahjong *prepared);
 
 static uint8_t
-cj4_yaku_is_winner(const cj4_mahjong *state, cj4_player player)
+cj4_yaku_is_winner(
+    const cj4_mahjong *state,
+    cj4_player player)
 {
     for (uint8_t i = 0; i < state->winner_count; ++i)
     {
@@ -1320,7 +1355,8 @@ cj4_yaku_is_winner(const cj4_mahjong *state, cj4_player player)
 }
 
 static cj4_tile_type
-cj4_yaku_next_dora_type(cj4_tile_type indicator)
+cj4_yaku_next_dora_type(
+    cj4_tile_type indicator)
 {
     if (indicator <= CJ4_TILE_TYPE_9M)
         return (cj4_tile_type)(CJ4_TILE_TYPE_1M + ((indicator - CJ4_TILE_TYPE_1M + 1) % 9));
@@ -1434,27 +1470,44 @@ cj4_yaku_count_yakuhai_han(
 }
 
 static uint8_t
-cj4_yaku_count_yakuman(cj4_yaku_flags flags)
+cj4_yaku_rule_enabled(
+    const cj4_rules *rules,
+    uint8_t value,
+    uint8_t default_value)
+{
+    if (!rules)
+        return default_value;
+
+    if (rules->version == 0)
+        return default_value;
+
+    return value != 0;
+}
+
+static uint8_t
+cj4_yaku_count_yakuman(
+    cj4_yaku_flags flags,
+    const cj4_rules *rules)
 {
     uint8_t count = 0;
 
     if (flags & CJ4_YAKU_KOKUSHI_13)
-        count += 2;
+        count += cj4_yaku_rule_enabled(rules, rules ? rules->kokushi_13_wait_double : 0, 1) ? 2 : 1;
     else if (flags & CJ4_YAKU_KOKUSHI)
         count++;
 
     if (flags & CJ4_YAKU_SUUANKOU_TANKI)
-        count += 2;
+        count += cj4_yaku_rule_enabled(rules, rules ? rules->suuankou_tanki_double : 0, 1) ? 2 : 1;
     else if (flags & CJ4_YAKU_SUUANKOU)
         count++;
 
     if (flags & CJ4_YAKU_JUNSEI_CHUUREN)
-        count += 2;
+        count += cj4_yaku_rule_enabled(rules, rules ? rules->junsei_chuuren_double : 0, 1) ? 2 : 1;
     else if (flags & CJ4_YAKU_CHUUREN)
         count++;
 
     if (flags & CJ4_YAKU_DAISUUSHII_DOUBLE)
-        count += 2;
+        count += cj4_yaku_rule_enabled(rules, rules ? rules->daisuushii_double : 0, 1) ? 2 : 1;
     else if (flags & CJ4_YAKU_DAISUUSHII)
         count++;
 
@@ -1679,7 +1732,8 @@ cj4_yaku_calculate_fu(
 }
 
 static int32_t
-cj4_yaku_round_up_100(int32_t value)
+cj4_yaku_round_up_100(
+    int32_t value)
 {
     return ((value + 99) / 100) * 100;
 }
@@ -1687,6 +1741,7 @@ cj4_yaku_round_up_100(int32_t value)
 static void
 cj4_yaku_fill_basic_points(
     const cj4_yaku_context *ctx,
+    const cj4_rules *rules,
     uint8_t han,
     uint16_t fu,
     uint8_t yakuman_count,
@@ -1707,7 +1762,7 @@ cj4_yaku_fill_basic_points(
     {
         base_points = 8000 * yakuman_count;
     }
-    else if (han >= 13)
+    else if (han >= 13 && cj4_yaku_rule_enabled(rules, rules ? rules->kazoe_yakuman : 0, 1))
     {
         out->yakuman_count = 1;
         base_points = 8000;
@@ -1729,7 +1784,9 @@ cj4_yaku_fill_basic_points(
         base_points = fu * (1 << (han + 2));
         if (han >= 5 ||
             (han == 4 && fu >= 40) ||
-            (han == 3 && fu >= 70))
+            (han == 3 && fu >= 70) ||
+            (cj4_yaku_rule_enabled(rules, rules ? rules->kiriage_mangan : 0, 0) &&
+             ((han == 4 && fu == 30) || (han == 3 && fu == 60))))
         {
             base_points = 2000;
         }
@@ -1808,7 +1865,7 @@ cj4_yaku_consider_score(
     cj4_yaku_best_score *best)
 {
     cj4_hand_score candidate;
-    uint8_t yakuman_count = cj4_yaku_count_yakuman(flags);
+    uint8_t yakuman_count = cj4_yaku_count_yakuman(flags, rules);
     uint8_t han;
     uint16_t fu;
     int32_t value;
@@ -1821,7 +1878,7 @@ cj4_yaku_consider_score(
               : 0;
     fu = cj4_yaku_calculate_fu(state, player, ctx, decomp, flags);
 
-    cj4_yaku_fill_basic_points(ctx, han, fu, yakuman_count, &candidate);
+    cj4_yaku_fill_basic_points(ctx, rules, han, fu, yakuman_count, &candidate);
     cj4_yaku_finalize_points(ctx, state, player, &candidate);
     value = cj4_yaku_score_value(ctx, player, state, &candidate);
 
@@ -2104,7 +2161,9 @@ cj4_yaku_collect_best_result(
 }
 
 static void
-cj4_yaku_append_public_yaku(cj4_win_result *result, cj4_win_yaku yaku)
+cj4_yaku_append_public_yaku(
+    cj4_win_result *result,
+    cj4_win_yaku yaku)
 {
     if (result->yaku_count >= CJ4_MAX_WIN_RESULT_YAKU)
         return;
@@ -2298,6 +2357,37 @@ cj4_yaku_build_win_result(
 }
 
 static uint8_t
+cj4_yaku_build_nagashi_result(
+    const cj4_mahjong *state,
+    cj4_player player,
+    cj4_win_result *out)
+{
+    if (!out || !state->nagashi_mangan[player])
+        return 0;
+
+    memset(out, 0, sizeof(*out));
+    out->player = player;
+    out->han = 5;
+    out->fu = 0;
+
+    if (player == state->dealer)
+    {
+        out->tsumo_non_dealer_payment = 4000;
+        out->tsumo_dealer_payment = 0;
+        out->ron_points = 12000;
+    }
+    else
+    {
+        out->tsumo_non_dealer_payment = 2000;
+        out->tsumo_dealer_payment = 4000;
+        out->ron_points = 8000;
+    }
+
+    cj4_yaku_append_public_yaku(out, CJ4_WIN_YAKU_NAGASHI_MANGAN);
+    return 1;
+}
+
+static uint8_t
 cj4_yaku_prepare_round_end_state(
     const cj4_mahjong *state,
     cj4_player player,
@@ -2334,6 +2424,16 @@ cj4_yaku_prepare_round_end_state(
         prepared->current_player = state->loser;
         prepared->winning_from_chankan = 1;
         prepared->pending_kakan_tile = state->winning_tile;
+        prepared->draw_tile = CJ4_TILE_ID_INVALID;
+        return 1;
+    }
+
+    if (state->pending_ankan_tile == state->winning_tile)
+    {
+        prepared->phase = CJ4_PHASE_ANKAN_RESOLVE;
+        prepared->current_player = state->loser;
+        prepared->winning_from_chankan = 1;
+        prepared->pending_ankan_tile = state->winning_tile;
         prepared->draw_tile = CJ4_TILE_ID_INVALID;
         return 1;
     }
@@ -2389,7 +2489,39 @@ cj4_collect_winning_results(
         return false;
 
     if (state->winner_count == 0)
+    {
+        uint8_t nagashi_count = 0;
+
+        for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
+        {
+            if (state->nagashi_mangan[player])
+                nagashi_count++;
+        }
+
+        if (nagashi_count == 0)
+            return true;
+
+        if (!out_results || capacity < nagashi_count)
+            return false;
+
+        for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
+        {
+            if (!state->nagashi_mangan[player])
+                continue;
+
+            if (!cj4_yaku_build_nagashi_result(
+                    state,
+                    (cj4_player)player,
+                    &out_results[*out_count]))
+            {
+                return false;
+            }
+
+            (*out_count)++;
+        }
+
         return true;
+    }
 
     if (!out_results || capacity < state->winner_count)
         return false;

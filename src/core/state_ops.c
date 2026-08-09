@@ -1,11 +1,13 @@
 #include "state_ops.h"
 #include "state_internal.h"
 #include "state_query.h"
+#include "tile_const.h"
 
 #include <assert.h>
 
 bool
-cj4_state_has_last_discard(const cj4_mahjong *state)
+cj4_state_has_last_discard(
+    const cj4_mahjong *state)
 {
     return state->discard_count > 0 &&
            cj4_get_last_discard_tile(state) != CJ4_TILE_ID_INVALID;
@@ -34,6 +36,23 @@ cj4_state_tile_is_in_hand(
     return loc->zone == CJ4_ZONE_HAND && loc->owner == player;
 }
 
+uint8_t
+cj4_state_live_wall_remaining(const cj4_mahjong *state)
+{
+    uint8_t dead_wall_draws = state->dead_wall_draw_count;
+    uint8_t live_wall_end;
+
+    if (dead_wall_draws > 4)
+        dead_wall_draws = 4;
+
+    live_wall_end = (uint8_t)(CJ4_LIVE_WALL_END - dead_wall_draws);
+
+    if (state->wall_pos >= live_wall_end)
+        return 0;
+
+    return (uint8_t)(live_wall_end - state->wall_pos);
+}
+
 void
 cj4_state_set_location(
     cj4_mahjong *state,
@@ -46,7 +65,8 @@ cj4_state_set_location(
 }
 
 uint8_t
-cj4_state_count_total_kans(const cj4_mahjong *state)
+cj4_state_count_total_kans(
+    const cj4_mahjong *state)
 {
     uint8_t total = 0;
 
@@ -68,7 +88,8 @@ cj4_state_count_total_kans(const cj4_mahjong *state)
 }
 
 uint8_t
-cj4_state_all_kans_by_one_player(const cj4_mahjong *state)
+cj4_state_all_kans_by_one_player(
+    const cj4_mahjong *state)
 {
     uint8_t owner = CJ4_PLAYER_COUNT;
 
@@ -94,11 +115,100 @@ cj4_state_all_kans_by_one_player(const cj4_mahjong *state)
     return 1;
 }
 
+static uint8_t
+cj4_state_count_meld_triplets_in_range(
+    const cj4_mahjong *state,
+    cj4_player player,
+    cj4_tile_type start,
+    cj4_tile_type end)
+{
+    uint8_t count = 0;
+
+    for (uint8_t i = 0; i < state->meld_count[player]; ++i)
+    {
+        const cj4_meld *meld = &state->melds[player][i];
+        cj4_tile_type type;
+
+        if (meld->type == CJ4_MELD_CHI)
+            continue;
+
+        type = cj4_tile_get_type(meld->tiles[0]);
+        if (type >= start && type <= end)
+            count++;
+    }
+
+    return count;
+}
+
+static uint8_t
+cj4_state_count_player_kans(
+    const cj4_mahjong *state,
+    cj4_player player)
+{
+    uint8_t count = 0;
+
+    for (uint8_t i = 0; i < state->meld_count[player]; ++i)
+    {
+        const cj4_meld *meld = &state->melds[player][i];
+
+        if (meld->type == CJ4_MELD_MINKAN ||
+            meld->type == CJ4_MELD_ANKAN ||
+            meld->type == CJ4_MELD_KAKAN)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+void
+cj4_state_update_pao(
+    cj4_mahjong *state,
+    cj4_player player,
+    cj4_player from_player)
+{
+    if (from_player == player || state->pao_owner[player])
+        return;
+
+    if (cj4_state_count_meld_triplets_in_range(
+            state,
+            player,
+            CJ4_TILE_TYPE_HAKU,
+            CJ4_TILE_TYPE_CHUN) >= 3)
+    {
+        state->pao_owner[player] = 1;
+        state->pao_player[player] = from_player;
+        state->pao_type[player] = CJ4_PAO_DAISANGEN;
+        return;
+    }
+
+    if (cj4_state_count_meld_triplets_in_range(
+            state,
+            player,
+            CJ4_TILE_TYPE_EAST,
+            CJ4_TILE_TYPE_NORTH) >= 4)
+    {
+        state->pao_owner[player] = 1;
+        state->pao_player[player] = from_player;
+        state->pao_type[player] = CJ4_PAO_DAISUUSHII;
+        return;
+    }
+
+    if (cj4_state_count_player_kans(state, player) >= 4)
+    {
+        state->pao_owner[player] = 1;
+        state->pao_player[player] = from_player;
+        state->pao_type[player] = CJ4_PAO_SUUKANTSU;
+    }
+}
+
 cj4_tile_id
 cj4_state_draw_tile(
     cj4_mahjong *state,
     cj4_player player)
 {
+    assert(cj4_state_live_wall_remaining(state) > 0);
     cj4_tile_id t = state->wall[state->wall_pos++];
 
     cj4_state_set_location(state, t, CJ4_ZONE_HAND, player);
@@ -125,16 +235,59 @@ cj4_state_draw_dead_wall_tile(
 }
 
 void
-cj4_state_clear_draw_tile(cj4_mahjong *state)
+cj4_state_clear_draw_tile(
+    cj4_mahjong *state)
 {
     state->draw_tile = CJ4_TILE_ID_INVALID;
 }
 
 void
-cj4_state_clear_all_ippatsu(cj4_mahjong *state)
+cj4_state_clear_all_ippatsu(
+    cj4_mahjong *state)
 {
     for (int i = 0; i < CJ4_PLAYER_COUNT; ++i)
         state->is_ippatsu[i] = 0;
+}
+
+void
+cj4_state_establish_pending_riichi(cj4_mahjong *state)
+{
+    cj4_player player = state->pending_riichi_player;
+
+    if (!state->pending_riichi || player >= CJ4_PLAYER_COUNT)
+        return;
+
+    if (!state->is_riichi[player])
+    {
+        state->is_riichi[player] = 1;
+        state->is_ippatsu[player] = 1;
+        state->riichi_sticks++;
+        state->scores[player] -= 1000;
+
+        if (state->pending_riichi_declared_on_first_turn)
+            state->riichi_declared_on_first_turn[player] = 1;
+    }
+
+    cj4_state_clear_pending_riichi(state);
+}
+
+void
+cj4_state_clear_pending_riichi(cj4_mahjong *state)
+{
+    state->pending_riichi_player = CJ4_PLAYER_COUNT;
+    state->pending_riichi = 0;
+    state->pending_riichi_declared_on_first_turn = 0;
+}
+
+void
+cj4_state_reveal_pending_kan_dora(cj4_mahjong *state)
+{
+    while (state->pending_kan_dora)
+    {
+        cj4_state_add_dora_indicator(state);
+        state->pending_kan_dora--;
+    }
+    state->pending_kan_dora = 0;
 }
 
 void
@@ -154,7 +307,8 @@ cj4_state_record_discard(
 }
 
 void
-cj4_state_consume_last_discard(cj4_mahjong *state)
+cj4_state_consume_last_discard(
+    cj4_mahjong *state)
 {
     if (state->discard_count == 0)
         return;
@@ -186,6 +340,8 @@ cj4_state_add_meld(
         m->tiles[i] = tiles[i];
         cj4_state_set_location(state, tiles[i], CJ4_ZONE_MELD, player);
     }
+
+    cj4_state_update_pao(state, player, from_player);
 }
 
 void
@@ -202,7 +358,8 @@ cj4_state_finish_open_call(
 }
 
 void
-cj4_state_add_dora_indicator(cj4_mahjong *state)
+cj4_state_add_dora_indicator(
+    cj4_mahjong *state)
 {
     if (state->dora_indicators_count < CJ4_MAX_DORA)
         state->dora_indicators_count++;
@@ -219,6 +376,12 @@ cj4_state_finish_tsumo(
     state->winner_count = 1;
     state->winning_tile = winning_tile;
     state->round_end_type = CJ4_ROUND_END_TSUMO;
+    state->abortive_draw_reason = CJ4_ABORTIVE_DRAW_NONE;
+    cj4_state_clear_pending_riichi(state);
+    state->pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    for (uint8_t i = 0; i < 4; ++i)
+        state->pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
+    state->pending_kan_dora = 0;
     state->phase = CJ4_PHASE_ROUND_END;
 }
 
@@ -241,6 +404,9 @@ cj4_state_finish_multi_ron(
     state->winner = state->winners[0];
     state->winning_tile = winning_tile;
     state->round_end_type = CJ4_ROUND_END_RON;
+    state->abortive_draw_reason = CJ4_ABORTIVE_DRAW_NONE;
+    cj4_state_clear_pending_riichi(state);
+    state->pending_kan_dora = 0;
     state->phase = CJ4_PHASE_ROUND_END;
 }
 
@@ -252,5 +418,22 @@ cj4_state_finish_draw_round(
     state->winner_count = 0;
     state->winning_tile = CJ4_TILE_ID_INVALID;
     state->round_end_type = round_end_type;
+    if (round_end_type != CJ4_ROUND_END_ABORTIVE_DRAW)
+        state->abortive_draw_reason = CJ4_ABORTIVE_DRAW_NONE;
+    cj4_state_clear_pending_riichi(state);
+    state->pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    state->pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    for (uint8_t i = 0; i < 4; ++i)
+        state->pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
+    state->pending_kan_dora = 0;
     state->phase = CJ4_PHASE_ROUND_END;
+}
+
+void
+cj4_state_finish_abortive_draw(
+    cj4_mahjong *state,
+    cj4_abortive_draw_reason reason)
+{
+    cj4_state_finish_draw_round(state, CJ4_ROUND_END_ABORTIVE_DRAW);
+    state->abortive_draw_reason = reason;
 }

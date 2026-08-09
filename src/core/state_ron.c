@@ -4,6 +4,7 @@
 #include "state_query.h"
 #include "state_yaku.h"
 #include "tile.h"
+#include "tile_const.h"
 
 #include <assert.h>
 
@@ -90,6 +91,59 @@ cj4_state_player_has_permanent_furiten(
     return 0;
 }
 
+static uint8_t
+cj4_state_player_can_kokushi_with_tile(
+    const cj4_mahjong *state,
+    cj4_player player,
+    cj4_tile_id tile)
+{
+    static const cj4_tile_type yaochu[] = {
+        CJ4_TILE_TYPE_1M,
+        CJ4_TILE_TYPE_9M,
+        CJ4_TILE_TYPE_1P,
+        CJ4_TILE_TYPE_9P,
+        CJ4_TILE_TYPE_1S,
+        CJ4_TILE_TYPE_9S,
+        CJ4_TILE_TYPE_EAST,
+        CJ4_TILE_TYPE_SOUTH,
+        CJ4_TILE_TYPE_WEST,
+        CJ4_TILE_TYPE_NORTH,
+        CJ4_TILE_TYPE_HAKU,
+        CJ4_TILE_TYPE_HATSU,
+        CJ4_TILE_TYPE_CHUN};
+    uint8_t counts[CJ4_TILE_TYPE_COUNT] = {0};
+    uint8_t pair_count = 0;
+
+    if (state->meld_count[player] != 0 ||
+        !cj4_tile_is_yaochu(tile))
+    {
+        return 0;
+    }
+
+    for (cj4_tile_id id = CJ4_TILE_ID_MIN; id <= CJ4_TILE_ID_MAX; ++id)
+    {
+        const cj4_location *loc = cj4_tile_location_const(state, id);
+
+        if (loc->zone == CJ4_ZONE_HAND && loc->owner == player)
+            counts[cj4_tile_get_type(id)]++;
+    }
+
+    counts[cj4_tile_get_type(tile)]++;
+
+    for (uint8_t i = 0; i < (uint8_t)(sizeof(yaochu) / sizeof(yaochu[0])); ++i)
+    {
+        uint8_t count = counts[yaochu[i]];
+
+        if (count == 0)
+            return 0;
+
+        if (count >= 2)
+            pair_count++;
+    }
+
+    return pair_count == 1;
+}
+
 bool
 cj4_can_ron(
     const cj4_mahjong *state,
@@ -113,6 +167,17 @@ cj4_can_ron(
 
         tile = state->pending_kakan_tile;
     }
+    else if (state->phase == CJ4_PHASE_ANKAN_RESOLVE)
+    {
+        if (!rules || !rules->kokushi_ron_on_ankan ||
+            player == state->current_player ||
+            state->pending_ankan_tile == CJ4_TILE_ID_INVALID)
+        {
+            return false;
+        }
+
+        tile = state->pending_ankan_tile;
+    }
     else
     {
         return false;
@@ -127,6 +192,9 @@ cj4_can_ron(
         state->riichi_furiten[player] ||
         cj4_state_player_has_permanent_furiten(state, player))
         return false;
+
+    if (state->phase == CJ4_PHASE_ANKAN_RESOLVE)
+        return cj4_state_player_can_kokushi_with_tile(state, player, tile);
 
     return cj4_has_yaku(&tmp, player, rules);
 }
@@ -146,7 +214,18 @@ cj4_do_ron_multi(
     cj4_tile_id winning_tile =
         state.phase == CJ4_PHASE_KAKAN_RESOLVE
             ? state.pending_kakan_tile
-            : cj4_get_last_discard_tile(&state);
+            : (state.phase == CJ4_PHASE_ANKAN_RESOLVE
+                   ? state.pending_ankan_tile
+                   : cj4_get_last_discard_tile(&state));
+
+    if (rules &&
+        rules->triple_ron_abortive_draw &&
+        cj4_ron_max_players(rules) == 3 &&
+        count >= 3)
+    {
+        cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_TRIPLE_RON);
+        return next;
+    }
 
     winner_count = cj4_ron_select_winners(
         &state,

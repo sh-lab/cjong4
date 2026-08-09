@@ -8,6 +8,9 @@ cj4_can_chi(const cj4_mahjong *state)
 {
     cj4_player next_player = cj4_next_player(state);
 
+    if (cj4_state_live_wall_remaining(state) == 0)
+        return false;
+
     if (state->is_riichi[next_player])
     {
         return false;
@@ -161,6 +164,7 @@ cj4_do_chi(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2)
         3,
         state.current_player,
         0);
+    cj4_state_establish_pending_riichi(&next);
     cj4_state_finish_open_call(&next, next_player, CJ4_PHASE_AFTER_CALL);
     next.first_turn_uninterrupted = 0;
     next.winning_from_chankan = 0;

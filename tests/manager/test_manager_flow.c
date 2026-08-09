@@ -2,20 +2,25 @@
 #include <string.h>
 
 #include "cjong4/core/action.h"
+#include "cjong4/core/rules.h"
 #include "cjong4/core/state.h"
+#include "cjong4/core/state_kan.h"
 #include "cjong4/core/state_query.h"
 #include "cjong4/core/tile.h"
 #include "cjong4/core/wind.h"
 #include "cjong4/manager/manager.h"
 
 static cj4_tile_id
-tile(cj4_tile_type type, uint8_t index)
+tile(
+    cj4_tile_type type,
+    uint8_t index)
 {
     return cj4_tile_make(type, index);
 }
 
 static cj4_mahjong
-make_empty_state(void)
+make_empty_state(
+    void)
 {
     cj4_mahjong state;
 
@@ -26,6 +31,10 @@ make_empty_state(void)
     state.round_wind = CJ4_WIND_EAST;
     state.draw_tile = CJ4_TILE_ID_INVALID;
     state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    for (uint8_t i = 0; i < 4; ++i)
+        state.pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
+    state.pending_riichi_player = CJ4_PLAYER_COUNT;
     state.winning_tile = CJ4_TILE_ID_INVALID;
     state.round_end_type = CJ4_ROUND_END_NONE;
 
@@ -141,7 +150,9 @@ choose_preferred_action(
 }
 
 static cj4m_player_delegate
-make_delegate(chooser_ctx *ctx, cj4_action_type preferred)
+make_delegate(
+    chooser_ctx *ctx,
+    cj4_action_type preferred)
 {
     ctx->preferred = preferred;
     ctx->call_count = 0;
@@ -154,7 +165,8 @@ make_delegate(chooser_ctx *ctx, cj4_action_type preferred)
 }
 
 static void
-test_player_view_hides_hidden_information(void)
+test_player_view_hides_hidden_information(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     const cj4_tile_id hand0[] = {
@@ -193,7 +205,8 @@ test_player_view_hides_hidden_information(void)
 }
 
 static void
-test_collect_actions_includes_pass_and_claims(void)
+test_collect_actions_includes_pass_and_claims(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     const cj4_tile_id chi_hand[] = {
@@ -231,7 +244,8 @@ test_collect_actions_includes_pass_and_claims(void)
 }
 
 static void
-test_step_uses_delegate_for_draw_phase(void)
+test_step_uses_delegate_for_draw_phase(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     chooser_ctx contexts[CJ4_PLAYER_COUNT];
@@ -267,13 +281,24 @@ test_step_uses_delegate_for_draw_phase(void)
     next = cj4m_step(&state, NULL, delegates);
 
     assert(next.phase == CJ4_PHASE_DISCARD);
-    assert(next.is_riichi[CJ4_PLAYER_0] == 1);
+    assert(next.pending_riichi == 1);
+    assert(next.pending_riichi_player == CJ4_PLAYER_0);
+    assert(next.is_riichi[CJ4_PLAYER_0] == 0);
+    assert(next.scores[CJ4_PLAYER_0] == 25000);
     assert(contexts[CJ4_PLAYER_0].call_count == 1);
     assert(contexts[CJ4_PLAYER_0].last_view_player == CJ4_PLAYER_0);
+
+    next = cj4m_step(&next, NULL, delegates);
+
+    assert(next.is_riichi[CJ4_PLAYER_0] == 1);
+    assert(next.pending_riichi == 0);
+    assert(next.scores[CJ4_PLAYER_0] == 24000);
+    assert(next.riichi_sticks == 1);
 }
 
 static void
-test_collect_actions_respects_riichi_restrictions(void)
+test_collect_actions_respects_riichi_restrictions(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     cj4_action actions[CJ4M_MAX_ACTIONS];
@@ -321,7 +346,87 @@ test_collect_actions_respects_riichi_restrictions(void)
 }
 
 static void
-test_step_prioritizes_pon_over_chi(void)
+test_collect_actions_filters_kuikae_discards(
+    void)
+{
+    cj4_rules rules = cj4_rules_default();
+    cj4_mahjong state = make_empty_state();
+    cj4_action actions[CJ4M_MAX_ACTIONS];
+    uint8_t action_count;
+
+    state.phase = CJ4_PHASE_AFTER_CALL;
+    state.current_player = CJ4_PLAYER_1;
+    state.meld_count[CJ4_PLAYER_1] = 1;
+    state.melds[CJ4_PLAYER_1][0] = (cj4_meld){
+        .tiles = {tile(2, 0), tile(3, 0), tile(4, 0)},
+        .size = 3,
+        .type = CJ4_MELD_CHI,
+        .from_player = CJ4_PLAYER_0,
+        .called_index = 0};
+    set_hand(&state, CJ4_PLAYER_1, (const cj4_tile_id[]){tile(2, 1), tile(5, 0), tile(6, 0)}, 3);
+
+    action_count = cj4m_collect_actions(
+        &state,
+        &rules,
+        CJ4_PLAYER_1,
+        actions,
+        CJ4M_MAX_ACTIONS);
+
+    assert(!contains_action(actions, action_count, CJ4_ACTION_DISCARD, tile(2, 1)));
+    assert(!contains_action(actions, action_count, CJ4_ACTION_DISCARD, tile(5, 0)));
+    assert(contains_action(actions, action_count, CJ4_ACTION_DISCARD, tile(6, 0)));
+}
+
+static void
+test_step_can_choose_kyuushu_kyuuhai(
+    void)
+{
+    cj4_rules rules = {0};
+    cj4_mahjong state = make_empty_state();
+    chooser_ctx contexts[CJ4_PLAYER_COUNT];
+    cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
+    cj4_mahjong next;
+    cj4_tile_id draw = tile(30, 0);
+    const cj4_tile_id hand[] = {
+        tile(0, 0),
+        tile(8, 0),
+        tile(9, 0),
+        tile(17, 0),
+        tile(18, 0),
+        tile(26, 0),
+        tile(27, 0),
+        tile(28, 0),
+        tile(29, 0),
+        tile(2, 0),
+        tile(3, 0),
+        tile(4, 0),
+        tile(5, 0),
+        draw};
+
+    rules.abortive_kyuushu_kyuuhai = 1;
+
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+        delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
+
+    delegates[CJ4_PLAYER_0] = make_delegate(&contexts[CJ4_PLAYER_0], CJ4_ACTION_ABORTIVE_DRAW);
+
+    set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
+    state.current_player = CJ4_PLAYER_0;
+    state.phase = CJ4_PHASE_DRAW;
+    state.draw_tile = draw;
+    state.first_turn_uninterrupted = 1;
+    state.draw_turn_count[CJ4_PLAYER_0] = 1;
+
+    next = cj4m_step(&state, &rules, delegates);
+
+    assert(next.phase == CJ4_PHASE_ROUND_END);
+    assert(next.round_end_type == CJ4_ROUND_END_ABORTIVE_DRAW);
+    assert(next.abortive_draw_reason == CJ4_ABORTIVE_DRAW_KYUUSHU_KYUUHAI);
+}
+
+static void
+test_step_prioritizes_pon_over_chi(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     chooser_ctx contexts[CJ4_PLAYER_COUNT];
@@ -357,7 +462,8 @@ test_step_prioritizes_pon_over_chi(void)
 }
 
 static void
-test_step_prioritizes_ron_and_respects_limit(void)
+test_step_prioritizes_ron_and_respects_limit(
+    void)
 {
     cj4_rules rules = {0};
     cj4_mahjong state = make_empty_state();
@@ -425,7 +531,8 @@ test_step_prioritizes_ron_and_respects_limit(void)
 }
 
 static void
-test_step_advances_after_all_pass(void)
+test_step_advances_after_all_pass(
+    void)
 {
     cj4_mahjong state = make_empty_state();
     chooser_ctx contexts[CJ4_PLAYER_COUNT];
@@ -452,15 +559,126 @@ test_step_advances_after_all_pass(void)
     assert(contexts[CJ4_PLAYER_3].call_count == 1);
 }
 
+static void
+test_step_allows_kokushi_ron_on_ankan(
+    void)
+{
+    cj4_rules rules = cj4_rules_default();
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong ankan;
+    cj4_mahjong next;
+    chooser_ctx contexts[CJ4_PLAYER_COUNT];
+    cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
+    const cj4_tile_id ankan_tiles[] = {
+        tile(0, 0),
+        tile(0, 1),
+        tile(0, 2),
+        tile(0, 3)};
+    const cj4_tile_id kokushi[] = {
+        tile(8, 0),
+        tile(8, 1),
+        tile(9, 0),
+        tile(17, 0),
+        tile(18, 0),
+        tile(26, 0),
+        tile(27, 0),
+        tile(28, 0),
+        tile(29, 0),
+        tile(30, 0),
+        tile(31, 0),
+        tile(32, 0),
+        tile(33, 0)};
+
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+        delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
+    delegates[CJ4_PLAYER_1] = make_delegate(&contexts[CJ4_PLAYER_1], CJ4_ACTION_RON);
+
+    set_hand(&state, CJ4_PLAYER_0, ankan_tiles, 4);
+    set_hand(&state, CJ4_PLAYER_1, kokushi, (uint8_t)(sizeof(kokushi) / sizeof(kokushi[0])));
+    state.phase = CJ4_PHASE_DRAW;
+    state.current_player = CJ4_PLAYER_0;
+    state.draw_tile = ankan_tiles[3];
+
+    ankan = cj4_do_ankan(
+        state,
+        ankan_tiles[0],
+        ankan_tiles[1],
+        ankan_tiles[2],
+        ankan_tiles[3]);
+    next = cj4m_step(&ankan, &rules, delegates);
+
+    assert(next.phase == CJ4_PHASE_ROUND_END);
+    assert(next.round_end_type == CJ4_ROUND_END_RON);
+    assert(next.winner_count == 1);
+    assert(next.winners[0] == CJ4_PLAYER_1);
+}
+
+static void
+test_collect_actions_hides_ankan_ron_when_rule_disabled(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong ankan;
+    cj4_action actions[CJ4M_MAX_ACTIONS];
+    uint8_t action_count;
+    const cj4_tile_id ankan_tiles[] = {
+        tile(0, 0),
+        tile(0, 1),
+        tile(0, 2),
+        tile(0, 3)};
+    const cj4_tile_id kokushi[] = {
+        tile(8, 0),
+        tile(8, 1),
+        tile(9, 0),
+        tile(17, 0),
+        tile(18, 0),
+        tile(26, 0),
+        tile(27, 0),
+        tile(28, 0),
+        tile(29, 0),
+        tile(30, 0),
+        tile(31, 0),
+        tile(32, 0),
+        tile(33, 0)};
+
+    set_hand(&state, CJ4_PLAYER_0, ankan_tiles, 4);
+    set_hand(&state, CJ4_PLAYER_1, kokushi, (uint8_t)(sizeof(kokushi) / sizeof(kokushi[0])));
+    state.phase = CJ4_PHASE_DRAW;
+    state.current_player = CJ4_PLAYER_0;
+    state.draw_tile = ankan_tiles[3];
+
+    ankan = cj4_do_ankan(
+        state,
+        ankan_tiles[0],
+        ankan_tiles[1],
+        ankan_tiles[2],
+        ankan_tiles[3]);
+    action_count = cj4m_collect_actions(
+        &ankan,
+        &rules,
+        CJ4_PLAYER_1,
+        actions,
+        CJ4M_MAX_ACTIONS);
+
+    assert(contains_action_type(actions, action_count, CJ4_ACTION_PASS));
+    assert(!contains_action_type(actions, action_count, CJ4_ACTION_RON));
+}
+
 int
-manager_tests_main(void)
+manager_tests_main(
+    void)
 {
     test_player_view_hides_hidden_information();
     test_collect_actions_includes_pass_and_claims();
     test_step_uses_delegate_for_draw_phase();
     test_collect_actions_respects_riichi_restrictions();
+    test_collect_actions_filters_kuikae_discards();
+    test_step_can_choose_kyuushu_kyuuhai();
     test_step_prioritizes_pon_over_chi();
     test_step_prioritizes_ron_and_respects_limit();
     test_step_advances_after_all_pass();
+    test_step_allows_kokushi_ron_on_ankan();
+    test_collect_actions_hides_ankan_ron_when_rule_disabled();
     return 0;
 }

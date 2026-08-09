@@ -12,13 +12,16 @@ extern "C"
 #endif
 
     static inline const cj4_location *
-    cj4_tile_location_const(const cj4_mahjong *state, cj4_tile_id tile)
+    cj4_tile_location_const(
+        const cj4_mahjong *state,
+        cj4_tile_id tile)
     {
         return &state->locations[tile];
     }
 
     static inline cj4_player
-    cj4_next_player(const cj4_mahjong *state)
+    cj4_next_player(
+        const cj4_mahjong *state)
     {
         return (cj4_player)((state->current_player + 1) % CJ4_PLAYER_COUNT);
     }
@@ -75,7 +78,8 @@ extern "C"
         CJ4_WIN_YAKU_HOUTEI,
         CJ4_WIN_YAKU_CHANKAN,
         CJ4_WIN_YAKU_TENHOU,
-        CJ4_WIN_YAKU_CHIIHOU
+        CJ4_WIN_YAKU_CHIIHOU,
+        CJ4_WIN_YAKU_NAGASHI_MANGAN
     } cj4_win_yaku;
 
     typedef struct

@@ -9,6 +9,7 @@ extern "C"
 #endif
 
 #define CJ4_MAX_DORA 5
+#define CJ4_LIVE_WALL_END 122
 
     static const uint8_t CJ4_RINSHAN_INDICES[4] = {
         134,

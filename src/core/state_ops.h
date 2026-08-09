@@ -21,6 +21,9 @@ cj4_state_tile_is_in_hand(
     cj4_player player,
     cj4_tile_id tile);
 
+uint8_t
+cj4_state_live_wall_remaining(const cj4_mahjong *state);
+
 cj4_tile_id
 cj4_state_draw_tile(
     cj4_mahjong *state,
@@ -51,6 +54,15 @@ void
 cj4_state_clear_all_ippatsu(cj4_mahjong *state);
 
 void
+cj4_state_establish_pending_riichi(cj4_mahjong *state);
+
+void
+cj4_state_clear_pending_riichi(cj4_mahjong *state);
+
+void
+cj4_state_reveal_pending_kan_dora(cj4_mahjong *state);
+
+void
 cj4_state_record_discard(
     cj4_mahjong *state,
     cj4_tile_id tile,
@@ -68,6 +80,12 @@ cj4_state_add_meld(
     uint8_t size,
     cj4_player from_player,
     uint8_t called_index);
+
+void
+cj4_state_update_pao(
+    cj4_mahjong *state,
+    cj4_player player,
+    cj4_player from_player);
 
 void
 cj4_state_finish_open_call(
@@ -95,5 +113,10 @@ void
 cj4_state_finish_draw_round(
     cj4_mahjong *state,
     cj4_round_end_type round_end_type);
+
+void
+cj4_state_finish_abortive_draw(
+    cj4_mahjong *state,
+    cj4_abortive_draw_reason reason);
 
 #endif /* CJ4_STATE_OPS_H */

@@ -1,5 +1,6 @@
 #include "cjong4/manager/manager.h"
 
+#include "state_abortive.h"
 #include "state_chi.h"
 #include "state_discard.h"
 #include "state_kan.h"
@@ -30,7 +31,9 @@ cj4m_push_action(
 }
 
 static cj4_action
-cj4m_make_action(cj4_action_type type, cj4_player player)
+cj4m_make_action(
+    cj4_action_type type,
+    cj4_player player)
 {
     cj4_action action;
 
@@ -76,7 +79,7 @@ cj4m_collect_turn_actions(
     {
         cj4_action action;
 
-        if (!cj4_can_discard(*state, tile))
+        if (!cj4_can_discard_with_rules(*state, rules, tile))
             continue;
 
         action = cj4m_make_action(CJ4_ACTION_DISCARD, player);
@@ -106,6 +109,13 @@ cj4m_collect_turn_actions(
     if (cj4_can_tsumo(state, rules))
     {
         cj4_action action = cj4m_make_action(CJ4_ACTION_TSUMO, player);
+        action.tile = state->draw_tile;
+        cj4m_push_action(actions, capacity, count, &action);
+    }
+
+    if (cj4_can_kyuushu_kyuuhai(state, rules))
+    {
+        cj4_action action = cj4m_make_action(CJ4_ACTION_ABORTIVE_DRAW, player);
         action.tile = state->draw_tile;
         cj4m_push_action(actions, capacity, count, &action);
     }
@@ -259,6 +269,27 @@ cj4m_collect_kakan_reaction_actions(
     }
 }
 
+static void
+cj4m_collect_ankan_reaction_actions(
+    const cj4_mahjong *state,
+    const cj4_rules *rules,
+    cj4_player player,
+    cj4_action *actions,
+    uint8_t capacity,
+    uint8_t *count)
+{
+    cj4_action pass_action = cj4m_make_action(CJ4_ACTION_PASS, player);
+
+    cj4m_push_action(actions, capacity, count, &pass_action);
+
+    if (cj4_can_ron(state, player, rules))
+    {
+        cj4_action action = cj4m_make_action(CJ4_ACTION_RON, player);
+        action.tile = state->pending_ankan_tile;
+        cj4m_push_action(actions, capacity, count, &action);
+    }
+}
+
 uint8_t
 cj4m_collect_actions(
     const cj4_mahjong *state,
@@ -306,6 +337,19 @@ cj4m_collect_actions(
         if (player != state->current_player)
         {
             cj4m_collect_kakan_reaction_actions(
+                state,
+                rules,
+                player,
+                actions,
+                capacity,
+                &count);
+        }
+        break;
+    case CJ4_PHASE_ANKAN_RESOLVE:
+        if (player != state->current_player &&
+            state->pending_ankan_tile != CJ4_TILE_ID_INVALID)
+        {
+            cj4m_collect_ankan_reaction_actions(
                 state,
                 rules,
                 player,

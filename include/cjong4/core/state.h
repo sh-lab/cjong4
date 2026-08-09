@@ -50,6 +50,24 @@ typedef enum
     CJ4_ROUND_END_ABORTIVE_DRAW
 } cj4_round_end_type;
 
+typedef enum
+{
+    CJ4_ABORTIVE_DRAW_NONE,
+    CJ4_ABORTIVE_DRAW_KYUUSHU_KYUUHAI,
+    CJ4_ABORTIVE_DRAW_SUUFON_RENDA,
+    CJ4_ABORTIVE_DRAW_FOUR_RIICHI,
+    CJ4_ABORTIVE_DRAW_FOUR_KANS,
+    CJ4_ABORTIVE_DRAW_TRIPLE_RON
+} cj4_abortive_draw_reason;
+
+typedef enum
+{
+    CJ4_PAO_NONE,
+    CJ4_PAO_DAISANGEN,
+    CJ4_PAO_DAISUUSHII,
+    CJ4_PAO_SUUKANTSU
+} cj4_pao_type;
+
 typedef struct
 {
 
@@ -76,14 +94,24 @@ typedef struct
     uint8_t is_riichi[CJ4_PLAYER_COUNT];
     uint8_t is_ippatsu[CJ4_PLAYER_COUNT];
     uint8_t riichi_declared_on_first_turn[CJ4_PLAYER_COUNT];
+    uint8_t pending_riichi;
+    cj4_player pending_riichi_player;
+    uint8_t pending_riichi_declared_on_first_turn;
     uint8_t draw_turn_count[CJ4_PLAYER_COUNT];
     uint8_t temporary_furiten[CJ4_PLAYER_COUNT];
     uint8_t riichi_furiten[CJ4_PLAYER_COUNT];
     uint8_t first_turn_uninterrupted;
     uint8_t winning_from_chankan;
+    uint8_t nagashi_mangan[CJ4_PLAYER_COUNT];
+    uint8_t pao_owner[CJ4_PLAYER_COUNT];
+    cj4_player pao_player[CJ4_PLAYER_COUNT];
+    cj4_pao_type pao_type[CJ4_PLAYER_COUNT];
 
     cj4_tile_id draw_tile;          // valid only when phase == CJ4_PHASE_DRAW
     cj4_tile_id pending_kakan_tile; /* valid only when phase == CJ4_PHASE_KAKAN_RESOLVE */
+    cj4_tile_id pending_ankan_tile; /* valid only when phase == CJ4_PHASE_ANKAN_RESOLVE */
+    cj4_tile_id pending_ankan_tiles[4];
+    uint8_t pending_kan_dora;
 
     /* Round result (set when the round ends). */
     cj4_player winner;                    /* winning player (first winner, for compatibility) */
@@ -92,6 +120,7 @@ typedef struct
     uint8_t winner_count;
     cj4_tile_id winning_tile; /* winning tile; CJ4_TILE_ID_INVALID if none */
     cj4_round_end_type round_end_type;
+    cj4_abortive_draw_reason abortive_draw_reason;
 
     /* Settlement result (valid when phase == CJ4_PHASE_SETTLE). */
     cj4_wind next_round_wind;

@@ -5,6 +5,9 @@
 bool
 cj4_can_pon(const cj4_mahjong *state, cj4_player player)
 {
+    if (cj4_state_live_wall_remaining(state) == 0)
+        return false;
+
     if (state->is_riichi[player])
     {
         return false;
@@ -74,6 +77,7 @@ cj4_do_pon(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_ti
         3,
         state.current_player,
         0);
+    cj4_state_establish_pending_riichi(&next);
     cj4_state_finish_open_call(&next, player, CJ4_PHASE_AFTER_CALL);
     next.first_turn_uninterrupted = 0;
     next.winning_from_chankan = 0;
