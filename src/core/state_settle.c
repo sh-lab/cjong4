@@ -5,13 +5,64 @@
 #include <assert.h>
 
 static uint8_t
+cj4_settle_rule_bool(
+    const cj4_rules *rules,
+    uint8_t value,
+    uint8_t default_value)
+{
+    if (!rules || rules->version == 0)
+        return default_value;
+
+    return value != 0;
+}
+
+static int32_t
+cj4_settle_progress_score(
+    const cj4_mahjong *state,
+    const cj4_rules *rules,
+    cj4_player player,
+    cj4_player riichi_stick_winner,
+    uint8_t awarded_riichi_sticks)
+{
+    int32_t score = state->scores[player];
+
+    if (cj4_settle_rule_bool(
+            rules,
+            rules ? rules->target_score_excludes_riichi_sticks : 0,
+            0) &&
+        player == riichi_stick_winner)
+    {
+        score -= awarded_riichi_sticks * 1000;
+    }
+
+    return score;
+}
+
+static uint8_t
 cj4_settle_player_has_top_score(
     const cj4_mahjong *state,
-    cj4_player player)
+    const cj4_rules *rules,
+    cj4_player player,
+    cj4_player riichi_stick_winner,
+    uint8_t awarded_riichi_sticks)
 {
+    int32_t player_score = cj4_settle_progress_score(
+        state,
+        rules,
+        player,
+        riichi_stick_winner,
+        awarded_riichi_sticks);
+
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
     {
-        if (state->scores[i] > state->scores[player])
+        int32_t score = cj4_settle_progress_score(
+            state,
+            rules,
+            (cj4_player)i,
+            riichi_stick_winner,
+            awarded_riichi_sticks);
+
+        if (score > player_score)
             return 0;
     }
 
@@ -55,18 +106,6 @@ cj4_settle_first_nagashi_mangan_player(
     }
 
     return CJ4_PLAYER_COUNT;
-}
-
-static uint8_t
-cj4_settle_rule_bool(
-    const cj4_rules *rules,
-    uint8_t value,
-    uint8_t default_value)
-{
-    if (!rules || rules->version == 0)
-        return default_value;
-
-    return value != 0;
 }
 
 static uint8_t
@@ -441,7 +480,9 @@ cj4_settle_determine_progress(
     cj4_mahjong *next,
     const cj4_mahjong *state,
     const cj4_rules *rules,
-    uint8_t dealer_continues)
+    uint8_t dealer_continues,
+    cj4_player riichi_stick_winner,
+    uint8_t awarded_riichi_sticks)
 {
     cj4_wind last_round_wind = cj4_settle_last_round_wind(rules);
     cj4_wind extension_last_round_wind =
@@ -465,7 +506,14 @@ cj4_settle_determine_progress(
 
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
     {
-        if (next->scores[i] >= target_score)
+        int32_t score = cj4_settle_progress_score(
+            next,
+            rules,
+            (cj4_player)i,
+            riichi_stick_winner,
+            awarded_riichi_sticks);
+
+        if (score >= target_score)
         {
             reached_target = 1;
             break;
@@ -497,7 +545,12 @@ cj4_settle_determine_progress(
         if (reached_target)
         {
             if (!dealer_continues ||
-                cj4_settle_player_has_top_score(next, state->dealer))
+                cj4_settle_player_has_top_score(
+                    next,
+                    rules,
+                    state->dealer,
+                    riichi_stick_winner,
+                    awarded_riichi_sticks))
             {
                 next->settlement_should_end = 1;
                 return;
@@ -521,6 +574,8 @@ cj4_do_settle(
     cj4_mahjong next = state;
     uint8_t tenpai[CJ4_PLAYER_COUNT] = {0};
     uint8_t dealer_continues = 0;
+    cj4_player riichi_stick_winner = CJ4_PLAYER_COUNT;
+    uint8_t awarded_riichi_sticks = 0;
 
     assert(cj4_can_settle(state));
 
@@ -548,7 +603,9 @@ cj4_do_settle(
 
         if (state.riichi_sticks > 0)
         {
-            next.scores[state.winners[0]] += state.riichi_sticks * 1000;
+            riichi_stick_winner = state.winners[0];
+            awarded_riichi_sticks = state.riichi_sticks;
+            next.scores[riichi_stick_winner] += state.riichi_sticks * 1000;
             next.riichi_sticks = 0;
         }
 
@@ -579,6 +636,8 @@ cj4_do_settle(
             stick_winner = cj4_settle_first_nagashi_mangan_player(&state);
             if (stick_winner < CJ4_PLAYER_COUNT && state.riichi_sticks > 0)
             {
+                riichi_stick_winner = stick_winner;
+                awarded_riichi_sticks = state.riichi_sticks;
                 next.scores[stick_winner] += state.riichi_sticks * 1000;
                 next.riichi_sticks = 0;
             }
@@ -596,7 +655,13 @@ cj4_do_settle(
         next.honba = dealer_continues ? (uint8_t)(state.honba + 1) : 0;
     }
 
-    cj4_settle_determine_progress(&next, &state, rules, dealer_continues);
+    cj4_settle_determine_progress(
+        &next,
+        &state,
+        rules,
+        dealer_continues,
+        riichi_stick_winner,
+        awarded_riichi_sticks);
 
     if (next.settlement_should_end && dealer_continues && next.honba > state.honba)
     {

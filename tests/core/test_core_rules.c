@@ -178,6 +178,11 @@ test_rules_default_and_validate(
     assert(rules.kiriage_mangan == 1);
     assert(rules.multi_ron_honba_first_only == 0);
     assert(rules.nagashi_dealer_tenpai_renchan == 0);
+    assert(rules.target_score_excludes_riichi_sticks == 0);
+
+    rules.target_score_excludes_riichi_sticks = 2;
+    assert(!cj4_rules_validate(&rules));
+    rules.target_score_excludes_riichi_sticks = 0;
 
     rules.max_ron_players = 0;
     assert(!cj4_rules_validate(&rules));
@@ -205,6 +210,7 @@ test_tenhou_preset_fields(
     assert(rules.pao_suukantsu == 0);
     assert(rules.multi_ron_honba_first_only == 1);
     assert(rules.nagashi_dealer_tenpai_renchan == 1);
+    assert(rules.target_score_excludes_riichi_sticks == 1);
 }
 
 static void
@@ -1772,6 +1778,104 @@ test_tonpuu_ending_on_dealer_tenpai_draw_does_not_increase_honba(
 }
 
 static void
+test_tenhou_target_score_excludes_awarded_riichi_sticks(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong won;
+    cj4_mahjong settled;
+    cj4_player winner = CJ4_PLAYER_2;
+    const cj4_tile_id hand[] = {
+        tile(1, 0),
+        tile(2, 0),
+        tile(3, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(12, 0),
+        tile(19, 0),
+        tile(20, 0),
+        tile(21, 0),
+        tile(4, 1),
+        tile(5, 1),
+        tile(14, 0),
+        tile(14, 1)};
+
+    set_hand(&state, winner, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
+    state.phase = CJ4_PHASE_DISCARD;
+    state.round_wind = CJ4_WIND_SOUTH;
+    state.current_player = CJ4_PLAYER_0;
+    state.dealer = CJ4_PLAYER_3;
+    state.riichi_sticks = 1;
+    state.scores[CJ4_PLAYER_0] = 32700;
+    state.scores[CJ4_PLAYER_1] = 25000;
+    state.scores[CJ4_PLAYER_2] = 21300;
+    state.scores[CJ4_PLAYER_3] = 20000;
+    add_discard(&state, CJ4_PLAYER_0, tile(6, 0));
+
+    won = cj4_do_ron_multi(state, &winner, 1, &rules);
+    settled = cj4_do_settle(won, &rules);
+
+    assert(settled.scores[winner] == 30000);
+    assert(settled.riichi_sticks == 0);
+    assert(settled.settlement_should_end == 0);
+    assert(settled.next_round_wind == CJ4_WIND_WEST);
+
+    rules.target_score_excludes_riichi_sticks = 0;
+    settled = cj4_do_settle(won, &rules);
+    assert(settled.settlement_should_end == 1);
+}
+
+static void
+test_tenhou_dealer_top_check_excludes_awarded_riichi_sticks(
+    void)
+{
+    cj4_rules rules = cj4_rules_tenhou();
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong won;
+    cj4_mahjong settled;
+    cj4_player winner = CJ4_PLAYER_3;
+    const cj4_tile_id hand[] = {
+        tile(1, 0),
+        tile(2, 0),
+        tile(3, 0),
+        tile(10, 0),
+        tile(11, 0),
+        tile(12, 0),
+        tile(19, 0),
+        tile(20, 0),
+        tile(21, 0),
+        tile(4, 1),
+        tile(5, 1),
+        tile(14, 0),
+        tile(14, 1)};
+
+    set_hand(&state, winner, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
+    state.phase = CJ4_PHASE_DISCARD;
+    state.round_wind = CJ4_WIND_SOUTH;
+    state.current_player = CJ4_PLAYER_0;
+    state.dealer = winner;
+    state.riichi_sticks = 1;
+    state.scores[CJ4_PLAYER_0] = 36600;
+    state.scores[CJ4_PLAYER_1] = 30000;
+    state.scores[CJ4_PLAYER_2] = 14500;
+    state.scores[CJ4_PLAYER_3] = 17900;
+    add_discard(&state, CJ4_PLAYER_0, tile(6, 0));
+
+    won = cj4_do_ron_multi(state, &winner, 1, &rules);
+    settled = cj4_do_settle(won, &rules);
+
+    assert(settled.scores[winner] == 30500);
+    assert(settled.riichi_sticks == 0);
+    assert(settled.settlement_should_end == 0);
+    assert(settled.next_dealer == winner);
+
+    rules.target_score_excludes_riichi_sticks = 0;
+    settled = cj4_do_settle(won, &rules);
+    assert(settled.settlement_should_end == 1);
+}
+
+static void
 test_double_riichi_is_always_enabled(
     void)
 {
@@ -2829,6 +2933,8 @@ main(
     test_tonpuu_ends_when_dealer_is_top_and_matches_target();
     test_tonpuu_continues_when_dealer_renchan_is_not_top();
     test_tonpuu_ending_on_dealer_tenpai_draw_does_not_increase_honba();
+    test_tenhou_target_score_excludes_awarded_riichi_sticks();
+    test_tenhou_dealer_top_check_excludes_awarded_riichi_sticks();
     test_double_riichi_is_always_enabled();
     test_score_rules_control_kazoe_and_kiriage();
     test_zero_initialized_rules_keep_v1_score_compatibility();
