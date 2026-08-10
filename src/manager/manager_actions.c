@@ -99,6 +99,9 @@ cj4m_collect_turn_actions(
     {
         cj4_action action;
 
+        if (!cj4_state_tile_is_in_hand(state, player, tile))
+            continue;
+
         if (!cj4_can_riichi(state, tile))
             continue;
 
