@@ -213,6 +213,8 @@ v1.1.0 は公開構造体 `cj4_rules` / `cj4_mahjong` を拡張します。ソ�
 
 v1.1.1 は公開構造体 `cj4_player_view` を拡張します。v1.1.0 とのバイナリABI互換は保証しません。
 
+v1.1.2 は捨て牌・立直候補収集時の不要な状態コピーを削減する性能改善リリースです。公開APIおよびABIに変更はありません。
+
 ## C言語仕様 / Language Standard
 
 - ISO C11
@@ -251,8 +253,8 @@ tests/manager/            manager tests
 
 ## ステータス / Status
 
-1.1.1 リリース<br>
-1.1.1 release
+1.1.2 リリース<br>
+1.1.2 release
 
 ---
 
