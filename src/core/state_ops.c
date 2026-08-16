@@ -264,7 +264,7 @@ cj4_state_record_discard(
     for (uint16_t id = 0; id < CJ4_TILE_ID_COUNT; ++id)
     {
         uint8_t discard = state->locations[id].discard;
-        if (discard != CJ4_LOCATION_NONE &&
+        if (cj4_location_is_discard(discard) &&
             cj4_location_discard_player(discard) == player)
             player_index++;
     }

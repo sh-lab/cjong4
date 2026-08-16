@@ -64,7 +64,7 @@ cj4_collect_discards(
         uint8_t index;
         cj4_discard *discard;
 
-        if (loc->discard == CJ4_LOCATION_NONE ||
+        if (!cj4_location_is_discard(loc->discard) ||
             loc->discard_history == CJ4_LOCATION_NONE)
             continue;
 
@@ -115,7 +115,7 @@ cj4_get_meld(
         }
         if (meld.size < 4)
         {
-            if (loc->discard != CJ4_LOCATION_NONE)
+            if (cj4_location_is_discard(loc->discard))
             {
                 meld.called_index = meld.size;
                 meld.from_player = cj4_location_discard_player(loc->discard);
@@ -165,7 +165,7 @@ cj4_collect_melds(
         }
         if (meld->size >= 4)
             continue;
-        if (loc->discard != CJ4_LOCATION_NONE)
+        if (cj4_location_is_discard(loc->discard))
         {
             meld->called_index = meld->size;
             meld->from_player = cj4_location_discard_player(loc->discard);
@@ -221,7 +221,7 @@ cj4_is_nagashi_mangan(
     for (uint16_t tile = 0; tile < CJ4_TILE_ID_COUNT; ++tile)
     {
         const cj4_location *loc = &state->locations[tile];
-        if (loc->discard == CJ4_LOCATION_NONE ||
+        if (!cj4_location_is_discard(loc->discard) ||
             cj4_location_discard_player(loc->discard) != player)
             continue;
         discarded = true;
@@ -243,7 +243,7 @@ cj4_make_player_state(
         cj4_location *loc = &masked.locations[tile];
         bool own_hand = cj4_location_is_hand(loc->placement) &&
                         cj4_location_placement_player(loc->placement) == player;
-        bool visible = loc->discard != CJ4_LOCATION_NONE ||
+        bool visible = cj4_location_is_discard(loc->discard) ||
                        cj4_location_is_meld(loc->placement);
         for (uint8_t i = 0; !visible && i < state->dora_count && i < CJ4_MAX_DORA; ++i)
             visible = loc->wall == CJ4_DORA_INDICES[i];

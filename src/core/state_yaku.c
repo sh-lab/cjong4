@@ -1378,7 +1378,8 @@ cj4_yaku_count_aka_dora(
         const cj4_location *loc = cj4_tile_location_const(state, (cj4_tile_id)tile);
 
         if (rules->aka_tiles[tile] &&
-            loc->placement != CJ4_LOCATION_NONE &&
+            (cj4_location_is_hand(loc->placement) ||
+             cj4_location_is_meld(loc->placement)) &&
             cj4_location_placement_player(loc->placement) == player)
         {
             count++;
@@ -1401,6 +1402,10 @@ cj4_yaku_count_indicator_dora(
     for (uint8_t i = 0; i < indicator_count && i < CJ4_MAX_DORA; ++i)
     {
         cj4_tile_id indicator_tile = cj4_get_wall_tile(state, indices[i]);
+
+        if (indicator_tile == CJ4_TILE_ID_INVALID)
+            continue;
+
         cj4_tile_type dora_type = cj4_yaku_next_dora_type(cj4_tile_get_type(indicator_tile));
         count += (uint8_t)ctx->total_counts[dora_type];
     }
@@ -1429,10 +1434,16 @@ cj4_yaku_copy_indicator_tiles(
     if (indicator_count > CJ4_MAX_WIN_RESULT_DORA_INDICATORS)
         indicator_count = CJ4_MAX_WIN_RESULT_DORA_INDICATORS;
 
+    *out_count = 0;
     for (uint8_t i = 0; i < indicator_count; ++i)
-        out_tiles[i] = cj4_get_wall_tile(state, indices[i]);
+    {
+        cj4_tile_id tile = cj4_get_wall_tile(state, indices[i]);
 
-    *out_count = indicator_count;
+        if (tile == CJ4_TILE_ID_INVALID)
+            continue;
+
+        out_tiles[(*out_count)++] = tile;
+    }
 }
 
 static uint8_t

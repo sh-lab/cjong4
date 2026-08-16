@@ -161,12 +161,20 @@ test_v2_packed_location_and_state_layout(
     void)
 {
     cj4_mahjong state = make_empty_state();
+    cj4_discard discards[CJ4_MAX_DISCARDS];
 
     assert(sizeof(cj4_location) == 4);
     assert(sizeof(cj4_mahjong) >= sizeof(cj4_location) * CJ4_TILE_ID_COUNT);
     assert(sizeof(cj4_mahjong) <= 700);
 
     assert(cj4_location_make_discard(CJ4_PLAYER_3, 30, true) == 0xfe);
+    assert(cj4_location_is_discard(0x00));
+    assert(cj4_location_is_discard(0x1e));
+    assert(cj4_location_is_discard(0x80));
+    assert(cj4_location_is_discard(0xfe));
+    assert(!cj4_location_is_discard(0x1f));
+    assert(!cj4_location_is_discard(0x7f));
+    assert(!cj4_location_is_discard(CJ4_LOCATION_NONE));
     assert(cj4_location_make_hand(CJ4_PLAYER_3) == 0x60);
     assert(cj4_location_make_meld(
                CJ4_PLAYER_3,
@@ -186,6 +194,12 @@ test_v2_packed_location_and_state_layout(
     assert(!cj4_location_is_meld(CJ4_LOCATION_NONE));
     assert(cj4_get_wall_tile(&state, CJ4_LOCATION_NONE) ==
            CJ4_TILE_ID_INVALID);
+
+    state.locations[0].discard = 0x1f;
+    state.locations[0].discard_history =
+        cj4_location_make_discard_history(0, false);
+    state.discard_count = 1;
+    assert(cj4_collect_discards(&state, discards) == 0);
 
     cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
     cj4_state_set_current_player(&state, CJ4_PLAYER_2);
@@ -2362,6 +2376,18 @@ test_collect_winning_results_exposes_dora_indicators(
     assert(results[0].ura_dora_indicators_count == 2);
     assert(results[0].ura_dora_indicators[0] == tile(28, 0));
     assert(results[0].ura_dora_indicators[1] == tile(32, 0));
+
+    won.locations[tile(27, 0)].wall = CJ4_LOCATION_NONE;
+    result_count = 0;
+    assert(cj4_collect_winning_results(
+        &won,
+        &rules,
+        results,
+        CJ4_PLAYER_COUNT,
+        &result_count));
+    assert(result_count == 1);
+    assert(results[0].dora_indicators_count == 1);
+    assert(results[0].dora_indicators[0] == tile(31, 0));
 }
 
 static void

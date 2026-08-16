@@ -50,11 +50,18 @@ extern "C"
                          ((uint8_t)player << 5) | index);
     }
 
+    static inline bool
+    cj4_location_is_discard(
+        uint8_t discard)
+    {
+        return (discard & 0x1fu) <= CJ4_DISCARD_INDEX_MAX;
+    }
+
     static inline cj4_player
     cj4_location_discard_player(
         uint8_t discard)
     {
-        assert(discard != CJ4_LOCATION_NONE);
+        assert(cj4_location_is_discard(discard));
         return (cj4_player)((discard >> 5) & 0x03u);
     }
 
@@ -62,7 +69,7 @@ extern "C"
     cj4_location_discard_index(
         uint8_t discard)
     {
-        assert(discard != CJ4_LOCATION_NONE);
+        assert(cj4_location_is_discard(discard));
         return discard & 0x1fu;
     }
 
@@ -70,7 +77,7 @@ extern "C"
     cj4_location_discard_is_tsumogiri(
         uint8_t discard)
     {
-        assert(discard != CJ4_LOCATION_NONE);
+        assert(cj4_location_is_discard(discard));
         return (discard & 0x80u) != 0;
     }
 
