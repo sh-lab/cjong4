@@ -5,13 +5,15 @@
 #include <string.h>
 
 static uint8_t
-cj4_rules_is_bool(uint8_t value)
+cj4_rules_is_bool(
+    uint8_t value)
 {
     return value == 0 || value == 1;
 }
 
 static uint8_t
-cj4_rules_booleans_are_valid(const cj4_rules *rules)
+cj4_rules_booleans_are_valid(
+    const cj4_rules *rules)
 {
     const uint8_t values[] = {
         rules->tobi_end,
@@ -50,7 +52,8 @@ cj4_rules_booleans_are_valid(const cj4_rules *rules)
 }
 
 static void
-cj4_rules_set_common_red_fives(cj4_rules *rules)
+cj4_rules_set_common_red_fives(
+    cj4_rules *rules)
 {
     rules->aka_tiles[CJ4_TILE_ID_5M_0] = 1;
     rules->aka_tiles[CJ4_TILE_ID_5P_0] = 1;
@@ -58,7 +61,8 @@ cj4_rules_set_common_red_fives(cj4_rules *rules)
 }
 
 cj4_rules
-cj4_rules_default(void)
+cj4_rules_default(
+    void)
 {
     cj4_rules rules;
 
@@ -108,7 +112,8 @@ cj4_rules_default(void)
 }
 
 cj4_rules
-cj4_rules_tenhou(void)
+cj4_rules_tenhou(
+    void)
 {
     cj4_rules rules = cj4_rules_default();
 
@@ -131,7 +136,8 @@ cj4_rules_tenhou(void)
 }
 
 cj4_rules
-cj4_rules_mjsoul(void)
+cj4_rules_mjsoul(
+    void)
 {
     cj4_rules rules = cj4_rules_default();
 
@@ -142,7 +148,8 @@ cj4_rules_mjsoul(void)
 }
 
 bool
-cj4_rules_validate(const cj4_rules *rules)
+cj4_rules_validate(
+    const cj4_rules *rules)
 {
     if (!rules)
         return false;

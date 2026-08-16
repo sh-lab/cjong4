@@ -1,5 +1,6 @@
 #include "state_discard.h"
 #include "state_ops.h"
+#include "state_query.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -10,21 +11,27 @@ cj4_kuikae_is_forbidden(
     const cj4_rules *rules,
     cj4_tile_id tile)
 {
-    cj4_player player = state->current_player;
-    const cj4_meld *meld;
+    cj4_player player = cj4_state_current_player(state);
+    cj4_meld meld_value;
+    cj4_meld *meld = &meld_value;
     cj4_tile_type discard_type;
     cj4_tile_type called_type;
 
     if (!rules || !rules->kuikae_forbidden)
         return 0;
 
-    if (state->phase != CJ4_PHASE_AFTER_CALL ||
-        state->meld_count[player] == 0)
+    if (cj4_state_phase(state) != CJ4_PHASE_AFTER_CALL ||
+        cj4_count_melds(state, player) == 0)
     {
         return 0;
     }
 
-    meld = &state->melds[player][state->meld_count[player] - 1];
+    if (!cj4_get_meld(
+            state,
+            player,
+            (uint8_t)(cj4_count_melds(state, player) - 1),
+            meld))
+        return 0;
 
     if (meld->type != CJ4_MELD_PON && meld->type != CJ4_MELD_CHI)
         return 0;
@@ -88,9 +95,9 @@ cj4_can_discard_with_rules(
     const cj4_rules *rules,
     cj4_tile_id tile)
 {
-    cj4_player player = state.current_player;
+    cj4_player player = cj4_state_current_player(&state);
 
-    if (state.phase != CJ4_PHASE_DRAW && state.phase != CJ4_PHASE_AFTER_CALL)
+    if (cj4_state_phase(&state) != CJ4_PHASE_DRAW && cj4_state_phase(&state) != CJ4_PHASE_AFTER_CALL)
     {
         return false;
     }
@@ -105,7 +112,7 @@ cj4_can_discard_with_rules(
         return false;
     }
 
-    if (state.is_riichi[player] && tile != state.draw_tile)
+    if (cj4_state_is_riichi(&state, player) && tile != state.draw_tile)
     {
         return false;
     }
@@ -130,27 +137,25 @@ cj4_do_discard_with_rules(
     const cj4_rules *rules,
     cj4_tile_id tile)
 {
-    assert(cj4_can_discard_with_rules(state, rules, tile));
+    if (!cj4_can_discard_with_rules(state, rules, tile))
+        return state;
 
     cj4_mahjong next = state;
 
     cj4_state_reveal_pending_kan_dora(&next);
-    cj4_state_record_discard(&next, tile, (uint8_t)(tile == state.draw_tile));
+    cj4_state_record_discard(
+        &next,
+        tile,
+        (uint8_t)(tile == state.draw_tile),
+        0);
     cj4_state_clear_draw_tile(&next);
-    next.winning_from_chankan = 0;
+    cj4_state_set_chankan(&next, 0);
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     next.pending_ankan_tile = CJ4_TILE_ID_INVALID;
-    if (state.is_ippatsu[state.current_player])
-        next.is_ippatsu[state.current_player] = 0;
+    if (cj4_state_is_ippatsu(&state, cj4_state_current_player(&state)))
+        cj4_state_set_ippatsu(&next, cj4_state_current_player(&state), false);
 
-    if (state.is_riichi[state.current_player] &&
-        state.first_turn_uninterrupted &&
-        state.draw_turn_count[state.current_player] == 1)
-    {
-        next.riichi_declared_on_first_turn[state.current_player] = 1;
-    }
-
-    next.phase = CJ4_PHASE_DISCARD;
+    cj4_state_set_phase(&next, CJ4_PHASE_DISCARD);
 
     return next;
 }

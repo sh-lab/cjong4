@@ -92,7 +92,7 @@ cj4m_collect_turn_actions(
         cj4m_push_action(actions, capacity, count, &action);
     }
 
-    if (state->phase != CJ4_PHASE_DRAW)
+    if (cj4_state_phase(state) != CJ4_PHASE_DRAW)
         return;
 
     for (cj4_tile_id tile = CJ4_TILE_ID_MIN; tile <= CJ4_TILE_ID_MAX; ++tile)
@@ -184,6 +184,8 @@ cj4m_collect_discard_reaction_actions(
     }
 
     last = cj4_get_last_discard_tile(state);
+    if (!cj4_tile_id_is_valid(last))
+        return;
     type = cj4_tile_get_type(last);
 
     if (cj4_can_pon(state, player))
@@ -312,11 +314,11 @@ cj4m_collect_actions(
     if (capacity == 0)
         return 0;
 
-    switch (state->phase)
+    switch (cj4_state_phase(state))
     {
     case CJ4_PHASE_DRAW:
     case CJ4_PHASE_AFTER_CALL:
-        if (player == state->current_player)
+        if (player == cj4_state_current_player(state))
         {
             cj4m_collect_turn_actions(
                 state,
@@ -328,7 +330,7 @@ cj4m_collect_actions(
         }
         break;
     case CJ4_PHASE_DISCARD:
-        if (player != state->current_player)
+        if (player != cj4_state_current_player(state))
         {
             cj4m_collect_discard_reaction_actions(
                 state,
@@ -340,7 +342,7 @@ cj4m_collect_actions(
         }
         break;
     case CJ4_PHASE_KAKAN_RESOLVE:
-        if (player != state->current_player)
+        if (player != cj4_state_current_player(state))
         {
             cj4m_collect_kakan_reaction_actions(
                 state,
@@ -352,7 +354,7 @@ cj4m_collect_actions(
         }
         break;
     case CJ4_PHASE_ANKAN_RESOLVE:
-        if (player != state->current_player &&
+        if (player != cj4_state_current_player(state) &&
             state->pending_ankan_tile != CJ4_TILE_ID_INVALID)
         {
             cj4m_collect_ankan_reaction_actions(

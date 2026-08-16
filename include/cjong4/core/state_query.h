@@ -23,7 +23,7 @@ extern "C"
     cj4_next_player(
         const cj4_mahjong *state)
     {
-        return (cj4_player)((state->current_player + 1) % CJ4_PLAYER_COUNT);
+        return (cj4_player)((cj4_state_current_player(state) + 1) % CJ4_PLAYER_COUNT);
     }
 
     enum
@@ -110,6 +110,45 @@ extern "C"
 
     cj4_tile_id
     cj4_get_last_discard_tile(const cj4_mahjong *state);
+
+    cj4_tile_id
+    cj4_get_wall_tile(const cj4_mahjong *state, uint8_t wall_position);
+
+    uint8_t
+    cj4_location_collect_hand(
+        const cj4_mahjong *state,
+        cj4_player player,
+        cj4_tile_id out_tiles[CJ4_MAX_HAND_TILES]);
+
+    uint8_t
+    cj4_location_collect_discards(
+        const cj4_mahjong *state,
+        cj4_discard out_discards[CJ4_MAX_DISCARDS]);
+
+    uint8_t
+    cj4_location_collect_melds(
+        const cj4_mahjong *state,
+        cj4_player player,
+        cj4_meld out_melds[CJ4_MAX_MELDS]);
+
+    uint8_t
+    cj4_count_melds(const cj4_mahjong *state, cj4_player player);
+
+    bool
+    cj4_get_meld(
+        const cj4_mahjong *state,
+        cj4_player player,
+        uint8_t group,
+        cj4_meld *out_meld);
+
+    cj4_player
+    cj4_get_winner(const cj4_mahjong *state, uint8_t index);
+
+    bool
+    cj4_is_nagashi_mangan(const cj4_mahjong *state, cj4_player player);
+
+    cj4_mahjong
+    cj4_make_player_state(const cj4_mahjong *state, cj4_player player);
 
     bool
     cj4_collect_winning_results(

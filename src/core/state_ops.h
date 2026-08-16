@@ -41,10 +41,9 @@ uint8_t
 cj4_state_all_kans_by_one_player(const cj4_mahjong *state);
 
 void
-cj4_state_set_location(
+cj4_state_set_hand_location(
     cj4_mahjong *state,
     cj4_tile_id tile,
-    cj4_zone zone,
     cj4_player owner);
 
 void
@@ -66,7 +65,8 @@ void
 cj4_state_record_discard(
     cj4_mahjong *state,
     cj4_tile_id tile,
-    uint8_t is_tsumogiri);
+    uint8_t is_tsumogiri,
+    uint8_t is_riichi);
 
 void
 cj4_state_consume_last_discard(cj4_mahjong *state);

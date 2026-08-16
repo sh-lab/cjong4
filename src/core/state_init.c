@@ -3,6 +3,47 @@
 #include "state_round_init.h"
 #include <string.h>
 
+bool
+cj4_wall_is_valid(
+    const cj4_tile_id wall[CJ4_TILE_ID_COUNT])
+{
+    uint8_t seen[CJ4_TILE_ID_COUNT] = {0};
+
+    if (!wall)
+        return false;
+
+    for (uint16_t position = 0; position < CJ4_TILE_ID_COUNT; ++position)
+    {
+        cj4_tile_id tile = wall[position];
+
+        if (!cj4_tile_id_is_valid(tile) || seen[tile])
+            return false;
+        seen[tile] = 1;
+    }
+
+    return true;
+}
+
+static cj4_mahjong
+cj4_state_create_invalid(
+    void)
+{
+    cj4_mahjong state;
+
+    memset(&state, 0, sizeof(state));
+    memset(state.locations, CJ4_LOCATION_NONE, sizeof(state.locations));
+    state.draw_tile = CJ4_TILE_ID_INVALID;
+    state.last_discard_tile = CJ4_TILE_ID_INVALID;
+    state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    memset(state.pending_ankan_tiles, CJ4_TILE_ID_INVALID, sizeof(state.pending_ankan_tiles));
+    state.winning_tile = CJ4_TILE_ID_INVALID;
+    cj4_state_clear_pending_riichi_bits(&state);
+    cj4_state_set_phase(&state, CJ4_PHASE_GAME_END);
+
+    return state;
+}
+
 cj4_mahjong
 cj4_state_create_round(
     const cj4_tile_id wall[CJ4_TILE_ID_COUNT],
@@ -15,12 +56,15 @@ cj4_state_create_round(
 {
     cj4_mahjong state;
 
-    // Minimal safe initialization
-    memset(&state, 0, sizeof(state));
+    if (!cj4_wall_is_valid(wall))
+        return cj4_state_create_invalid();
 
-    if (wall)
+    memset(&state, 0, sizeof(state));
+    memset(state.locations, CJ4_LOCATION_NONE, sizeof(state.locations));
+    for (uint16_t position = 0; position < CJ4_TILE_ID_COUNT; ++position)
     {
-        memcpy(state.wall, wall, sizeof(state.wall));
+        cj4_tile_id tile = wall[position];
+        state.locations[tile].wall = (uint8_t)position;
     }
 
     int32_t initial_score = 25000;
@@ -62,30 +106,28 @@ cj4_state_create_round(
     }
 
     state.draw_tile = cj4_state_draw_tile(&state, state.dealer);
-    state.draw_turn_count[state.dealer] = 1;
+    cj4_state_set_draw_turn(&state, state.dealer, 1);
 
     state.dead_wall_draw_count = 0;
 
-    state.dora_indicators_count = 1;
-    state.first_turn_uninterrupted = 1;
-    state.winning_from_chankan = 0;
+    state.dora_count = 1;
+    cj4_state_set_first_turn(&state, true);
+    cj4_state_set_chankan(&state, false);
     state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
     for (int i = 0; i < 4; ++i)
         state.pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
-    state.pending_riichi = 0;
-    state.pending_riichi_player = CJ4_PLAYER_COUNT;
-    state.pending_riichi_declared_on_first_turn = 0;
+    cj4_state_clear_pending_riichi_bits(&state);
     state.pending_kan_dora = 0;
     state.winning_tile = CJ4_TILE_ID_INVALID;
-    state.round_end_type = CJ4_ROUND_END_NONE;
+    state.last_discard_tile = CJ4_TILE_ID_INVALID;
+    cj4_state_set_round_result(&state, CJ4_ROUND_END_NONE, CJ4_ABORTIVE_DRAW_NONE);
     state.next_round_wind = CJ4_WIND_EAST;
     state.next_dealer = CJ4_PLAYER_0;
     state.settlement_should_end = 0;
 
-    state.current_player = state.dealer;
-
-    state.phase = CJ4_PHASE_DRAW;
+    cj4_state_set_current_player(&state, state.dealer);
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
 
     return state;
 }

@@ -24,6 +24,51 @@ This library is designed with the following principles:
 
 ---
 
+## ビルド / Build
+
+必要なもの：
+
+- CMake 3.16以降
+- ISO C11対応コンパイラ（GCC、Clang、MSVC）
+
+Releaseビルド：
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
+```
+
+## テスト / Test
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
+cmake --build build --config Release --parallel
+ctest --test-dir build -C Release --output-on-failure
+```
+
+## インストール / Install
+
+任意のprefixへ静的ライブラリ、公開ヘッダ、CMake package filesをインストールできます。
+
+```sh
+cmake --install build --config Release --prefix /path/to/prefix
+```
+
+CMakeプロジェクトから利用する場合：
+
+```cmake
+find_package(cjong4 2 CONFIG REQUIRED)
+target_link_libraries(your_target PRIVATE cjong4::cj4)
+```
+
+標準の探索先以外へインストールした場合は、利用側の構成時にprefixを指定します。
+
+```sh
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/prefix
+```
+
+---
+
 ## アーキテクチャ / Architecture
 
 cjong4 は以下の3層構造で設計されています：
@@ -74,9 +119,19 @@ cj4_action (*decide)(
 cjong4 は牌を「集合」ではなく「位置」で管理します。
 
 - 各牌は固定IDを持つ
-- 状態は配置で表現される
+- `locations[136]` を牌配置の唯一の正規データとする
+- 各牌の4バイトに元山位置・捨牌・手牌/鳴牌・捨牌履歴を保持する
+- 山・捨牌・手牌・鳴牌は必要時に最大136枚を走査して復元する
+- ツモ牌と最新捨牌だけは牌IDを直接保持する
 - ソート不要
 - 同一性は構造的に比較可能
+
+`cj4_location` は常に4バイトで、各バイトの未使用値は `0xFF` です。復元には
+`cj4_get_wall_tile()`、`cj4_location_collect_hand()`、
+`cj4_location_collect_discards()`、`cj4_location_collect_melds()` を使用できます。
+プレイヤー別のマスク済み状態は `cj4_make_player_state()` で生成できます。
+マスク済み状態は参照・表示用であり、状態遷移APIへの入力には使用しません。
+現在のClang環境で `cj4_mahjong` は592バイトです。
 
 ---
 
@@ -105,7 +160,7 @@ cjong4 は牌を「集合」ではなく「位置」で管理します。
 ライブラリは外部駆動型です：
 
 ```c
-while (state.phase != CJ4_PHASE_GAME_END)
+while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 {
     state = cj4m_step(&state, &rules, delegates);
 
@@ -120,6 +175,8 @@ while (state.phase != CJ4_PHASE_GAME_END)
 
 - `cj4m_step` は局内の進行を1ステップ進める
 - 次局開始時の wall 供給は呼び出し側が行う
+- wall は `0`〜`135` の物理牌IDを各1回含む必要があり、
+  `cj4_wall_is_valid()` で事前検証できる
 - UI・AI・ログと容易に統合可能
 
 ---
@@ -133,7 +190,7 @@ while (state.phase != CJ4_PHASE_GAME_END)
 - 流し満貫
 - 責任払い（大三元・大四喜・四槓子）
 
-### v1.1.x 対応ルール
+### v2 対応ルール
 
 - 立直宣言は「宣言中」と「成立済み」を分離
   - 宣言牌へのロンがなければ、鳴かれた場合も立直成立
@@ -209,11 +266,7 @@ while (state.phase != CJ4_PHASE_GAME_END)
 
 ## 互換性 / Compatibility
 
-v1.1.0 は公開構造体 `cj4_rules` / `cj4_mahjong` を拡張します。ソース互換を基準とし、v1.0.0 とのバイナリABI互換は保証しません。
-
-v1.1.1 は公開構造体 `cj4_player_view` を拡張します。v1.1.0 とのバイナリABI互換は保証しません。
-
-v1.1.2 は捨て牌・立直候補収集時の不要な状態コピーを削減する性能改善リリースです。公開APIおよびABIに変更はありません。
+v2 は `cj4_mahjong` の牌配置を `cj4_location locations[136]` に統合し、山・捨牌・鳴牌の永続配列を廃止します。v1.x とのソース互換・バイナリABI互換は保証しません。行動判定・状態遷移APIは従来の値渡しモデルを維持します。
 
 ## C言語仕様 / Language Standard
 
@@ -247,14 +300,16 @@ src/core/                 core implementation
 src/manager/              manager implementation
 tests/core/               core tests 
 tests/manager/            manager tests
+cmake/                    CMake package configuration
+.github/workflows/        continuous integration
 ```
 
 ---
 
 ## ステータス / Status
 
-1.1.2 リリース<br>
-1.1.2 release
+2.0.0 リリース<br>
+2.0.0 release
 
 ---
 

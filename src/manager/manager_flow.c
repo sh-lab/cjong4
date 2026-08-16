@@ -4,6 +4,7 @@
 #include "state_chi.h"
 #include "state_discard.h"
 #include "state_kan.h"
+#include "state_ops.h"
 #include "state_pass.h"
 #include "state_pon.h"
 #include "state_riichi.h"
@@ -11,7 +12,6 @@
 #include "state_round.h"
 #include "state_settle.h"
 #include "state_tsumo.h"
-#include "state_ops.h"
 
 #include <assert.h>
 #include <string.h>
@@ -58,7 +58,7 @@ cj4m_distance_from_current(
     const cj4_mahjong *state,
     cj4_player player)
 {
-    return (uint8_t)((player + CJ4_PLAYER_COUNT - state->current_player) %
+    return (uint8_t)((player + CJ4_PLAYER_COUNT - cj4_state_current_player(state)) %
                      CJ4_PLAYER_COUNT);
 }
 
@@ -71,14 +71,23 @@ cj4m_select_action(
 {
     cj4_action selected;
 
-    assert(delegate != 0);
-    assert(delegate->decide != 0);
-    assert(action_count > 0);
+    memset(&selected, 0, sizeof(selected));
+    selected.type = CJ4_ACTION_PASS;
+    selected.player = view ? view->player : CJ4_PLAYER_0;
+    selected.tile = CJ4_TILE_ID_INVALID;
+
+    if (!delegate || !delegate->decide || !actions || action_count == 0)
+        return selected;
 
     selected = delegate->decide(delegate->ctx, view, actions, action_count);
-    assert(cj4m_action_is_offered(&selected, actions, action_count));
+    if (cj4m_action_is_offered(&selected, actions, action_count))
+        return selected;
 
-    return selected;
+    for (uint8_t i = 0; i < action_count; ++i)
+        if (actions[i].type == CJ4_ACTION_PASS)
+            return actions[i];
+
+    return actions[0];
 }
 
 static cj4_mahjong
@@ -137,7 +146,7 @@ cj4m_step_turn_phase(
     const cj4m_player_delegate delegates[CJ4_PLAYER_COUNT])
 {
     cj4_action actions[CJ4M_MAX_ACTIONS];
-    cj4_player player = state->current_player;
+    cj4_player player = cj4_state_current_player(state);
     cj4_player_view view = cj4m_make_player_view(state, player);
     uint8_t action_count = cj4m_collect_actions(
         state,
@@ -197,7 +206,7 @@ cj4m_step_pending_kan_dora_turn(
 {
     cj4_action actions[CJ4M_MAX_ACTIONS];
     cj4_action tsumo_action;
-    cj4_player player = state->current_player;
+    cj4_player player = cj4_state_current_player(state);
     uint8_t action_count = cj4m_collect_actions(
         state,
         rules,
@@ -283,7 +292,7 @@ cj4m_step_discard_phase(
         uint8_t action_count;
         cj4_action selected;
 
-        if (player == state->current_player)
+        if (player == cj4_state_current_player(state))
             continue;
 
         view = cj4m_make_player_view(state, player);
@@ -355,7 +364,7 @@ cj4m_step_kakan_resolve_phase(
         uint8_t action_count;
         cj4_action selected;
 
-        if (player == state->current_player)
+        if (player == cj4_state_current_player(state))
             continue;
 
         view = cj4m_make_player_view(state, player);
@@ -400,7 +409,7 @@ cj4m_step_ankan_resolve_phase(
         uint8_t action_count;
         cj4_action selected;
 
-        if (player == state->current_player)
+        if (player == cj4_state_current_player(state))
             continue;
 
         view = cj4m_make_player_view(state, player);
@@ -433,8 +442,10 @@ cj4m_step(
     const cj4m_player_delegate delegates[CJ4_PLAYER_COUNT])
 {
     assert(state != 0);
+    if (!delegates)
+        return *state;
 
-    switch (state->phase)
+    switch (cj4_state_phase(state))
     {
     case CJ4_PHASE_DRAW:
         if (state->pending_kan_dora > 0)

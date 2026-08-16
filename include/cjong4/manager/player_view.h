@@ -12,7 +12,7 @@ extern "C"
 
     enum
     {
-        CJ4M_MAX_HAND_TILES = 14,
+        CJ4M_MAX_HAND_TILES = CJ4_MAX_HAND_TILES,
         CJ4M_MAX_DORA_INDICATORS = 5
     };
 

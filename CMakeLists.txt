@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
-project(cjong4 VERSION 1.1.1 LANGUAGES C)
+project(cjong4 VERSION 2.0.0 LANGUAGES C)
+
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 # Use C11
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
-option(BUILD_EXAMPLES "Build example programs" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 
 # Collect source files from layered directories.
@@ -16,10 +19,12 @@ file(GLOB_RECURSE CJ4_SOURCES CONFIGURE_DEPENDS
 )
 
 add_library(cj4 STATIC ${CJ4_SOURCES})
+add_library(cjong4::cj4 ALIAS cj4)
 
 target_include_directories(cj4
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/cjong4/core
         ${CMAKE_CURRENT_SOURCE_DIR}/include/cjong4/manager
@@ -57,10 +62,39 @@ if (BUILD_TESTS)
     add_test(NAME cj4_tests COMMAND cj4_tests)
 endif()
 
-# Install (optional)
 install(TARGETS cj4
-    ARCHIVE DESTINATION lib
+    EXPORT cjong4Targets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+set(CJ4_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/cjong4")
+
+install(EXPORT cjong4Targets
+    FILE cjong4Targets.cmake
+    NAMESPACE cjong4::
+    DESTINATION ${CJ4_CMAKE_INSTALL_DIR}
+)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cjong4Config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cjong4Config.cmake"
+    INSTALL_DESTINATION ${CJ4_CMAKE_INSTALL_DIR}
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/cjong4ConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/cjong4Config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/cjong4ConfigVersion.cmake"
+    DESTINATION ${CJ4_CMAKE_INSTALL_DIR}
+)
 
 message(STATUS "cjong4 project configured (C ${CMAKE_C_STANDARD})")

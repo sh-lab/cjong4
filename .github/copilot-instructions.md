@@ -1,40 +1,43 @@
 # Copilot instructions for cjong4
 
 ## Summary
-- cjong4 is a pure-functional C library implementing 4-player (riichi) mahjong core logic. Current repository only contains README and LICENSE; project is WIP (no build/test scripts detected).
+- cjong4 is a C11 library implementing pure-function-oriented core and manager logic for 4-player Japanese mahjong (riichi mahjong).
+- v2 uses `cj4_location locations[136]` as the canonical tile layout and reconstructs walls, hands, discards, and melds from it.
 
 ## Build, test, and lint commands
-- No build, test, or lint scripts detected in the repository root.
-- If adding a minimal local build, prefer a small Makefile or CMake targeting C11. Example manual commands (illustrative only, not present in repo):
-  - Build: gcc -std=c11 -Iinclude -c src/*.c && ar rcs libcj4.a *.o
-  - Single-file build: gcc -std=c11 -Iinclude -o example_bin examples/example.c src/*.c
-  - Lint (if added): run clang-tidy / cppcheck configured for C11
-  - Tests: no test harness found. Recommend adding a C test framework (e.g., Check, Unity) and expose how to run a single test via the test runner (e.g., ./tests/test_runner --filter test_name).
+- Configure: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON`
+- Build: `cmake --build build --config Release --parallel`
+- Test: `ctest --test-dir build -C Release --output-on-failure`
+- Format check: `find include src tests -type f \( -name '*.c' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run --Werror`
+- Install: `cmake --install build --config Release --prefix /path/to/prefix`
+- The tests use the repository's assertion-based `cj4_tests` executable and do not require an external test framework.
 
 ## High-level architecture (what Copilot should know)
-- Position-based model: every tile has a fixed position; state is represented as a layout. Expect fixed-size arrays/indexed layouts where positions are part of the state model, rather than multiset counters.
+- Position-based model: every physical tile has a fixed ID, and `locations[136]` is the canonical layout. Reverse lookups scan this array rather than using persistent duplicate arrays or caches.
 - Pure functions: core logic is implemented as pure functions (no side effects, no hidden state). New functions should avoid global or static mutable state and be deterministic.
 - State handling: functions should accept and return full state values (no in-place mutation).
 - Tile identity: tiles are treated as unique entities (not only by type).
 - 4-player specialization: player count is fixed at 4; turn order and hand sizes are fixed. Implementations should assume 4 players throughout.
 - Language and targets: ISO C11 is the target standard. GCC, Clang, and MSVC are supported/expected.
-- Public API prefix: public symbols use `cj4_` prefix (e.g., `cj4_state`, `cj4_tile`, `cj4_apply_action`). Keep public API names consistent.
+- Public API prefixes: core symbols use `cj4_`; manager symbols use `cj4m_`.
 
 ## Key conventions and patterns
 - No global or static mutable state: design functions to accept and return full state values rather than mutate shared state.
 - Structural equality: equality should be structural/deterministic given the position-based model.
-- Directory layout (planned): include/, cjong4/, src/ — follow this convention when adding headers and sources.
+- Directory layout: public headers are under `include/cjong4/`, implementation files under `src/`, and tests under `tests/`.
 - Naming: public APIs use `cj4_` prefix. Internal or private symbols may use a different convention but avoid exposing non-prefixed public names.
 - Fixed sizes: hand sizes and player counts are fixed (13/14 tiles, 4 players). Data structures should be designed assuming these invariants (no need for dynamic sizing).
 
 ## Repository-specific notes
-- Current repository is in early WIP state; README documents design principles and planned features. When adding tooling, include top-level Makefile or CMakeLists.txt and a test runner so Copilot can recommend exact commands.
-- No AI assistant-specific config files (CLAUDE.md, AGENTS.md, .cursorrules, .windsurfrules, CONVENTIONS.md, etc.) were found. If added, merge important guidance into this file.
+- CMake builds the static `cj4` library and optionally the `cj4_tests` executable with `BUILD_TESTS=ON`.
+- Installed consumers use `find_package(cjong4 CONFIG REQUIRED)` and link `cjong4::cj4`.
+- GitHub Actions validates GCC, Clang with ASan/UBSan, and MSVC.
+- v2 is intentionally source- and ABI-incompatible with v1.x; do not add compatibility aliases unless explicitly requested.
 
 ## How Copilot should assist
 - Prefer solutions that maintain pure-function interfaces and avoid introducing global or static mutable state.
-- When suggesting new files, follow the planned layout and prefix public symbols with `cj4_`.
-- For build/test suggestions, prefer adding explicit scripts (Makefile/CMake/test runner) and document single-test invocation.
+- When suggesting new files, follow the current layout and use the documented public symbol prefixes.
+- Keep build and test instructions aligned with the top-level CMake configuration and README.
 
 ## Notes
 - Keep implementations simple and deterministic rather than abstract or generic.

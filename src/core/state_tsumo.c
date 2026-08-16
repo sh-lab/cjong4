@@ -5,25 +5,28 @@
 #include <assert.h>
 
 bool
-cj4_can_tsumo(const cj4_mahjong *state, const cj4_rules *rules)
+cj4_can_tsumo(
+    const cj4_mahjong *state,
+    const cj4_rules *rules)
 {
-    if (state->phase != CJ4_PHASE_DRAW)
+    if (cj4_state_phase(state) != CJ4_PHASE_DRAW)
         return false;
 
     if (state->draw_tile == CJ4_TILE_ID_INVALID)
         return false;
 
-    return cj4_has_yaku(state, state->current_player, rules);
+    return cj4_has_yaku(state, cj4_state_current_player(state), rules);
 }
 
 cj4_mahjong
-cj4_do_tsumo(const cj4_mahjong state)
+cj4_do_tsumo(
+    const cj4_mahjong state)
 {
-    assert(state.phase == CJ4_PHASE_DRAW);
+    assert(cj4_state_phase(&state) == CJ4_PHASE_DRAW);
     assert(state.draw_tile != CJ4_TILE_ID_INVALID);
 
     cj4_mahjong next = state;
-    cj4_state_finish_tsumo(&next, state.current_player, state.draw_tile);
+    cj4_state_finish_tsumo(&next, cj4_state_current_player(&state), state.draw_tile);
 
     return next;
 }

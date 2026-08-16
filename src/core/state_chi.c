@@ -4,14 +4,15 @@
 #include <assert.h>
 
 bool
-cj4_can_chi(const cj4_mahjong *state)
+cj4_can_chi(
+    const cj4_mahjong *state)
 {
     cj4_player next_player = cj4_next_player(state);
 
     if (cj4_state_live_wall_remaining(state) == 0)
         return false;
 
-    if (state->is_riichi[next_player])
+    if (cj4_state_is_riichi(state, next_player))
     {
         return false;
     }
@@ -77,7 +78,10 @@ cj4_can_chi(const cj4_mahjong *state)
 }
 
 bool
-cj4_can_chi_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2)
+cj4_can_chi_with_tile(
+    const cj4_mahjong *state,
+    cj4_tile_id tile1,
+    cj4_tile_id tile2)
 {
     if (!cj4_can_chi(state))
     {
@@ -145,7 +149,10 @@ cj4_can_chi_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id t
 }
 
 cj4_mahjong
-cj4_do_chi(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2)
+cj4_do_chi(
+    const cj4_mahjong state,
+    cj4_tile_id tile1,
+    cj4_tile_id tile2)
 {
     assert(cj4_can_chi_with_tile(&state, tile1, tile2));
 
@@ -162,12 +169,12 @@ cj4_do_chi(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2)
         CJ4_MELD_CHI,
         meld_tiles,
         3,
-        state.current_player,
+        cj4_state_current_player(&state),
         0);
     cj4_state_establish_pending_riichi(&next);
     cj4_state_finish_open_call(&next, next_player, CJ4_PHASE_AFTER_CALL);
-    next.first_turn_uninterrupted = 0;
-    next.winning_from_chankan = 0;
+    cj4_state_set_first_turn(&next, 0);
+    cj4_state_set_chankan(&next, 0);
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
 
     return next;
