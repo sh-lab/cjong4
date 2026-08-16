@@ -911,7 +911,6 @@ cj4_yaku_evaluate_decomposition(
 {
     uint8_t triplet_like_count = 0;
     uint8_t concealed_triplets = 0;
-    uint8_t quad_count = 0;
     uint8_t has_sequence = 0;
     uint8_t all_sequences = 1;
     uint8_t sequence_bases[27] = {0};
@@ -942,9 +941,6 @@ cj4_yaku_evaluate_decomposition(
                     concealed_triplets--;
             }
 
-            if (group->kind == CJ4_GROUP_QUAD)
-                quad_count++;
-
             if (group->base_type >= CJ4_TILE_TYPE_1M &&
                 group->base_type <= CJ4_TILE_TYPE_9S &&
                 cj4_tile_type_get_suit(group->base_type) != CJ4_TILE_SUIT_HONOR)
@@ -963,9 +959,6 @@ cj4_yaku_evaluate_decomposition(
                 wind_triplets++;
         }
     }
-
-    if (ctx->quad_count > quad_count)
-        quad_count = ctx->quad_count;
 
     if (ctx->is_closed_hand && all_sequences && decomp->has_pair &&
         !decomp->pair_uses_winning_tile &&
