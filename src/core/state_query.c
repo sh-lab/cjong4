@@ -218,6 +218,8 @@ cj4_location_collect_melds(
             continue;
 
         group = cj4_location_meld_group(loc->placement);
+        if (group >= CJ4_MAX_MELDS)
+            continue;
         meld = &groups[group];
         if (!found[group])
         {
