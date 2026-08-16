@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cjong4 VERSION 2.0.0 LANGUAGES C)
+project(cjong4 VERSION 2.0.2 LANGUAGES C)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
