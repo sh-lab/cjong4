@@ -3,12 +3,14 @@
 #include "state_query.h"
 
 bool
-cj4_can_pon(const cj4_mahjong *state, cj4_player player)
+cj4_can_pon(
+    const cj4_mahjong *state,
+    cj4_player player)
 {
     if (cj4_state_live_wall_remaining(state) == 0)
         return false;
 
-    if (state->is_riichi[player])
+    if (cj4_state_is_riichi(state, player))
     {
         return false;
     }
@@ -29,7 +31,11 @@ cj4_can_pon(const cj4_mahjong *state, cj4_player player)
 }
 
 bool
-cj4_can_pon_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2)
+cj4_can_pon_with_tile(
+    const cj4_mahjong *state,
+    cj4_player player,
+    cj4_tile_id tile1,
+    cj4_tile_id tile2)
 {
     if (!cj4_can_pon(state, player))
     {
@@ -60,7 +66,11 @@ cj4_can_pon_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id t
 }
 
 cj4_mahjong
-cj4_do_pon(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2)
+cj4_do_pon(
+    const cj4_mahjong state,
+    cj4_player player,
+    cj4_tile_id tile1,
+    cj4_tile_id tile2)
 {
     assert(cj4_can_pon_with_tile(&state, player, tile1, tile2));
 
@@ -75,12 +85,12 @@ cj4_do_pon(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_ti
         CJ4_MELD_PON,
         meld_tiles,
         3,
-        state.current_player,
+        cj4_state_current_player(&state),
         0);
     cj4_state_establish_pending_riichi(&next);
     cj4_state_finish_open_call(&next, player, CJ4_PHASE_AFTER_CALL);
-    next.first_turn_uninterrupted = 0;
-    next.winning_from_chankan = 0;
+    cj4_state_set_first_turn(&next, 0);
+    cj4_state_set_chankan(&next, 0);
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
 
     return next;

@@ -18,7 +18,8 @@ cj4_count_distinct_yaochu_in_hand(
         const cj4_location *loc = cj4_tile_location_const(state, tile);
         cj4_tile_type type;
 
-        if (loc->zone != CJ4_ZONE_HAND || loc->owner != player)
+        if (!cj4_location_is_hand(loc->placement) ||
+            cj4_location_placement_player(loc->placement) != player)
             continue;
 
         type = cj4_tile_get_type(tile);
@@ -42,15 +43,15 @@ cj4_can_kyuushu_kyuuhai(
     if (!state || !rules || !rules->abortive_kyuushu_kyuuhai)
         return false;
 
-    if (state->phase != CJ4_PHASE_DRAW ||
-        !state->first_turn_uninterrupted ||
+    if (cj4_state_phase(state) != CJ4_PHASE_DRAW ||
+        !cj4_state_first_turn(state) ||
         state->draw_tile == CJ4_TILE_ID_INVALID)
     {
         return false;
     }
 
-    player = state->current_player;
-    if (state->draw_turn_count[player] != 1)
+    player = cj4_state_current_player(state);
+    if (cj4_state_draw_turn(state, player) != 1)
         return false;
 
     return cj4_count_distinct_yaochu_in_hand(state, player) >= 9;
@@ -62,7 +63,7 @@ cj4_do_kyuushu_kyuuhai(
 {
     cj4_mahjong next = state;
 
-    assert(state.phase == CJ4_PHASE_DRAW);
+    assert(cj4_state_phase(&state) == CJ4_PHASE_DRAW);
     assert(state.draw_tile != CJ4_TILE_ID_INVALID);
 
     cj4_state_clear_draw_tile(&next);

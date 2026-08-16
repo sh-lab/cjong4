@@ -17,7 +17,8 @@ cj4_ron_distance_from_discarder(
 }
 
 static uint8_t
-cj4_ron_max_players(const cj4_rules *rules)
+cj4_ron_max_players(
+    const cj4_rules *rules)
 {
     if (!rules || rules->max_ron_players == 0 || rules->max_ron_players > 3)
         return 3;
@@ -48,9 +49,9 @@ cj4_ron_select_winners(
         for (uint8_t j = (uint8_t)(i + 1); j < count; ++j)
         {
             uint8_t dist_best =
-                cj4_ron_distance_from_discarder(state->current_player, selected[best]);
+                cj4_ron_distance_from_discarder(cj4_state_current_player(state), selected[best]);
             uint8_t dist_j =
-                cj4_ron_distance_from_discarder(state->current_player, selected[j]);
+                cj4_ron_distance_from_discarder(cj4_state_current_player(state), selected[j]);
 
             if (dist_j < dist_best)
                 best = j;
@@ -77,9 +78,11 @@ cj4_state_player_has_permanent_furiten(
     if (cj4_collect_waiting_tile_types(state, player, waits) == 0)
         return 0;
 
-    for (uint8_t i = 0; i < state->discard_count; ++i)
+    cj4_discard discards[CJ4_MAX_DISCARDS];
+    uint8_t count = cj4_collect_discards(state, discards);
+    for (uint8_t i = 0; i < count; ++i)
     {
-        const cj4_discard *d = &state->discards[i];
+        const cj4_discard *d = &discards[i];
 
         if (d->player != player)
             continue;
@@ -114,7 +117,7 @@ cj4_state_player_can_kokushi_with_tile(
     uint8_t counts[CJ4_TILE_TYPE_COUNT] = {0};
     uint8_t pair_count = 0;
 
-    if (state->meld_count[player] != 0 ||
+    if (cj4_count_melds(state, player) != 0 ||
         !cj4_tile_is_yaochu(tile))
     {
         return 0;
@@ -124,7 +127,8 @@ cj4_state_player_can_kokushi_with_tile(
     {
         const cj4_location *loc = cj4_tile_location_const(state, id);
 
-        if (loc->zone == CJ4_ZONE_HAND && loc->owner == player)
+        if (cj4_location_is_hand(loc->placement) &&
+            cj4_location_placement_player(loc->placement) == player)
             counts[cj4_tile_get_type(id)]++;
     }
 
@@ -152,25 +156,25 @@ cj4_can_ron(
 {
     cj4_tile_id tile;
 
-    if (state->phase == CJ4_PHASE_DISCARD)
+    if (cj4_state_phase(state) == CJ4_PHASE_DISCARD)
     {
         if (!cj4_state_can_claim_discard(state, player))
             return false;
 
         tile = cj4_get_last_discard_tile(state);
     }
-    else if (state->phase == CJ4_PHASE_KAKAN_RESOLVE)
+    else if (cj4_state_phase(state) == CJ4_PHASE_KAKAN_RESOLVE)
     {
-        if (player == state->current_player ||
+        if (player == cj4_state_current_player(state) ||
             state->pending_kakan_tile == CJ4_TILE_ID_INVALID)
             return false;
 
         tile = state->pending_kakan_tile;
     }
-    else if (state->phase == CJ4_PHASE_ANKAN_RESOLVE)
+    else if (cj4_state_phase(state) == CJ4_PHASE_ANKAN_RESOLVE)
     {
         if (!rules || !rules->kokushi_ron_on_ankan ||
-            player == state->current_player ||
+            player == cj4_state_current_player(state) ||
             state->pending_ankan_tile == CJ4_TILE_ID_INVALID)
         {
             return false;
@@ -185,15 +189,15 @@ cj4_can_ron(
 
     /* 4. create temporary state and add tile to player's hand */
     cj4_mahjong tmp = *state;
-    cj4_state_set_location(&tmp, tile, CJ4_ZONE_HAND, player);
-    tmp.winning_from_chankan = (uint8_t)(state->phase == CJ4_PHASE_KAKAN_RESOLVE);
+    cj4_state_set_hand_location(&tmp, tile, player);
+    cj4_state_set_chankan(&tmp, (uint8_t)(cj4_state_phase(state) == CJ4_PHASE_KAKAN_RESOLVE));
 
-    if (state->temporary_furiten[player] ||
-        state->riichi_furiten[player] ||
+    if (cj4_state_temporary_furiten(state, player) ||
+        cj4_state_riichi_furiten(state, player) ||
         cj4_state_player_has_permanent_furiten(state, player))
         return false;
 
-    if (state->phase == CJ4_PHASE_ANKAN_RESOLVE)
+    if (cj4_state_phase(state) == CJ4_PHASE_ANKAN_RESOLVE)
         return cj4_state_player_can_kokushi_with_tile(state, player, tile);
 
     return cj4_has_yaku(&tmp, player, rules);
@@ -212,9 +216,9 @@ cj4_do_ron_multi(
     cj4_player winners[CJ4_PLAYER_COUNT];
     uint8_t winner_count;
     cj4_tile_id winning_tile =
-        state.phase == CJ4_PHASE_KAKAN_RESOLVE
+        cj4_state_phase(&state) == CJ4_PHASE_KAKAN_RESOLVE
             ? state.pending_kakan_tile
-            : (state.phase == CJ4_PHASE_ANKAN_RESOLVE
+            : (cj4_state_phase(&state) == CJ4_PHASE_ANKAN_RESOLVE
                    ? state.pending_ankan_tile
                    : cj4_get_last_discard_tile(&state));
 

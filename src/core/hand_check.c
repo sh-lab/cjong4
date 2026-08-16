@@ -6,7 +6,9 @@
 
 /* Recursive meld partitioning using type counts. */
 static bool
-remove_melds(int counts[CJ4_TILE_TYPE_COUNT], int melds_needed)
+remove_melds(
+    int counts[CJ4_TILE_TYPE_COUNT],
+    int melds_needed)
 {
     if (melds_needed == 0)
         return true;
@@ -62,7 +64,9 @@ remove_melds(int counts[CJ4_TILE_TYPE_COUNT], int melds_needed)
 }
 
 static bool
-check_standard(int counts_orig[CJ4_TILE_TYPE_COUNT], int melds_needed)
+check_standard(
+    int counts_orig[CJ4_TILE_TYPE_COUNT],
+    int melds_needed)
 {
     int counts[CJ4_TILE_TYPE_COUNT];
     for (int i = 0; i < CJ4_TILE_TYPE_COUNT; ++i)
@@ -93,7 +97,8 @@ check_standard(int counts_orig[CJ4_TILE_TYPE_COUNT], int melds_needed)
 }
 
 static bool
-check_seven_pairs(int counts[CJ4_TILE_TYPE_COUNT])
+check_seven_pairs(
+    int counts[CJ4_TILE_TYPE_COUNT])
 {
     int pair_count = 0;
     int tiles = 0;
@@ -115,7 +120,8 @@ check_seven_pairs(int counts[CJ4_TILE_TYPE_COUNT])
 }
 
 static bool
-check_kokushi(int counts[CJ4_TILE_TYPE_COUNT])
+check_kokushi(
+    int counts[CJ4_TILE_TYPE_COUNT])
 {
     /* Kokushi (thirteen orphans) set of types */
     const int terminals[13] = {
@@ -152,7 +158,9 @@ check_kokushi(int counts[CJ4_TILE_TYPE_COUNT])
 }
 
 bool
-cj4_is_complete_hand(const cj4_mahjong *state, cj4_player player)
+cj4_is_complete_hand(
+    const cj4_mahjong *state,
+    cj4_player player)
 {
     int counts[34] = {0};
     int tiles = 0;
@@ -160,7 +168,8 @@ cj4_is_complete_hand(const cj4_mahjong *state, cj4_player player)
     for (int tid = 0; tid < CJ4_TILE_ID_COUNT; ++tid)
     {
         const cj4_location *loc = cj4_tile_location_const(state, (cj4_tile_id)tid);
-        if (loc->zone == CJ4_ZONE_HAND && loc->owner == player)
+        if (cj4_location_is_hand(loc->placement) &&
+            cj4_location_placement_player(loc->placement) == player)
         {
             cj4_tile_type type = cj4_tile_get_type((cj4_tile_id)tid);
             counts[type]++;
@@ -169,12 +178,12 @@ cj4_is_complete_hand(const cj4_mahjong *state, cj4_player player)
     }
 
     /* Compute expected number of concealed tiles based on existing melds. */
-    if (state->meld_count[player] > CJ4_MAX_MELDS)
+    if (cj4_count_melds(state, player) > CJ4_MAX_MELDS)
         return false; /* sanity */
-    int melds = state->meld_count[player];
+    int melds = cj4_count_melds(state, player);
     int expected_tiles = (4 - melds) * 3 + 2;
 
-    /* For the shape check, only consider concealed tiles (tiles in CJ4_ZONE_HAND).
+    /* For the shape check, only consider concealed tiles (hand placements).
      * Open/closed melds are assumed to be valid melds already and should not be
      * re-counted into the concealed tile grouping. Therefore, the number of
      * concealed tiles must equal expected_tiles.
@@ -218,7 +227,8 @@ cj4_find_test_tile(
         cj4_tile_id tile = cj4_tile_make(type, i);
         const cj4_location *loc = cj4_tile_location_const(state, tile);
 
-        if (!(loc->zone == CJ4_ZONE_HAND && loc->owner == player))
+        if (!(cj4_location_is_hand(loc->placement) &&
+              cj4_location_placement_player(loc->placement) == player))
             return tile;
     }
 
@@ -245,8 +255,7 @@ cj4_collect_waiting_tile_types(
             continue;
 
         cj4_mahjong tmp = *state;
-        tmp.locations[tile].zone = CJ4_ZONE_HAND;
-        tmp.locations[tile].owner = player;
+        tmp.locations[tile].placement = cj4_location_make_hand(player);
 
         if (!cj4_is_complete_hand(&tmp, player))
             continue;

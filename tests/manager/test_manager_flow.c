@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "../../src/core/state_ops.h"
 #include "cjong4/core/action.h"
 #include "cjong4/core/rules.h"
 #include "cjong4/core/state.h"
@@ -26,18 +27,22 @@ make_empty_state(
     cj4_mahjong state;
 
     memset(&state, 0, sizeof(state));
-    state.phase = CJ4_PHASE_DRAW;
+    memset(state.locations, CJ4_LOCATION_NONE, sizeof(state.locations));
+    for (uint16_t i = 0; i < CJ4_TILE_ID_COUNT; ++i)
+        state.locations[i].wall = (uint8_t)i;
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
     state.dealer = CJ4_PLAYER_0;
-    state.current_player = CJ4_PLAYER_0;
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     state.round_wind = CJ4_WIND_EAST;
     state.draw_tile = CJ4_TILE_ID_INVALID;
     state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
     state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
     for (uint8_t i = 0; i < 4; ++i)
         state.pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
-    state.pending_riichi_player = CJ4_PLAYER_COUNT;
+    cj4_state_clear_pending_riichi_bits(&state);
+    state.last_discard_tile = CJ4_TILE_ID_INVALID;
     state.winning_tile = CJ4_TILE_ID_INVALID;
-    state.round_end_type = CJ4_ROUND_END_NONE;
+    cj4_state_set_round_result(&state, CJ4_ROUND_END_NONE, CJ4_ABORTIVE_DRAW_NONE);
 
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
         state.scores[i] = 25000;
@@ -54,9 +59,20 @@ set_hand(
 {
     for (uint8_t i = 0; i < count; ++i)
     {
-        state->locations[tiles[i]].zone = CJ4_ZONE_HAND;
-        state->locations[tiles[i]].owner = player;
+        state->locations[tiles[i]].placement = cj4_location_make_hand(player);
     }
+}
+
+static void
+set_test_wall(
+    cj4_mahjong *state,
+    uint8_t position,
+    cj4_tile_id tile)
+{
+    for (uint16_t i = 0; i < CJ4_TILE_ID_COUNT; ++i)
+        if (state->locations[i].wall == position)
+            state->locations[i].wall = CJ4_LOCATION_NONE;
+    state->locations[tile].wall = position;
 }
 
 static void
@@ -65,13 +81,33 @@ add_discard(
     cj4_player player,
     cj4_tile_id discarded)
 {
-    cj4_discard *entry = &state->discards[state->discard_count++];
-    entry->tile = discarded;
-    entry->player = player;
-    entry->is_active = 1;
-    entry->is_tsumogiri = 0;
-    state->locations[discarded].zone = CJ4_ZONE_RIVER;
-    state->locations[discarded].owner = player;
+    cj4_player current = cj4_state_current_player(state);
+    cj4_state_set_current_player(state, player);
+    cj4_state_record_discard(state, discarded, 0, 0);
+    cj4_state_set_current_player(state, current);
+}
+
+static void
+set_test_meld(
+    cj4_mahjong *state,
+    cj4_player player,
+    uint8_t group,
+    const cj4_meld *meld)
+{
+    for (uint8_t i = 0; i < meld->size; ++i)
+    {
+        cj4_tile_id id = meld->tiles[i];
+        state->locations[id].placement =
+            cj4_location_make_meld(player, group, meld->type);
+        if (i == meld->called_index && meld->from_player != player &&
+            state->locations[id].discard == CJ4_LOCATION_NONE)
+        {
+            state->locations[id].discard =
+                cj4_location_make_discard(meld->from_player, 0, false);
+            state->locations[id].discard_history =
+                cj4_location_make_discard_history(state->discard_count++, false);
+        }
+    }
 }
 
 static uint8_t
@@ -269,14 +305,14 @@ make_pending_kan_dora_win_state(
         CJ4_PLAYER_0,
         hand,
         (uint8_t)(sizeof(hand) / sizeof(hand[0])));
-    state.phase = CJ4_PHASE_KAKAN_RESOLVE;
-    state.current_player = CJ4_PLAYER_0;
+    cj4_state_set_phase(&state, CJ4_PHASE_KAKAN_RESOLVE);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     state.dealer = CJ4_PLAYER_1;
     state.pending_kakan_tile = tile(6, 0);
     state.dora_indicators_count = 1;
-    state.wall[130] = tile(30, 0);
-    state.wall[128] = tile(4, 1);
-    state.wall[134] = tile(5, 0);
+    set_test_wall(&state, (uint8_t)(130), tile(30, 0));
+    set_test_wall(&state, (uint8_t)(128), tile(4, 1));
+    set_test_wall(&state, (uint8_t)(134), tile(5, 0));
 
     return cj4_do_rinshan_draw(state, rules);
 }
@@ -299,14 +335,14 @@ test_player_view_hides_hidden_information(
 
     set_hand(&state, CJ4_PLAYER_0, hand0, 4);
     set_hand(&state, CJ4_PLAYER_1, hand1, 3);
-    state.current_player = CJ4_PLAYER_0;
-    state.phase = CJ4_PHASE_DRAW;
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
     state.draw_tile = hand0[3];
-    state.is_riichi[CJ4_PLAYER_1] = 1;
-    state.temporary_furiten[CJ4_PLAYER_0] = 1;
+    cj4_state_set_riichi(&state, CJ4_PLAYER_1, 1);
+    cj4_state_set_temporary_furiten(&state, CJ4_PLAYER_0, 1);
     state.dora_indicators_count = 2;
-    state.wall[130] = tile(27, 0);
-    state.wall[128] = tile(31, 0);
+    set_test_wall(&state, (uint8_t)(130), tile(27, 0));
+    set_test_wall(&state, (uint8_t)(128), tile(31, 0));
     add_discard(&state, CJ4_PLAYER_2, tile(20, 0));
 
     view = cj4m_make_player_view(&state, CJ4_PLAYER_0);
@@ -347,7 +383,7 @@ test_step_reveals_pending_kan_dora_between_delegate_calls(
         .ctx = &context,
         .decide = choose_pending_kan_dora_action};
 
-    assert(state.phase == CJ4_PHASE_DRAW);
+    assert(cj4_state_phase(&state) == CJ4_PHASE_DRAW);
     assert(state.dora_indicators_count == 1);
     assert(state.pending_kan_dora == 1);
     assert(cj4_can_tsumo(&state, &rules));
@@ -366,7 +402,7 @@ test_step_reveals_pending_kan_dora_between_delegate_calls(
     assert(context.dora_count[1] == 2);
     assert(context.dora_indicators[1][0] == tile(30, 0));
     assert(context.dora_indicators[1][1] == tile(4, 1));
-    assert(next.phase == CJ4_PHASE_DISCARD);
+    assert(cj4_state_phase(&next) == CJ4_PHASE_DISCARD);
     assert(next.dora_indicators_count == 2);
     assert(next.pending_kan_dora == 0);
 }
@@ -398,8 +434,8 @@ test_step_does_not_reveal_current_kan_dora_on_rinshan_tsumo(
     assert(context.saw_tsumo[0]);
     assert(!context.saw_discard[0]);
     assert(context.dora_count[0] == 1);
-    assert(next.phase == CJ4_PHASE_ROUND_END);
-    assert(next.round_end_type == CJ4_ROUND_END_TSUMO);
+    assert(cj4_state_phase(&next) == CJ4_PHASE_ROUND_END);
+    assert(cj4_state_round_end_type(&next) == CJ4_ROUND_END_TSUMO);
     assert(next.dora_indicators_count == 1);
     assert(next.pending_kan_dora == 0);
 }
@@ -446,12 +482,12 @@ test_step_minkan_flow_reveals_dora_before_discard_choice(
         CJ4_PLAYER_1,
         hand,
         (uint8_t)(sizeof(hand) / sizeof(hand[0])));
-    state.phase = CJ4_PHASE_DISCARD;
-    state.current_player = CJ4_PLAYER_0;
+    cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     state.dora_indicators_count = 1;
-    state.wall[130] = tile(30, 0);
-    state.wall[128] = tile(4, 1);
-    state.wall[134] = tile(20, 0);
+    set_test_wall(&state, (uint8_t)(130), tile(30, 0));
+    set_test_wall(&state, (uint8_t)(128), tile(4, 1));
+    set_test_wall(&state, (uint8_t)(134), tile(20, 0));
     add_discard(&state, CJ4_PLAYER_0, tile(27, 3));
 
     after_minkan = cj4m_step(&state, &rules, delegates);
@@ -459,15 +495,17 @@ test_step_minkan_flow_reveals_dora_before_discard_choice(
     assert(context.call_count == 1);
     assert(context.saw_minkan[0]);
     assert(context.dora_count[0] == 1);
-    assert(after_minkan.phase == CJ4_PHASE_ANKAN_RESOLVE);
-    assert(after_minkan.current_player == CJ4_PLAYER_1);
-    assert(after_minkan.meld_count[CJ4_PLAYER_1] == 1);
-    assert(after_minkan.melds[CJ4_PLAYER_1][0].type == CJ4_MELD_MINKAN);
+    assert(cj4_state_phase(&after_minkan) == CJ4_PHASE_ANKAN_RESOLVE);
+    assert(cj4_state_current_player(&after_minkan) == CJ4_PLAYER_1);
+    assert(cj4_count_melds(&after_minkan, CJ4_PLAYER_1) == 1);
+    cj4_meld minkan;
+    assert(cj4_get_meld(&after_minkan, CJ4_PLAYER_1, 0, &minkan));
+    assert(minkan.type == CJ4_MELD_MINKAN);
 
     after_rinshan = cj4m_step(&after_minkan, &rules, delegates);
 
     assert(context.call_count == 1);
-    assert(after_rinshan.phase == CJ4_PHASE_DRAW);
+    assert(cj4_state_phase(&after_rinshan) == CJ4_PHASE_DRAW);
     assert(after_rinshan.draw_tile == tile(20, 0));
     assert(after_rinshan.dora_indicators_count == 1);
     assert(after_rinshan.pending_kan_dora == 1);
@@ -486,8 +524,8 @@ test_step_minkan_flow_reveals_dora_before_discard_choice(
     assert(context.dora_count[2] == 2);
     assert(context.dora_indicators[2][0] == tile(30, 0));
     assert(context.dora_indicators[2][1] == tile(4, 1));
-    assert(after_discard.phase == CJ4_PHASE_DISCARD);
-    assert(after_discard.current_player == CJ4_PLAYER_1);
+    assert(cj4_state_phase(&after_discard) == CJ4_PHASE_DISCARD);
+    assert(cj4_state_current_player(&after_discard) == CJ4_PLAYER_1);
     assert(after_discard.dora_indicators_count == 2);
     assert(after_discard.pending_kan_dora == 0);
 }
@@ -508,8 +546,8 @@ test_collect_actions_includes_pass_and_claims(
 
     set_hand(&state, CJ4_PLAYER_1, chi_hand, 2);
     set_hand(&state, CJ4_PLAYER_2, pon_hand, 2);
-    state.phase = CJ4_PHASE_DISCARD;
-    state.current_player = CJ4_PLAYER_0;
+    cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     add_discard(&state, CJ4_PLAYER_0, tile(3, 0));
 
     action_count = cj4m_collect_actions(
@@ -562,24 +600,24 @@ test_step_uses_delegate_for_draw_phase(
     delegates[CJ4_PLAYER_0] = make_delegate(&contexts[CJ4_PLAYER_0], CJ4_ACTION_RIICHI);
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
-    state.current_player = CJ4_PLAYER_0;
-    state.phase = CJ4_PHASE_DRAW;
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
     state.draw_tile = draw;
 
     next = cj4m_step(&state, NULL, delegates);
 
-    assert(next.phase == CJ4_PHASE_DISCARD);
-    assert(next.pending_riichi == 1);
-    assert(next.pending_riichi_player == CJ4_PLAYER_0);
-    assert(next.is_riichi[CJ4_PLAYER_0] == 0);
+    assert(cj4_state_phase(&next) == CJ4_PHASE_DISCARD);
+    assert(cj4_state_has_pending_riichi(&next));
+    assert(cj4_state_pending_riichi_player(&next) == CJ4_PLAYER_0);
+    assert(cj4_state_is_riichi(&next, CJ4_PLAYER_0) == 0);
     assert(next.scores[CJ4_PLAYER_0] == 25000);
     assert(contexts[CJ4_PLAYER_0].call_count == 1);
     assert(contexts[CJ4_PLAYER_0].last_view_player == CJ4_PLAYER_0);
 
     next = cj4m_step(&next, NULL, delegates);
 
-    assert(next.is_riichi[CJ4_PLAYER_0] == 1);
-    assert(next.pending_riichi == 0);
+    assert(cj4_state_is_riichi(&next, CJ4_PLAYER_0) == 1);
+    assert(!cj4_state_has_pending_riichi(&next));
     assert(next.scores[CJ4_PLAYER_0] == 24000);
     assert(next.riichi_sticks == 1);
 }
@@ -609,17 +647,11 @@ test_collect_actions_respects_riichi_restrictions(
         tile(24, 0)};
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
-    state.current_player = CJ4_PLAYER_0;
-    state.phase = CJ4_PHASE_DRAW;
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
     state.draw_tile = draw;
-    state.is_riichi[CJ4_PLAYER_0] = 1;
-    state.meld_count[CJ4_PLAYER_0] = 1;
-    state.melds[CJ4_PLAYER_0][0] = (cj4_meld){
-        .tiles = {tile(4, 0), tile(4, 1), tile(4, 2)},
-        .size = 3,
-        .type = CJ4_MELD_PON,
-        .from_player = CJ4_PLAYER_1,
-        .called_index = 0};
+    cj4_state_set_riichi(&state, CJ4_PLAYER_0, 1);
+    set_test_meld(&state, CJ4_PLAYER_0, 0, &(cj4_meld){.tiles = {tile(4, 0), tile(4, 1), tile(4, 2)}, .size = 3, .type = CJ4_MELD_PON, .from_player = CJ4_PLAYER_1, .called_index = 0});
 
     action_count = cj4m_collect_actions(
         &state,
@@ -642,15 +674,9 @@ test_collect_actions_filters_kuikae_discards(
     cj4_action actions[CJ4M_MAX_ACTIONS];
     uint8_t action_count;
 
-    state.phase = CJ4_PHASE_AFTER_CALL;
-    state.current_player = CJ4_PLAYER_1;
-    state.meld_count[CJ4_PLAYER_1] = 1;
-    state.melds[CJ4_PLAYER_1][0] = (cj4_meld){
-        .tiles = {tile(2, 0), tile(3, 0), tile(4, 0)},
-        .size = 3,
-        .type = CJ4_MELD_CHI,
-        .from_player = CJ4_PLAYER_0,
-        .called_index = 0};
+    cj4_state_set_phase(&state, CJ4_PHASE_AFTER_CALL);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_1);
+    set_test_meld(&state, CJ4_PLAYER_1, 0, &(cj4_meld){.tiles = {tile(2, 0), tile(3, 0), tile(4, 0)}, .size = 3, .type = CJ4_MELD_CHI, .from_player = CJ4_PLAYER_0, .called_index = 0});
     set_hand(&state, CJ4_PLAYER_1, (const cj4_tile_id[]){tile(2, 1), tile(5, 0), tile(6, 0)}, 3);
 
     action_count = cj4m_collect_actions(
@@ -699,17 +725,17 @@ test_step_can_choose_kyuushu_kyuuhai(
     delegates[CJ4_PLAYER_0] = make_delegate(&contexts[CJ4_PLAYER_0], CJ4_ACTION_ABORTIVE_DRAW);
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
-    state.current_player = CJ4_PLAYER_0;
-    state.phase = CJ4_PHASE_DRAW;
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
     state.draw_tile = draw;
-    state.first_turn_uninterrupted = 1;
-    state.draw_turn_count[CJ4_PLAYER_0] = 1;
+    cj4_state_set_first_turn(&state, 1);
+    cj4_state_set_draw_turn(&state, CJ4_PLAYER_0, 1);
 
     next = cj4m_step(&state, &rules, delegates);
 
-    assert(next.phase == CJ4_PHASE_ROUND_END);
-    assert(next.round_end_type == CJ4_ROUND_END_ABORTIVE_DRAW);
-    assert(next.abortive_draw_reason == CJ4_ABORTIVE_DRAW_KYUUSHU_KYUUHAI);
+    assert(cj4_state_phase(&next) == CJ4_PHASE_ROUND_END);
+    assert(cj4_state_round_end_type(&next) == CJ4_ROUND_END_ABORTIVE_DRAW);
+    assert(cj4_state_abortive_reason(&next) == CJ4_ABORTIVE_DRAW_KYUUSHU_KYUUHAI);
 }
 
 static void
@@ -735,16 +761,18 @@ test_step_prioritizes_pon_over_chi(
 
     set_hand(&state, CJ4_PLAYER_1, chi_hand, 2);
     set_hand(&state, CJ4_PLAYER_2, pon_hand, 2);
-    state.phase = CJ4_PHASE_DISCARD;
-    state.current_player = CJ4_PLAYER_0;
+    cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     add_discard(&state, CJ4_PLAYER_0, tile(3, 0));
 
     next = cj4m_step(&state, NULL, delegates);
 
-    assert(next.phase == CJ4_PHASE_AFTER_CALL);
-    assert(next.current_player == CJ4_PLAYER_2);
-    assert(next.meld_count[CJ4_PLAYER_2] == 1);
-    assert(next.melds[CJ4_PLAYER_2][0].type == CJ4_MELD_PON);
+    assert(cj4_state_phase(&next) == CJ4_PHASE_AFTER_CALL);
+    assert(cj4_state_current_player(&next) == CJ4_PLAYER_2);
+    assert(cj4_count_melds(&next, CJ4_PLAYER_2) == 1);
+    cj4_meld pon;
+    assert(cj4_get_meld(&next, CJ4_PLAYER_2, 0, &pon));
+    assert(pon.type == CJ4_MELD_PON);
     assert(contexts[CJ4_PLAYER_1].call_count == 1);
     assert(contexts[CJ4_PLAYER_2].call_count == 1);
 }
@@ -803,16 +831,16 @@ test_step_prioritizes_ron_and_respects_limit(
     set_hand(&state, CJ4_PLAYER_1, chi_hand, 2);
     set_hand(&state, CJ4_PLAYER_2, ron_hand, (uint8_t)(sizeof(ron_hand) / sizeof(ron_hand[0])));
     set_hand(&state, CJ4_PLAYER_3, ron_hand_alt, (uint8_t)(sizeof(ron_hand_alt) / sizeof(ron_hand_alt[0])));
-    state.phase = CJ4_PHASE_DISCARD;
-    state.current_player = CJ4_PLAYER_0;
+    cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     add_discard(&state, CJ4_PLAYER_0, tile(6, 0));
 
     next = cj4m_step(&state, &rules, delegates);
 
-    assert(next.phase == CJ4_PHASE_ROUND_END);
-    assert(next.round_end_type == CJ4_ROUND_END_RON);
-    assert(next.winner_count == 1);
-    assert(next.winners[0] == CJ4_PLAYER_2);
+    assert(cj4_state_phase(&next) == CJ4_PHASE_ROUND_END);
+    assert(cj4_state_round_end_type(&next) == CJ4_ROUND_END_RON);
+    assert(cj4_state_winner_count(&next) == 1);
+    assert(cj4_get_winner(&next, 0) == CJ4_PLAYER_2);
     assert(contexts[CJ4_PLAYER_1].call_count == 1);
     assert(contexts[CJ4_PLAYER_2].call_count == 1);
     assert(contexts[CJ4_PLAYER_3].call_count == 1);
@@ -831,16 +859,16 @@ test_step_advances_after_all_pass(
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
         delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
 
-    state.phase = CJ4_PHASE_DISCARD;
-    state.current_player = CJ4_PLAYER_0;
-    state.wall[0] = next_draw;
+    cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
+    set_test_wall(&state, (uint8_t)(0), next_draw);
     state.wall_pos = 0;
     add_discard(&state, CJ4_PLAYER_0, tile(8, 0));
 
     next = cj4m_step(&state, NULL, delegates);
 
-    assert(next.phase == CJ4_PHASE_DRAW);
-    assert(next.current_player == CJ4_PLAYER_1);
+    assert(cj4_state_phase(&next) == CJ4_PHASE_DRAW);
+    assert(cj4_state_current_player(&next) == CJ4_PLAYER_1);
     assert(next.draw_tile == next_draw);
     assert(contexts[CJ4_PLAYER_1].call_count == 1);
     assert(contexts[CJ4_PLAYER_2].call_count == 1);
@@ -883,8 +911,8 @@ test_step_allows_kokushi_ron_on_ankan(
 
     set_hand(&state, CJ4_PLAYER_0, ankan_tiles, 4);
     set_hand(&state, CJ4_PLAYER_1, kokushi, (uint8_t)(sizeof(kokushi) / sizeof(kokushi[0])));
-    state.phase = CJ4_PHASE_DRAW;
-    state.current_player = CJ4_PLAYER_0;
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     state.draw_tile = ankan_tiles[3];
 
     ankan = cj4_do_ankan(
@@ -895,10 +923,10 @@ test_step_allows_kokushi_ron_on_ankan(
         ankan_tiles[3]);
     next = cj4m_step(&ankan, &rules, delegates);
 
-    assert(next.phase == CJ4_PHASE_ROUND_END);
-    assert(next.round_end_type == CJ4_ROUND_END_RON);
-    assert(next.winner_count == 1);
-    assert(next.winners[0] == CJ4_PLAYER_1);
+    assert(cj4_state_phase(&next) == CJ4_PHASE_ROUND_END);
+    assert(cj4_state_round_end_type(&next) == CJ4_ROUND_END_RON);
+    assert(cj4_state_winner_count(&next) == 1);
+    assert(cj4_get_winner(&next, 0) == CJ4_PLAYER_1);
 }
 
 static void
@@ -932,8 +960,8 @@ test_collect_actions_hides_ankan_ron_when_rule_disabled(
 
     set_hand(&state, CJ4_PLAYER_0, ankan_tiles, 4);
     set_hand(&state, CJ4_PLAYER_1, kokushi, (uint8_t)(sizeof(kokushi) / sizeof(kokushi[0])));
-    state.phase = CJ4_PHASE_DRAW;
-    state.current_player = CJ4_PLAYER_0;
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     state.draw_tile = ankan_tiles[3];
 
     ankan = cj4_do_ankan(
