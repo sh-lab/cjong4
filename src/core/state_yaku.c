@@ -116,7 +116,7 @@ cj4_yaku_is_closed_hand(
     cj4_player player)
 {
     cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t count = cj4_collect_melds(state, player, melds);
+    uint8_t count = cj4_location_collect_melds(state, player, melds);
     for (uint8_t i = 0; i < count; ++i)
     {
         if (melds[i].type != CJ4_MELD_ANKAN)
@@ -300,7 +300,7 @@ cj4_yaku_collect_context(
     }
 
     cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t meld_count = cj4_collect_melds(state, player, melds);
+    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
     for (uint8_t i = 0; i < meld_count; ++i)
     {
         const cj4_meld *meld = &melds[i];
@@ -764,7 +764,7 @@ cj4_yaku_init_decomposition(
     memset(decomp, 0, sizeof(*decomp));
 
     cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t meld_count = cj4_collect_melds(state, player, melds);
+    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
     for (uint8_t i = 0; i < meld_count; ++i)
     {
         const cj4_meld *meld = &melds[i];
@@ -2403,7 +2403,7 @@ cj4_yaku_prepare_round_end_state(
     }
 
     if (!cj4_yaku_is_winner(state, player) ||
-        state->winning_tile == CJ4_TILE_ID_INVALID)
+        !cj4_tile_id_is_valid(state->winning_tile))
         return 0;
 
     *prepared = *state;

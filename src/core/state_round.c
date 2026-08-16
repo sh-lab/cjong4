@@ -1,5 +1,6 @@
 #include "state_round.h"
 
+#include "state_init.h"
 #include "state_round_init.h"
 
 #include <assert.h>
@@ -18,8 +19,8 @@ cj4_do_next_round(
     const cj4_tile_id wall[CJ4_TILE_ID_COUNT],
     const cj4_rules *rules)
 {
-    assert(cj4_can_next_round(state));
-    assert(wall != 0);
+    if (!cj4_can_next_round(state) || !cj4_wall_is_valid(wall))
+        return state;
 
     return cj4_state_create_round(
         wall,

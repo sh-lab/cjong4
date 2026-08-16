@@ -7,6 +7,7 @@ extern "C"
 #endif
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 
     /*
@@ -81,10 +82,25 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
      * Preconditions:
      *   - id in [0, 135]
      */
-    static inline cj4_tile_type
-    cj4_tile_get_type(cj4_tile_id id)
+    static inline bool
+    cj4_tile_id_is_valid(
+        cj4_tile_id id)
     {
-        assert(id >= CJ4_TILE_ID_MIN && id <= CJ4_TILE_ID_MAX);
+        return id <= CJ4_TILE_ID_MAX;
+    }
+
+    static inline bool
+    cj4_tile_type_is_valid(
+        cj4_tile_type type)
+    {
+        return type <= CJ4_TILE_TYPE_MAX;
+    }
+
+    static inline cj4_tile_type
+    cj4_tile_get_type(
+        cj4_tile_id id)
+    {
+        assert(cj4_tile_id_is_valid(id));
         return (cj4_tile_type)(id / CJ4_TILE_PER_TYPE);
     }
 
@@ -97,9 +113,10 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
     } cj4_tile_suit;
 
     static inline cj4_tile_suit
-    cj4_tile_type_get_suit(cj4_tile_type type)
+    cj4_tile_type_get_suit(
+        cj4_tile_type type)
     {
-        assert(type >= CJ4_TILE_TYPE_MIN && type <= CJ4_TILE_TYPE_MAX);
+        assert(cj4_tile_type_is_valid(type));
 
         if (type <= 8)
             return CJ4_TILE_SUIT_MANZU;
@@ -111,15 +128,17 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
     }
 
     static inline cj4_tile_suit
-    cj4_tile_get_suit(cj4_tile_id id)
+    cj4_tile_get_suit(
+        cj4_tile_id id)
     {
         return cj4_tile_type_get_suit(cj4_tile_get_type(id));
     }
 
     static inline uint8_t
-    cj4_tile_type_is_yaochu(cj4_tile_type type)
+    cj4_tile_type_is_yaochu(
+        cj4_tile_type type)
     {
-        assert(type >= CJ4_TILE_TYPE_MIN && type <= CJ4_TILE_TYPE_MAX);
+        assert(cj4_tile_type_is_valid(type));
 
         if (type >= 27)
             return 1;
@@ -129,15 +148,17 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
     }
 
     static inline uint8_t
-    cj4_tile_is_yaochu(cj4_tile_id id)
+    cj4_tile_is_yaochu(
+        cj4_tile_id id)
     {
         return cj4_tile_type_is_yaochu(cj4_tile_get_type(id));
     }
 
     static inline uint8_t
-    cj4_tile_type_get_number(cj4_tile_type type)
+    cj4_tile_type_get_number(
+        cj4_tile_type type)
     {
-        assert(type >= CJ4_TILE_TYPE_MIN && type <= CJ4_TILE_TYPE_MAX);
+        assert(cj4_tile_type_is_valid(type));
 
         if (type >= 27)
             return 0;
@@ -145,7 +166,8 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
     }
 
     static inline uint8_t
-    cj4_tile_get_number(cj4_tile_id id)
+    cj4_tile_get_number(
+        cj4_tile_id id)
     {
         return cj4_tile_type_get_number(cj4_tile_get_type(id));
     }
@@ -157,9 +179,10 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
      *   - id in [0, 135]
      */
     static inline uint8_t
-    cj4_tile_get_index(cj4_tile_id id)
+    cj4_tile_get_index(
+        cj4_tile_id id)
     {
-        assert(id >= CJ4_TILE_ID_MIN && id <= CJ4_TILE_ID_MAX);
+        assert(cj4_tile_id_is_valid(id));
         return (uint8_t)(id % CJ4_TILE_PER_TYPE);
     }
 
@@ -171,9 +194,11 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
      *   - index in [0, 3]
      */
     static inline cj4_tile_id
-    cj4_tile_make(cj4_tile_type type, uint8_t index)
+    cj4_tile_make(
+        cj4_tile_type type,
+        uint8_t index)
     {
-        assert(type >= CJ4_TILE_TYPE_MIN && type <= CJ4_TILE_TYPE_MAX);
+        assert(cj4_tile_type_is_valid(type));
         assert(index < CJ4_TILE_PER_TYPE);
         return (cj4_tile_id)(type * CJ4_TILE_PER_TYPE + index);
     }

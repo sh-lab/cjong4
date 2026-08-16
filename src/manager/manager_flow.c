@@ -71,14 +71,23 @@ cj4m_select_action(
 {
     cj4_action selected;
 
-    assert(delegate != 0);
-    assert(delegate->decide != 0);
-    assert(action_count > 0);
+    memset(&selected, 0, sizeof(selected));
+    selected.type = CJ4_ACTION_PASS;
+    selected.player = view ? view->player : CJ4_PLAYER_0;
+    selected.tile = CJ4_TILE_ID_INVALID;
+
+    if (!delegate || !delegate->decide || !actions || action_count == 0)
+        return selected;
 
     selected = delegate->decide(delegate->ctx, view, actions, action_count);
-    assert(cj4m_action_is_offered(&selected, actions, action_count));
+    if (cj4m_action_is_offered(&selected, actions, action_count))
+        return selected;
 
-    return selected;
+    for (uint8_t i = 0; i < action_count; ++i)
+        if (actions[i].type == CJ4_ACTION_PASS)
+            return actions[i];
+
+    return actions[0];
 }
 
 static cj4_mahjong
@@ -433,6 +442,8 @@ cj4m_step(
     const cj4m_player_delegate delegates[CJ4_PLAYER_COUNT])
 {
     assert(state != 0);
+    if (!delegates)
+        return *state;
 
     switch (cj4_state_phase(state))
     {

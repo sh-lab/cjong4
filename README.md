@@ -82,8 +82,10 @@ cjong4 は牌を「集合」ではなく「位置」で管理します。
 - 同一性は構造的に比較可能
 
 `cj4_location` は常に4バイトで、各バイトの未使用値は `0xFF` です。復元には
-`cj4_get_wall_tile()`、`cj4_collect_discards()`、`cj4_collect_melds()` を使用できます。
+`cj4_get_wall_tile()`、`cj4_location_collect_hand()`、
+`cj4_location_collect_discards()`、`cj4_location_collect_melds()` を使用できます。
 プレイヤー別のマスク済み状態は `cj4_make_player_state()` で生成できます。
+マスク済み状態は参照・表示用であり、状態遷移APIへの入力には使用しません。
 現在のClang環境で `cj4_mahjong` は592バイトです。
 
 ---
@@ -113,7 +115,7 @@ cjong4 は牌を「集合」ではなく「位置」で管理します。
 ライブラリは外部駆動型です：
 
 ```c
-while (state.phase != CJ4_PHASE_GAME_END)
+while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 {
     state = cj4m_step(&state, &rules, delegates);
 
@@ -128,6 +130,8 @@ while (state.phase != CJ4_PHASE_GAME_END)
 
 - `cj4m_step` は局内の進行を1ステップ進める
 - 次局開始時の wall 供給は呼び出し側が行う
+- wall は `0`〜`135` の物理牌IDを各1回含む必要があり、
+  `cj4_wall_is_valid()` で事前検証できる
 - UI・AI・ログと容易に統合可能
 
 ---

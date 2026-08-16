@@ -184,6 +184,8 @@ cj4m_collect_discard_reaction_actions(
     }
 
     last = cj4_get_last_discard_tile(state);
+    if (!cj4_tile_id_is_valid(last))
+        return;
     type = cj4_tile_get_type(last);
 
     if (cj4_can_pon(state, player))

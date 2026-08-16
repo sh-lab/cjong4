@@ -79,7 +79,7 @@ cj4_state_player_has_permanent_furiten(
         return 0;
 
     cj4_discard discards[CJ4_MAX_DISCARDS];
-    uint8_t count = cj4_collect_discards(state, discards);
+    uint8_t count = cj4_location_collect_discards(state, discards);
     for (uint8_t i = 0; i < count; ++i)
     {
         const cj4_discard *d = &discards[i];

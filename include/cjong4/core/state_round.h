@@ -14,6 +14,8 @@ extern "C"
     bool
     cj4_can_next_round(const cj4_mahjong state);
 
+    /* Returns state unchanged when wall is invalid or the round cannot
+     * advance. */
     cj4_mahjong
     cj4_do_next_round(
         const cj4_mahjong state,

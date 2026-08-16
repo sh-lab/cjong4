@@ -216,6 +216,25 @@ make_delegate(
 }
 
 static cj4_action
+choose_invalid_action(
+    void *opaque,
+    const cj4_player_view *view,
+    const cj4_action *actions,
+    uint8_t action_count)
+{
+    cj4_action action;
+
+    (void)opaque;
+    (void)view;
+    (void)actions;
+    (void)action_count;
+    memset(&action, 0, sizeof(action));
+    action.type = CJ4_ACTION_DISCARD;
+    action.tile = CJ4_TILE_ID_INVALID;
+    return action;
+}
+
+static cj4_action
 choose_pending_kan_dora_action(
     void *opaque,
     const cj4_player_view *view,
@@ -361,6 +380,40 @@ test_player_view_hides_hidden_information(
     assert(view.dora_indicators_count == 2);
     assert(view.dora_indicators[0] == tile(27, 0));
     assert(view.dora_indicators[1] == tile(31, 0));
+
+    state.draw_tile = 200;
+    state.locations[tile(27, 0)].wall = CJ4_LOCATION_NONE;
+    view = cj4m_make_player_view(&state, CJ4_PLAYER_0);
+    assert(view.draw_tile == CJ4_TILE_ID_INVALID);
+    assert(view.dora_indicators_count == 1);
+    assert(view.dora_indicators[0] == tile(31, 0));
+}
+
+static void
+test_step_replaces_invalid_delegate_action(
+    void)
+{
+    cj4_mahjong state = make_empty_state();
+    cj4_mahjong next;
+    chooser_ctx contexts[CJ4_PLAYER_COUNT];
+    cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
+    const cj4_tile_id hand[] = {tile(0, 0), tile(1, 0)};
+
+    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+        delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
+    delegates[CJ4_PLAYER_0].ctx = NULL;
+    delegates[CJ4_PLAYER_0].decide = choose_invalid_action;
+
+    set_hand(&state, CJ4_PLAYER_0, hand, 2);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
+    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
+    state.draw_tile = hand[1];
+
+    next = cj4m_step(&state, NULL, delegates);
+
+    assert(cj4_state_phase(&next) == CJ4_PHASE_DISCARD);
+    assert(next.discard_count == 1);
+    assert(cj4_tile_id_is_valid(next.last_discard_tile));
 }
 
 static void
@@ -986,6 +1039,7 @@ manager_tests_main(
     void)
 {
     test_player_view_hides_hidden_information();
+    test_step_replaces_invalid_delegate_action();
     test_step_reveals_pending_kan_dora_between_delegate_calls();
     test_step_does_not_reveal_current_kan_dora_on_rinshan_tsumo();
     test_step_minkan_flow_reveals_dora_before_discard_choice();

@@ -330,7 +330,7 @@ cj4_can_kakan(
         return false;
 
     cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t meld_count = cj4_collect_melds(state, player, melds);
+    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
     for (uint8_t i = 0; i < meld_count; ++i)
     {
         const cj4_meld *m = &melds[i];
@@ -367,7 +367,7 @@ cj4_can_kakan_with_tile(
     cj4_tile_type type = cj4_tile_get_type(tile);
 
     cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t meld_count = cj4_collect_melds(state, player, melds);
+    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
     for (uint8_t i = 0; i < meld_count; ++i)
     {
         const cj4_meld *m = &melds[i];

@@ -115,12 +115,18 @@ extern "C"
     cj4_get_wall_tile(const cj4_mahjong *state, uint8_t wall_position);
 
     uint8_t
-    cj4_collect_discards(
+    cj4_location_collect_hand(
+        const cj4_mahjong *state,
+        cj4_player player,
+        cj4_tile_id out_tiles[CJ4_MAX_HAND_TILES]);
+
+    uint8_t
+    cj4_location_collect_discards(
         const cj4_mahjong *state,
         cj4_discard out_discards[CJ4_MAX_DISCARDS]);
 
     uint8_t
-    cj4_collect_melds(
+    cj4_location_collect_melds(
         const cj4_mahjong *state,
         cj4_player player,
         cj4_meld out_melds[CJ4_MAX_MELDS]);

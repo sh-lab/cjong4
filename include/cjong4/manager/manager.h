@@ -34,6 +34,8 @@ extern "C"
      * kakan rinshan draw.  When tsumo is available, the first call offers
      * PASS/TSUMO before the new kan dora is revealed.  After PASS, the second
      * call exposes the new indicator and offers the remaining turn actions.
+     * If a delegate returns an action that was not offered, PASS is selected
+     * when available; otherwise the first offered action is selected.
      */
     cj4_mahjong
     cj4m_step(

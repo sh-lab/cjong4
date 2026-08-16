@@ -16,6 +16,7 @@
 #include "cjong4/core/state_query.h"
 #include "cjong4/core/state_riichi.h"
 #include "cjong4/core/state_ron.h"
+#include "cjong4/core/state_round.h"
 #include "cjong4/core/state_settle.h"
 #include "cjong4/core/state_tsumo.h"
 
@@ -162,10 +163,19 @@ test_v2_packed_location_and_state_layout(
 {
     cj4_mahjong state = make_empty_state();
     cj4_discard discards[CJ4_MAX_DISCARDS];
+    cj4_location unknown;
 
     assert(sizeof(cj4_location) == 4);
     assert(sizeof(cj4_mahjong) >= sizeof(cj4_location) * CJ4_TILE_ID_COUNT);
     assert(sizeof(cj4_mahjong) <= 700);
+    assert(cj4_tile_id_is_valid(CJ4_TILE_ID_MIN));
+    assert(cj4_tile_id_is_valid(CJ4_TILE_ID_MAX));
+    assert(!cj4_tile_id_is_valid(136));
+    assert(!cj4_tile_id_is_valid(CJ4_TILE_ID_INVALID));
+
+    memset(&unknown, CJ4_LOCATION_NONE, sizeof(unknown));
+    assert(cj4_location_is_unknown(&unknown));
+    assert(!cj4_location_is_unknown(NULL));
 
     assert(cj4_location_make_discard(CJ4_PLAYER_3, 30, true) == 0xfe);
     assert(cj4_location_is_discard(0x00));
@@ -175,6 +185,9 @@ test_v2_packed_location_and_state_layout(
     assert(!cj4_location_is_discard(0x1f));
     assert(!cj4_location_is_discard(0x7f));
     assert(!cj4_location_is_discard(CJ4_LOCATION_NONE));
+    assert(cj4_location_discard_player(CJ4_LOCATION_NONE) == CJ4_PLAYER_COUNT);
+    assert(cj4_location_discard_index(CJ4_LOCATION_NONE) == 31);
+    assert(!cj4_location_discard_is_tsumogiri(CJ4_LOCATION_NONE));
     assert(cj4_location_make_hand(CJ4_PLAYER_3) == 0x60);
     assert(cj4_location_make_meld(
                CJ4_PLAYER_3,
@@ -186,12 +199,21 @@ test_v2_packed_location_and_state_layout(
     assert(!cj4_location_is_hand(0x01));
     assert(!cj4_location_is_hand(0x7f));
     assert(!cj4_location_is_hand(CJ4_LOCATION_NONE));
+    assert(cj4_location_placement_player(0x01) == CJ4_PLAYER_COUNT);
     assert(cj4_location_is_meld(0x80));
     assert(cj4_location_is_meld(0xfc));
     assert(!cj4_location_is_meld(0x85));
     assert(!cj4_location_is_meld(0x86));
     assert(!cj4_location_is_meld(0x87));
     assert(!cj4_location_is_meld(CJ4_LOCATION_NONE));
+    assert(cj4_location_meld_group(CJ4_LOCATION_NONE) == 4);
+    assert(cj4_location_meld_type(CJ4_LOCATION_NONE) == CJ4_MELD_INVALID);
+    assert(cj4_location_is_discard_history(0x00));
+    assert(cj4_location_is_discard_history(0xd5));
+    assert(!cj4_location_is_discard_history(0x56));
+    assert(!cj4_location_is_discard_history(CJ4_LOCATION_NONE));
+    assert(cj4_location_discard_history_index(CJ4_LOCATION_NONE) == 86);
+    assert(!cj4_location_discard_is_riichi(CJ4_LOCATION_NONE));
     assert(cj4_get_wall_tile(&state, CJ4_LOCATION_NONE) ==
            CJ4_TILE_ID_INVALID);
 
@@ -199,7 +221,8 @@ test_v2_packed_location_and_state_layout(
     state.locations[0].discard_history =
         cj4_location_make_discard_history(0, false);
     state.discard_count = 1;
-    assert(cj4_collect_discards(&state, discards) == 0);
+    assert(cj4_location_collect_discards(&state, discards) == 0);
+    assert(cj4_location_collect_discards(&state, discards) == 0);
 
     cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
     cj4_state_set_current_player(&state, CJ4_PLAYER_2);
@@ -244,6 +267,8 @@ test_v2_location_reconstruction_and_player_mask(
     cj4_mahjong masked;
     cj4_meld meld;
     cj4_discard discards[CJ4_MAX_DISCARDS];
+    cj4_tile_id hand[CJ4_MAX_HAND_TILES];
+    cj4_meld melds[CJ4_MAX_MELDS];
 
     set_hand(&state, CJ4_PLAYER_0, &own, 1);
     set_hand(&state, CJ4_PLAYER_1, &hidden, 1);
@@ -260,9 +285,13 @@ test_v2_location_reconstruction_and_player_mask(
     assert(meld.from_player == CJ4_PLAYER_3);
     assert(meld.called_index < meld.size);
     assert(meld.tiles[meld.called_index] == called);
-    assert(cj4_collect_discards(&state, discards) == 1);
+    assert(cj4_location_collect_hand(&state, CJ4_PLAYER_0, hand) == 1);
+    assert(hand[0] == own);
+    assert(cj4_location_collect_discards(&state, discards) == 1);
     assert(discards[0].tile == called);
     assert(!discards[0].is_active);
+    assert(cj4_location_collect_melds(&state, CJ4_PLAYER_2, melds) == 1);
+    assert(melds[0].type == CJ4_MELD_PON);
 
     masked = cj4_make_player_state(&state, CJ4_PLAYER_0);
     assert(masked.locations[own].wall != CJ4_LOCATION_NONE);
@@ -272,6 +301,10 @@ test_v2_location_reconstruction_and_player_mask(
     assert(masked.locations[called].discard != CJ4_LOCATION_NONE);
     assert(cj4_location_is_meld(masked.locations[called].placement));
     assert(masked.locations[dora].wall == 130);
+
+    state.draw_tile = 200;
+    masked = cj4_make_player_state(&state, CJ4_PLAYER_0);
+    assert(masked.draw_tile == CJ4_TILE_ID_INVALID);
 }
 
 static void
@@ -280,11 +313,13 @@ test_v2_initial_state_uses_locations_as_canonical_wall(
 {
     cj4_tile_id wall[CJ4_TILE_ID_COUNT];
     cj4_rules rules = cj4_rules_default();
+    cj4_mahjong unchanged;
     uint8_t hand_count = 0;
 
     for (uint16_t i = 0; i < CJ4_TILE_ID_COUNT; ++i)
         wall[i] = (cj4_tile_id)i;
 
+    assert(cj4_wall_is_valid(wall));
     cj4_mahjong state = cj4_create_initial_state(wall, &rules);
     for (uint16_t i = 0; i < CJ4_TILE_ID_COUNT; ++i)
     {
@@ -299,6 +334,39 @@ test_v2_initial_state_uses_locations_as_canonical_wall(
     assert(state.last_discard_tile == CJ4_TILE_ID_INVALID);
     assert(state.discard_count == 0);
     assert(state.dora_count == 1);
+
+    wall[0] = wall[1];
+    assert(!cj4_wall_is_valid(wall));
+    state = cj4_create_initial_state(wall, &rules);
+    assert(cj4_state_phase(&state) == CJ4_PHASE_GAME_END);
+    assert(state.draw_tile == CJ4_TILE_ID_INVALID);
+
+    wall[0] = CJ4_TILE_ID_INVALID;
+    assert(!cj4_wall_is_valid(wall));
+    assert(!cj4_wall_is_valid(NULL));
+
+    state = make_empty_state();
+    cj4_state_set_phase(&state, CJ4_PHASE_SETTLE);
+    state.settlement_should_end = 0;
+    unchanged = cj4_do_next_round(state, wall, &rules);
+    assert(memcmp(&state, &unchanged, sizeof(state)) == 0);
+}
+
+static void
+test_v2_rejects_out_of_range_winning_tile(
+    void)
+{
+    cj4_mahjong state = make_empty_state();
+    cj4_win_result result;
+    uint8_t count = 1;
+
+    cj4_state_set_phase(&state, CJ4_PHASE_ROUND_END);
+    cj4_state_set_round_result(&state, CJ4_ROUND_END_RON, CJ4_ABORTIVE_DRAW_NONE);
+    state.winner_mask = 1;
+    state.winning_tile = 200;
+
+    assert(!cj4_collect_winning_results(&state, NULL, &result, 1, &count));
+    assert(count == 0);
 }
 
 static void
@@ -3022,6 +3090,7 @@ main(
     test_v2_packed_location_and_state_layout();
     test_v2_location_reconstruction_and_player_mask();
     test_v2_initial_state_uses_locations_as_canonical_wall();
+    test_v2_rejects_out_of_range_winning_tile();
     test_rules_default_and_validate();
     test_tenhou_preset_fields();
     test_riichi_uses_shape_tenpai();

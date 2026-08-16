@@ -3,6 +3,47 @@
 #include "state_round_init.h"
 #include <string.h>
 
+bool
+cj4_wall_is_valid(
+    const cj4_tile_id wall[CJ4_TILE_ID_COUNT])
+{
+    uint8_t seen[CJ4_TILE_ID_COUNT] = {0};
+
+    if (!wall)
+        return false;
+
+    for (uint16_t position = 0; position < CJ4_TILE_ID_COUNT; ++position)
+    {
+        cj4_tile_id tile = wall[position];
+
+        if (!cj4_tile_id_is_valid(tile) || seen[tile])
+            return false;
+        seen[tile] = 1;
+    }
+
+    return true;
+}
+
+static cj4_mahjong
+cj4_state_create_invalid(
+    void)
+{
+    cj4_mahjong state;
+
+    memset(&state, 0, sizeof(state));
+    memset(state.locations, CJ4_LOCATION_NONE, sizeof(state.locations));
+    state.draw_tile = CJ4_TILE_ID_INVALID;
+    state.last_discard_tile = CJ4_TILE_ID_INVALID;
+    state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
+    state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
+    memset(state.pending_ankan_tiles, CJ4_TILE_ID_INVALID, sizeof(state.pending_ankan_tiles));
+    state.winning_tile = CJ4_TILE_ID_INVALID;
+    cj4_state_clear_pending_riichi_bits(&state);
+    cj4_state_set_phase(&state, CJ4_PHASE_GAME_END);
+
+    return state;
+}
+
 cj4_mahjong
 cj4_state_create_round(
     const cj4_tile_id wall[CJ4_TILE_ID_COUNT],
@@ -15,16 +56,15 @@ cj4_state_create_round(
 {
     cj4_mahjong state;
 
+    if (!cj4_wall_is_valid(wall))
+        return cj4_state_create_invalid();
+
     memset(&state, 0, sizeof(state));
     memset(state.locations, CJ4_LOCATION_NONE, sizeof(state.locations));
-    if (wall)
+    for (uint16_t position = 0; position < CJ4_TILE_ID_COUNT; ++position)
     {
-        for (uint16_t position = 0; position < CJ4_TILE_ID_COUNT; ++position)
-        {
-            cj4_tile_id tile = wall[position];
-            if (tile <= CJ4_TILE_ID_MAX)
-                state.locations[tile].wall = (uint8_t)position;
-        }
+        cj4_tile_id tile = wall[position];
+        state.locations[tile].wall = (uint8_t)position;
     }
 
     int32_t initial_score = 25000;

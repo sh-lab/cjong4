@@ -9,8 +9,8 @@ bool
 cj4_state_has_last_discard(
     const cj4_mahjong *state)
 {
-    return state->discard_count > 0 &&
-           state->last_discard_tile != CJ4_TILE_ID_INVALID;
+    return state && state->discard_count > 0 &&
+           cj4_tile_id_is_valid(state->last_discard_tile);
 }
 
 bool
@@ -57,6 +57,9 @@ cj4_state_set_hand_location(
     cj4_tile_id tile,
     cj4_player owner)
 {
+    if (!state || !cj4_tile_id_is_valid(tile) || owner >= CJ4_PLAYER_COUNT)
+        return;
+
     state->locations[tile].placement = cj4_location_make_hand(owner);
 }
 
@@ -68,7 +71,7 @@ cj4_state_count_total_kans(
     for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
     {
         cj4_meld melds[CJ4_MAX_MELDS];
-        uint8_t count = cj4_collect_melds(state, (cj4_player)player, melds);
+        uint8_t count = cj4_location_collect_melds(state, (cj4_player)player, melds);
         for (uint8_t i = 0; i < count; ++i)
             if (melds[i].type == CJ4_MELD_MINKAN ||
                 melds[i].type == CJ4_MELD_ANKAN ||
@@ -86,7 +89,7 @@ cj4_state_all_kans_by_one_player(
     for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
     {
         cj4_meld melds[CJ4_MAX_MELDS];
-        uint8_t count = cj4_collect_melds(state, (cj4_player)player, melds);
+        uint8_t count = cj4_location_collect_melds(state, (cj4_player)player, melds);
         for (uint8_t i = 0; i < count; ++i)
         {
             cj4_meld_type type = melds[i].type;
@@ -111,7 +114,7 @@ cj4_state_count_meld_triplets_in_range(
 {
     cj4_meld melds[CJ4_MAX_MELDS];
     uint8_t count = 0;
-    uint8_t meld_count = cj4_collect_melds(state, player, melds);
+    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
     for (uint8_t i = 0; i < meld_count; ++i)
     {
         cj4_tile_type type;
@@ -131,7 +134,7 @@ cj4_state_count_player_kans(
 {
     cj4_meld melds[CJ4_MAX_MELDS];
     uint8_t count = 0;
-    uint8_t meld_count = cj4_collect_melds(state, player, melds);
+    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
     for (uint8_t i = 0; i < meld_count; ++i)
         if (melds[i].type == CJ4_MELD_MINKAN ||
             melds[i].type == CJ4_MELD_ANKAN ||
@@ -260,6 +263,11 @@ cj4_state_record_discard(
 {
     cj4_player player = cj4_state_current_player(state);
     uint8_t player_index = 0;
+
+    if (!cj4_tile_id_is_valid(tile) || player >= CJ4_PLAYER_COUNT ||
+        state->discard_count > CJ4_DISCARD_HISTORY_MAX)
+        return;
+
     assert(state->discard_count <= CJ4_DISCARD_HISTORY_MAX);
     for (uint16_t id = 0; id < CJ4_TILE_ID_COUNT; ++id)
     {
@@ -297,6 +305,15 @@ cj4_state_add_meld(
     uint8_t called_index)
 {
     uint8_t group = cj4_count_melds(state, player);
+
+    if (!tiles || player >= CJ4_PLAYER_COUNT ||
+        (size != 3 && size != 4) || group >= CJ4_MAX_MELDS ||
+        type > CJ4_MELD_KAKAN)
+        return;
+    for (uint8_t i = 0; i < size; ++i)
+        if (!cj4_tile_id_is_valid(tiles[i]))
+            return;
+
     assert(size == 3 || size == 4);
     assert(group < CJ4_MAX_MELDS);
     (void)from_player;

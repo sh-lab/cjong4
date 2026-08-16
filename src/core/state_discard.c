@@ -137,7 +137,8 @@ cj4_do_discard_with_rules(
     const cj4_rules *rules,
     cj4_tile_id tile)
 {
-    assert(cj4_can_discard_with_rules(state, rules, tile));
+    if (!cj4_can_discard_with_rules(state, rules, tile))
+        return state;
 
     cj4_mahjong next = state;
 

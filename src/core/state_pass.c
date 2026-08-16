@@ -34,7 +34,7 @@ cj4_is_suufon_renda(
     }
 
     cj4_discard discards[CJ4_MAX_DISCARDS];
-    uint8_t total = cj4_collect_discards(state, discards);
+    uint8_t total = cj4_location_collect_discards(state, discards);
     for (uint8_t i = 0; i < total; ++i)
     {
         const cj4_discard *discard = &discards[i];

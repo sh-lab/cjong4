@@ -14,7 +14,7 @@ cj4_state_is_closed_for_riichi(
     cj4_player player)
 {
     cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t count = cj4_collect_melds(state, player, melds);
+    uint8_t count = cj4_location_collect_melds(state, player, melds);
     for (uint8_t i = 0; i < count; ++i)
     {
         if (melds[i].type != CJ4_MELD_ANKAN)
