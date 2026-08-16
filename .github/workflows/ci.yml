@@ -35,6 +35,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_C_COMPILER=gcc
           -DCMAKE_C_EXTENSIONS=OFF
+          -DCMAKE_C_FLAGS=-Werror
           -DBUILD_TESTS=ON
 
       - name: Build

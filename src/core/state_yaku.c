@@ -941,8 +941,7 @@ cj4_yaku_evaluate_decomposition(
                     concealed_triplets--;
             }
 
-            if (group->base_type >= CJ4_TILE_TYPE_1M &&
-                group->base_type <= CJ4_TILE_TYPE_9S &&
+            if (group->base_type <= CJ4_TILE_TYPE_9S &&
                 cj4_tile_type_get_suit(group->base_type) != CJ4_TILE_SUIT_HONOR)
             {
                 uint8_t suit = (uint8_t)cj4_tile_type_get_suit(group->base_type);
