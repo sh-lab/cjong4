@@ -24,6 +24,51 @@ This library is designed with the following principles:
 
 ---
 
+## ビルド / Build
+
+必要なもの：
+
+- CMake 3.16以降
+- ISO C11対応コンパイラ（GCC、Clang、MSVC）
+
+Releaseビルド：
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
+```
+
+## テスト / Test
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
+cmake --build build --config Release --parallel
+ctest --test-dir build -C Release --output-on-failure
+```
+
+## インストール / Install
+
+任意のprefixへ静的ライブラリ、公開ヘッダ、CMake package filesをインストールできます。
+
+```sh
+cmake --install build --config Release --prefix /path/to/prefix
+```
+
+CMakeプロジェクトから利用する場合：
+
+```cmake
+find_package(cjong4 2 CONFIG REQUIRED)
+target_link_libraries(your_target PRIVATE cjong4::cj4)
+```
+
+標準の探索先以外へインストールした場合は、利用側の構成時にprefixを指定します。
+
+```sh
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/prefix
+```
+
+---
+
 ## アーキテクチャ / Architecture
 
 cjong4 は以下の3層構造で設計されています：
@@ -255,6 +300,8 @@ src/core/                 core implementation
 src/manager/              manager implementation
 tests/core/               core tests 
 tests/manager/            manager tests
+cmake/                    CMake package configuration
+.github/workflows/        continuous integration
 ```
 
 ---
