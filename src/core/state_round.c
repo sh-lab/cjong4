@@ -1,4 +1,5 @@
 #include "state_round.h"
+#include "state_internal.h"
 
 #include "state_init.h"
 #include "state_round_init.h"

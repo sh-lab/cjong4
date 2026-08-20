@@ -1,4 +1,5 @@
 #include "state_abortive.h"
+#include "state_internal.h"
 
 #include "state_ops.h"
 #include "state_query.h"
@@ -15,7 +16,7 @@ cj4_count_distinct_yaochu_in_hand(
 
     for (cj4_tile_id tile = CJ4_TILE_ID_MIN; tile <= CJ4_TILE_ID_MAX; ++tile)
     {
-        const cj4_location *loc = cj4_tile_location_const(state, tile);
+        const cj4_location *loc = cj4_state_tile_location_const(state, tile);
         cj4_tile_type type;
 
         if (!cj4_location_is_hand(loc->placement) ||

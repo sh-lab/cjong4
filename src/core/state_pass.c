@@ -33,11 +33,11 @@ cj4_is_suufon_renda(
         return 0;
     }
 
-    cj4_discard discards[CJ4_MAX_DISCARDS];
-    uint8_t total = cj4_location_collect_discards(state, discards);
-    for (uint8_t i = 0; i < total; ++i)
+    cj4_discard_list discards =
+        cj4_location_collect_discards(state->locations);
+    for (uint8_t i = 0; i < discards.count; ++i)
     {
-        const cj4_discard *discard = &discards[i];
+        const cj4_discard *discard = &discards.items[i];
 
         if (discard_count[discard->player] == 0)
             first_type[discard->player] = cj4_tile_get_type(discard->tile);

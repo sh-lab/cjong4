@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "rules.h"
-#include "state.h"
+#include "state_internal.h"
 #include "tile.h"
 
 bool

@@ -2,7 +2,7 @@
 
 ## Summary
 - cjong4 is a C11 library implementing pure-function-oriented core and manager logic for 4-player Japanese mahjong (riichi mahjong).
-- v2 uses `cj4_location locations[136]` as the canonical tile layout and reconstructs walls, hands, discards, and melds from it.
+- v3 uses `cj4_location locations[136]` as the canonical tile layout and reconstructs walls, hands, discards, melds, and dora indicators from it.
 
 ## Build, test, and lint commands
 - Configure: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON`
@@ -32,7 +32,7 @@
 - CMake builds the static `cj4` library and optionally the `cj4_tests` executable with `BUILD_TESTS=ON`.
 - Installed consumers use `find_package(cjong4 CONFIG REQUIRED)` and link `cjong4::cj4`.
 - GitHub Actions validates GCC, Clang with ASan/UBSan, and MSVC.
-- v2 is intentionally source- and ABI-incompatible with v1.x; do not add compatibility aliases unless explicitly requested.
+- v3 is intentionally source- and ABI-incompatible with earlier releases; do not add compatibility aliases unless explicitly requested.
 
 ## How Copilot should assist
 - Prefer solutions that maintain pure-function interfaces and avoid introducing global or static mutable state.

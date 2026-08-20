@@ -57,7 +57,7 @@ cmake --install build --config Release --prefix /path/to/prefix
 CMakeプロジェクトから利用する場合：
 
 ```cmake
-find_package(cjong4 2 CONFIG REQUIRED)
+find_package(cjong4 3 CONFIG REQUIRED)
 target_link_libraries(your_target PRIVATE cjong4::cj4)
 ```
 
@@ -107,8 +107,7 @@ cj4_action (*decide)(
 - `actions` は合法手一覧
 - プレイヤーは1つ選択する
 - `ctx` と `decide` を `cj4m_player_delegate` に束ねて `cj4m_step` に渡す
-- 大明槓・加槓後に嶺上和了が可能な場合、`decide` は最初に `TSUMO` / `PASS`、
-  `PASS` 後に槓ドラ表示牌を公開したviewと打牌・連続槓候補で再度呼ばれる
+- 嶺上牌ツモ後も、通常のツモ後と同様にツモ和了・打牌・連続槓候補が一度に渡される
 
 ---
 
@@ -126,12 +125,11 @@ cjong4 は牌を「集合」ではなく「位置」で管理します。
 - ソート不要
 - 同一性は構造的に比較可能
 
-`cj4_location` は常に4バイトで、各バイトの未使用値は `0xFF` です。復元には
-`cj4_get_wall_tile()`、`cj4_location_collect_hand()`、
-`cj4_location_collect_discards()`、`cj4_location_collect_melds()` を使用できます。
-プレイヤー別のマスク済み状態は `cj4_make_player_state()` で生成できます。
-マスク済み状態は参照・表示用であり、状態遷移APIへの入力には使用しません。
-現在のClang環境で `cj4_mahjong` は592バイトです。
+`cj4_location` は常に4バイトで、各バイトの未使用値は `0xFF` です。1牌の位置は
+`cj4_location_get()` で取得します。手牌・捨牌・鳴牌・ドラ表示牌は
+`cj4_location_collect_*()` が返すリスト値として復元できます。完全状態には
+`cj4_mahjong.locations`、プレイヤー別のマスク済み情報には
+`cj4_player_view.locations` を渡します。
 
 ---
 
@@ -190,7 +188,7 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 - 流し満貫
 - 責任払い（大三元・大四喜・四槓子）
 
-### v2 対応ルール
+### v3 対応ルール
 
 - 立直宣言は「宣言中」と「成立済み」を分離
   - 宣言牌へのロンがなければ、鳴かれた場合も立直成立
@@ -199,10 +197,10 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 - 喰い替え禁止
   - ポン/チー直後の1打だけ、同種牌と両面チー外側の筋喰い替えを禁止可能
 - 槓ドラ表示タイミング
-  - 暗槓: 暗槓 → 槓ドラ表示 → 嶺上ツモ
-  - 大明槓/加槓: 槓 → 嶺上ツモ → 槓ドラ表示 → 打牌
-  - 大明槓/加槓の新しい槓ドラは、その槓の嶺上開花には適用しない
-  - 打牌せず連続して槓する場合は、次の嶺上ツモ前に表示する
+  - 暗槓は常に成立時に表示
+  - 大明槓・加槓は先めくり／後めくりを選択可能
+  - 後めくりでは槓後の打牌記録後、ロン・ポン・チー判定前に表示
+  - 打牌せず連続して槓する場合は、次の槍槓判定前に前の槓ドラを表示
 - 国士無双に限る暗槓槍槓
 - 三家和の途中流局切り替え
 - 特殊形ダブル役満、数え役満、切り上げ満貫の切り替え
@@ -219,6 +217,7 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 | --- | ---: | --- |
 | `kuitan` | 1 | 喰い断を有効化 |
 | `kuikae_forbidden` | 1 | 鳴き直後1打の喰い替え禁止 |
+| `kan_dora_timing` | `CJ4_KAN_DORA_EARLY` | 大明槓・加槓の槓ドラ表示タイミング |
 | `ippatsu` | 1 | 一発役を有効化 |
 | `max_ron_players` | 3 | 同一打牌へのロン最大人数（1=頭ハネ、2=二家和、3=三家和まで） |
 | `kokushi_ron_on_ankan` | 1 | 国士無双に限り暗槓へのロンを許可 |
@@ -251,9 +250,9 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 
 | プリセット | 差分 |
 | --- | --- |
-| `cj4_rules_default()` | 標準設定。三家和は流局せず3人ロン、責任払いは和了全体対象 |
-| `cj4_rules_tenhou()` | 三家和流局、本場・供託の上家取り、流し満貫時の親聴牌連荘、供託を除く終局判定を有効化。切り上げ満貫、暗槓国士槍槓、特殊形ダブル役満を無効化。責任払いは大三元・大四喜のみ、複合役満を含む和了全体対象 |
-| `cj4_rules_mjsoul()` | 現時点では default と同じく三家和は3人ロン、責任払いは和了全体対象 |
+| `cj4_rules_default()` | 標準設定。槓ドラは先めくり、三家和は流局せず3人ロン、責任払いは和了全体対象 |
+| `cj4_rules_tenhou()` | 槓ドラは後めくり。三家和流局、本場・供託の上家取り、流し満貫時の親聴牌連荘、供託を除く終局判定を有効化。切り上げ満貫、暗槓国士槍槓、特殊形ダブル役満を無効化。責任払いは大三元・大四喜のみ、複合役満を含む和了全体対象 |
+| `cj4_rules_mjsoul()` | 槓ドラは後めくり。三家和は3人ロン、責任払いは和了全体対象 |
 
 非対応：
 
@@ -266,7 +265,7 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 
 ## 互換性 / Compatibility
 
-v2 は `cj4_mahjong` の牌配置を `cj4_location locations[136]` に統合し、山・捨牌・鳴牌の永続配列を廃止します。v1.x とのソース互換・バイナリABI互換は保証しません。行動判定・状態遷移APIは従来の値渡しモデルを維持します。
+v3 は破壊的変更です。位置情報の収集APIは `locations` を受け取り、配列と件数をまとめた値を返します。`cj4_player_view` もマスク済みの `locations` を保持する形式へ変更しています。旧収集API、`cj4_make_player_state()`、状態変更用アクセサーとのソース互換・バイナリABI互換は保証しません。
 
 ## C言語仕様 / Language Standard
 
@@ -308,8 +307,8 @@ cmake/                    CMake package configuration
 
 ## ステータス / Status
 
-2.0.2 リリース<br>
-2.0.2 release
+3.0.0<br>
+3.0.0
 
 ---
 
