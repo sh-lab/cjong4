@@ -78,11 +78,11 @@ cj4_state_player_has_permanent_furiten(
     if (cj4_collect_waiting_tile_types(state, player, waits) == 0)
         return 0;
 
-    cj4_discard discards[CJ4_MAX_DISCARDS];
-    uint8_t count = cj4_location_collect_discards(state, discards);
-    for (uint8_t i = 0; i < count; ++i)
+    cj4_discard_list discards =
+        cj4_location_collect_discards(state->locations);
+    for (uint8_t i = 0; i < discards.count; ++i)
     {
-        const cj4_discard *d = &discards[i];
+        const cj4_discard *d = &discards.items[i];
 
         if (d->player != player)
             continue;
@@ -117,7 +117,7 @@ cj4_state_player_can_kokushi_with_tile(
     uint8_t counts[CJ4_TILE_TYPE_COUNT] = {0};
     uint8_t pair_count = 0;
 
-    if (cj4_count_melds(state, player) != 0 ||
+    if (cj4_location_collect_melds(state->locations, player).count != 0 ||
         !cj4_tile_is_yaochu(tile))
     {
         return 0;
@@ -125,7 +125,7 @@ cj4_state_player_can_kokushi_with_tile(
 
     for (cj4_tile_id id = CJ4_TILE_ID_MIN; id <= CJ4_TILE_ID_MAX; ++id)
     {
-        const cj4_location *loc = cj4_tile_location_const(state, id);
+        const cj4_location *loc = cj4_state_tile_location_const(state, id);
 
         if (cj4_location_is_hand(loc->placement) &&
             cj4_location_placement_player(loc->placement) == player)

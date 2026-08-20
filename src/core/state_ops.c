@@ -70,12 +70,12 @@ cj4_state_count_total_kans(
     uint8_t total = 0;
     for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
     {
-        cj4_meld melds[CJ4_MAX_MELDS];
-        uint8_t count = cj4_location_collect_melds(state, (cj4_player)player, melds);
-        for (uint8_t i = 0; i < count; ++i)
-            if (melds[i].type == CJ4_MELD_MINKAN ||
-                melds[i].type == CJ4_MELD_ANKAN ||
-                melds[i].type == CJ4_MELD_KAKAN)
+        cj4_meld_list melds =
+            cj4_location_collect_melds(state->locations, (cj4_player)player);
+        for (uint8_t i = 0; i < melds.count; ++i)
+            if (melds.items[i].type == CJ4_MELD_MINKAN ||
+                melds.items[i].type == CJ4_MELD_ANKAN ||
+                melds.items[i].type == CJ4_MELD_KAKAN)
                 total++;
     }
     return total;
@@ -88,11 +88,11 @@ cj4_state_all_kans_by_one_player(
     uint8_t owner = CJ4_PLAYER_COUNT;
     for (uint8_t player = 0; player < CJ4_PLAYER_COUNT; ++player)
     {
-        cj4_meld melds[CJ4_MAX_MELDS];
-        uint8_t count = cj4_location_collect_melds(state, (cj4_player)player, melds);
-        for (uint8_t i = 0; i < count; ++i)
+        cj4_meld_list melds =
+            cj4_location_collect_melds(state->locations, (cj4_player)player);
+        for (uint8_t i = 0; i < melds.count; ++i)
         {
-            cj4_meld_type type = melds[i].type;
+            cj4_meld_type type = melds.items[i].type;
             if (type != CJ4_MELD_MINKAN && type != CJ4_MELD_ANKAN &&
                 type != CJ4_MELD_KAKAN)
                 continue;
@@ -112,15 +112,15 @@ cj4_state_count_meld_triplets_in_range(
     cj4_tile_type start,
     cj4_tile_type end)
 {
-    cj4_meld melds[CJ4_MAX_MELDS];
+    cj4_meld_list melds =
+        cj4_location_collect_melds(state->locations, player);
     uint8_t count = 0;
-    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
-    for (uint8_t i = 0; i < meld_count; ++i)
+    for (uint8_t i = 0; i < melds.count; ++i)
     {
         cj4_tile_type type;
-        if (melds[i].type == CJ4_MELD_CHI)
+        if (melds.items[i].type == CJ4_MELD_CHI)
             continue;
-        type = cj4_tile_get_type(melds[i].tiles[0]);
+        type = cj4_tile_get_type(melds.items[i].tiles[0]);
         if (type >= start && type <= end)
             count++;
     }
@@ -132,13 +132,13 @@ cj4_state_count_player_kans(
     const cj4_mahjong *state,
     cj4_player player)
 {
-    cj4_meld melds[CJ4_MAX_MELDS];
+    cj4_meld_list melds =
+        cj4_location_collect_melds(state->locations, player);
     uint8_t count = 0;
-    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
-    for (uint8_t i = 0; i < meld_count; ++i)
-        if (melds[i].type == CJ4_MELD_MINKAN ||
-            melds[i].type == CJ4_MELD_ANKAN ||
-            melds[i].type == CJ4_MELD_KAKAN)
+    for (uint8_t i = 0; i < melds.count; ++i)
+        if (melds.items[i].type == CJ4_MELD_MINKAN ||
+            melds.items[i].type == CJ4_MELD_ANKAN ||
+            melds.items[i].type == CJ4_MELD_KAKAN)
             count++;
     return count;
 }
@@ -247,10 +247,10 @@ void
 cj4_state_reveal_pending_kan_dora(
     cj4_mahjong *state)
 {
-    while (state->pending_kan_dora)
+    while (state->pending_kan_dora_count)
     {
         cj4_state_add_dora_indicator(state);
-        state->pending_kan_dora--;
+        state->pending_kan_dora_count--;
     }
 }
 
@@ -304,7 +304,8 @@ cj4_state_add_meld(
     cj4_player from_player,
     uint8_t called_index)
 {
-    uint8_t group = cj4_count_melds(state, player);
+    uint8_t group =
+        cj4_location_collect_melds(state->locations, player).count;
 
     if (!tiles || player >= CJ4_PLAYER_COUNT ||
         (size != 3 && size != 4) || group >= CJ4_MAX_MELDS ||
@@ -353,7 +354,7 @@ cj4_state_clear_round_pending(
     state->pending_ankan_tile = CJ4_TILE_ID_INVALID;
     for (uint8_t i = 0; i < 4; ++i)
         state->pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
-    state->pending_kan_dora = 0;
+    state->pending_kan_dora_count = 0;
 }
 
 void
@@ -385,7 +386,7 @@ cj4_state_finish_multi_ron(
     cj4_state_set_round_result(state, CJ4_ROUND_END_RON, CJ4_ABORTIVE_DRAW_NONE);
     /* Keep the pending kan target for round-end score reconstruction. */
     cj4_state_clear_pending_riichi(state);
-    state->pending_kan_dora = 0;
+    state->pending_kan_dora_count = 0;
     cj4_state_set_phase(state, CJ4_PHASE_ROUND_END);
 }
 

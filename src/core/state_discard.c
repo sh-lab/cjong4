@@ -12,26 +12,23 @@ cj4_kuikae_is_forbidden(
     cj4_tile_id tile)
 {
     cj4_player player = cj4_state_current_player(state);
-    cj4_meld meld_value;
-    cj4_meld *meld = &meld_value;
+    cj4_meld_list melds;
+    const cj4_meld *meld;
     cj4_tile_type discard_type;
     cj4_tile_type called_type;
 
     if (!rules || !rules->kuikae_forbidden)
         return 0;
 
-    if (cj4_state_phase(state) != CJ4_PHASE_AFTER_CALL ||
-        cj4_count_melds(state, player) == 0)
+    if (cj4_state_phase(state) != CJ4_PHASE_AFTER_CALL)
     {
         return 0;
     }
 
-    if (!cj4_get_meld(
-            state,
-            player,
-            (uint8_t)(cj4_count_melds(state, player) - 1),
-            meld))
+    melds = cj4_location_collect_melds(state->locations, player);
+    if (melds.count == 0)
         return 0;
+    meld = &melds.items[melds.count - 1];
 
     if (meld->type != CJ4_MELD_PON && meld->type != CJ4_MELD_CHI)
         return 0;
@@ -142,12 +139,12 @@ cj4_do_discard_with_rules(
 
     cj4_mahjong next = state;
 
-    cj4_state_reveal_pending_kan_dora(&next);
     cj4_state_record_discard(
         &next,
         tile,
         (uint8_t)(tile == state.draw_tile),
         0);
+    cj4_state_reveal_pending_kan_dora(&next);
     cj4_state_clear_draw_tile(&next);
     cj4_state_set_chankan(&next, 0);
     next.pending_kakan_tile = CJ4_TILE_ID_INVALID;

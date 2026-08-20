@@ -11,14 +11,6 @@ extern "C"
 {
 #endif
 
-    static inline const cj4_location *
-    cj4_tile_location_const(
-        const cj4_mahjong *state,
-        cj4_tile_id tile)
-    {
-        return &state->locations[tile];
-    }
-
     static inline cj4_player
     cj4_next_player(
         const cj4_mahjong *state)
@@ -114,41 +106,34 @@ extern "C"
     cj4_tile_id
     cj4_get_wall_tile(const cj4_mahjong *state, uint8_t wall_position);
 
-    uint8_t
+    cj4_hand
     cj4_location_collect_hand(
-        const cj4_mahjong *state,
-        cj4_player player,
-        cj4_tile_id out_tiles[CJ4_MAX_HAND_TILES]);
+        const cj4_location locations[CJ4_TILE_ID_COUNT],
+        cj4_player player);
 
-    uint8_t
+    cj4_discard_list
     cj4_location_collect_discards(
-        const cj4_mahjong *state,
-        cj4_discard out_discards[CJ4_MAX_DISCARDS]);
+        const cj4_location locations[CJ4_TILE_ID_COUNT]);
 
-    uint8_t
+    cj4_discard_list
+    cj4_location_collect_player_discards(
+        const cj4_location locations[CJ4_TILE_ID_COUNT],
+        cj4_player player);
+
+    cj4_meld_list
     cj4_location_collect_melds(
-        const cj4_mahjong *state,
-        cj4_player player,
-        cj4_meld out_melds[CJ4_MAX_MELDS]);
+        const cj4_location locations[CJ4_TILE_ID_COUNT],
+        cj4_player player);
 
-    uint8_t
-    cj4_count_melds(const cj4_mahjong *state, cj4_player player);
-
-    bool
-    cj4_get_meld(
-        const cj4_mahjong *state,
-        cj4_player player,
-        uint8_t group,
-        cj4_meld *out_meld);
+    cj4_dora_indicator_list
+    cj4_location_collect_dora_indicators(
+        const cj4_location locations[CJ4_TILE_ID_COUNT]);
 
     cj4_player
     cj4_get_winner(const cj4_mahjong *state, uint8_t index);
 
     bool
     cj4_is_nagashi_mangan(const cj4_mahjong *state, cj4_player player);
-
-    cj4_mahjong
-    cj4_make_player_state(const cj4_mahjong *state, cj4_player player);
 
     bool
     cj4_collect_winning_results(

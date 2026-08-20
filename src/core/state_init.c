@@ -118,7 +118,7 @@ cj4_state_create_round(
     for (int i = 0; i < 4; ++i)
         state.pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
     cj4_state_clear_pending_riichi_bits(&state);
-    state.pending_kan_dora = 0;
+    state.pending_kan_dora_count = 0;
     state.winning_tile = CJ4_TILE_ID_INVALID;
     state.last_discard_tile = CJ4_TILE_ID_INVALID;
     cj4_state_set_round_result(&state, CJ4_ROUND_END_NONE, CJ4_ABORTIVE_DRAW_NONE);

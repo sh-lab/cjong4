@@ -10,7 +10,7 @@ extern "C"
 {
 #endif
 
-#define CJ4_RULES_VERSION 1u
+#define CJ4_RULES_VERSION 2u
 
     typedef enum
     {
@@ -18,6 +18,12 @@ extern "C"
         CJ4_GAME_HANCHAN,
         CJ4_GAME_FULL
     } cj4_game_type;
+
+    typedef enum
+    {
+        CJ4_KAN_DORA_EARLY,
+        CJ4_KAN_DORA_LATE
+    } cj4_kan_dora_timing;
 
     typedef struct
     {
@@ -32,6 +38,7 @@ extern "C"
         /* general */
         uint8_t kuitan;
         uint8_t kuikae_forbidden;
+        cj4_kan_dora_timing kan_dora_timing;
 
         /* riichi */
         uint8_t ippatsu;

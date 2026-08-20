@@ -1,11 +1,11 @@
 #ifndef CJ4_LOCATION_H
 #define CJ4_LOCATION_H
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "player.h"
+#include "tile.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -49,18 +49,6 @@ extern "C"
                location->discard_history == CJ4_LOCATION_NONE;
     }
 
-    static inline uint8_t
-    cj4_location_make_discard(
-        cj4_player player,
-        uint8_t index,
-        bool is_tsumogiri)
-    {
-        assert(player < CJ4_PLAYER_COUNT);
-        assert(index <= CJ4_DISCARD_INDEX_MAX);
-        return (uint8_t)((is_tsumogiri ? 0x80u : 0u) |
-                         ((uint8_t)player << 5) | index);
-    }
-
     static inline bool
     cj4_location_is_discard(
         uint8_t discard)
@@ -93,27 +81,6 @@ extern "C"
         if (!cj4_location_is_discard(discard))
             return false;
         return (discard & 0x80u) != 0;
-    }
-
-    static inline uint8_t
-    cj4_location_make_hand(
-        cj4_player player)
-    {
-        assert(player < CJ4_PLAYER_COUNT);
-        return (uint8_t)((uint8_t)player << 5);
-    }
-
-    static inline uint8_t
-    cj4_location_make_meld(
-        cj4_player player,
-        uint8_t group,
-        cj4_meld_type type)
-    {
-        assert(player < CJ4_PLAYER_COUNT);
-        assert(group <= CJ4_MELD_GROUP_MAX);
-        assert(type <= CJ4_MELD_KAKAN);
-        return (uint8_t)(0x80u | ((uint8_t)player << 5) |
-                         (group << 3) | (uint8_t)type);
     }
 
     static inline bool
@@ -159,15 +126,6 @@ extern "C"
         return (cj4_meld_type)(placement & 0x07u);
     }
 
-    static inline uint8_t
-    cj4_location_make_discard_history(
-        uint8_t index,
-        bool is_riichi)
-    {
-        assert(index <= CJ4_DISCARD_HISTORY_MAX);
-        return (uint8_t)((is_riichi ? 0x80u : 0u) | index);
-    }
-
     static inline bool
     cj4_location_is_discard_history(
         uint8_t history)
@@ -191,6 +149,23 @@ extern "C"
         if (!cj4_location_is_discard_history(history))
             return false;
         return (history & 0x80u) != 0;
+    }
+
+    static inline cj4_location
+    cj4_location_get(
+        const cj4_location locations[CJ4_TILE_ID_COUNT],
+        cj4_tile_id tile)
+    {
+        const cj4_location unknown = {
+            CJ4_LOCATION_NONE,
+            CJ4_LOCATION_NONE,
+            CJ4_LOCATION_NONE,
+            CJ4_LOCATION_NONE};
+
+        if (!locations || !cj4_tile_id_is_valid(tile))
+            return unknown;
+
+        return locations[tile];
     }
 
 #if defined(__cplusplus)

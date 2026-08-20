@@ -10,41 +10,29 @@ extern "C"
 {
 #endif
 
-    enum
-    {
-        CJ4M_MAX_HAND_TILES = CJ4_MAX_HAND_TILES,
-        CJ4M_MAX_DORA_INDICATORS = 5
-    };
-
     typedef struct
     {
-        cj4_player player;
+        cj4_location locations[CJ4_TILE_ID_COUNT];
+
+        int32_t scores[CJ4_PLAYER_COUNT];
         cj4_phase phase;
+
+        cj4_player player;
         cj4_player current_player;
         cj4_player dealer;
         cj4_wind round_wind;
-        int32_t scores[CJ4_PLAYER_COUNT];
+
+        uint8_t honba;
+        uint8_t riichi_sticks;
+
         uint8_t is_riichi[CJ4_PLAYER_COUNT];
         uint8_t temporary_furiten;
         uint8_t riichi_furiten;
         uint8_t first_turn_uninterrupted;
 
-        cj4_tile_id hand[CJ4M_MAX_HAND_TILES];
-        uint8_t hand_count;
         cj4_tile_id draw_tile;
         cj4_tile_id last_discard;
-        cj4_tile_id pending_kakan_tile;
-
-        /* Currently visible front-side dora indicators only.
-         * Pending kan dora and ura dora are not included. */
-        cj4_tile_id dora_indicators[CJ4M_MAX_DORA_INDICATORS];
-        uint8_t dora_indicators_count;
-
-        cj4_discard discards[CJ4_MAX_DISCARDS];
-        uint8_t discard_count;
-
-        cj4_meld melds[CJ4_PLAYER_COUNT][CJ4_MAX_MELDS];
-        uint8_t meld_count[CJ4_PLAYER_COUNT];
+        cj4_tile_id kan_tile;
     } cj4_player_view;
 
 #ifdef __cplusplus

@@ -115,11 +115,11 @@ cj4_yaku_is_closed_hand(
     const cj4_mahjong *state,
     cj4_player player)
 {
-    cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t count = cj4_location_collect_melds(state, player, melds);
-    for (uint8_t i = 0; i < count; ++i)
+    cj4_meld_list melds =
+        cj4_location_collect_melds(state->locations, player);
+    for (uint8_t i = 0; i < melds.count; ++i)
     {
-        if (melds[i].type != CJ4_MELD_ANKAN)
+        if (melds.items[i].type != CJ4_MELD_ANKAN)
             return 0;
     }
 
@@ -287,7 +287,7 @@ cj4_yaku_collect_context(
 
     for (int tid = 0; tid < CJ4_TILE_ID_COUNT; ++tid)
     {
-        const cj4_location *loc = cj4_tile_location_const(state, (cj4_tile_id)tid);
+        const cj4_location *loc = cj4_state_tile_location_const(state, (cj4_tile_id)tid);
 
         if (cj4_location_is_hand(loc->placement) &&
             cj4_location_placement_player(loc->placement) == player)
@@ -299,11 +299,11 @@ cj4_yaku_collect_context(
         }
     }
 
-    cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
-    for (uint8_t i = 0; i < meld_count; ++i)
+    cj4_meld_list melds =
+        cj4_location_collect_melds(state->locations, player);
+    for (uint8_t i = 0; i < melds.count; ++i)
     {
-        const cj4_meld *meld = &melds[i];
+        const cj4_meld *meld = &melds.items[i];
 
         if (meld->type != CJ4_MELD_ANKAN)
             ctx->has_open_meld = 1;
@@ -763,11 +763,11 @@ cj4_yaku_init_decomposition(
 {
     memset(decomp, 0, sizeof(*decomp));
 
-    cj4_meld melds[CJ4_MAX_MELDS];
-    uint8_t meld_count = cj4_location_collect_melds(state, player, melds);
-    for (uint8_t i = 0; i < meld_count; ++i)
+    cj4_meld_list melds =
+        cj4_location_collect_melds(state->locations, player);
+    for (uint8_t i = 0; i < melds.count; ++i)
     {
-        const cj4_meld *meld = &melds[i];
+        const cj4_meld *meld = &melds.items[i];
         cj4_yaku_group *group = &decomp->groups[decomp->group_count++];
 
         group->base_type = cj4_yaku_open_meld_base_type(meld);
@@ -830,7 +830,7 @@ cj4_yaku_apply_count_based_yaku(
             *flags |= CJ4_YAKU_CHIIHOU;
     }
 
-    if (cj4_count_melds(state, player) == 0)
+    if (cj4_location_collect_melds(state->locations, player).count == 0)
     {
         if (cj4_yaku_is_kokushi(ctx->concealed_counts))
         {
@@ -1367,7 +1367,7 @@ cj4_yaku_count_aka_dora(
 
     for (int tile = 0; tile < CJ4_TILE_ID_COUNT; ++tile)
     {
-        const cj4_location *loc = cj4_tile_location_const(state, (cj4_tile_id)tile);
+        const cj4_location *loc = cj4_state_tile_location_const(state, (cj4_tile_id)tile);
 
         if (rules->aka_tiles[tile] &&
             (cj4_location_is_hand(loc->placement) ||

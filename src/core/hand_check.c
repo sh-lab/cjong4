@@ -1,4 +1,5 @@
 #include "hand_check.h"
+#include "state_internal.h"
 #include "state_query.h"
 #include "tile.h"
 
@@ -167,7 +168,7 @@ cj4_is_complete_hand(
 
     for (int tid = 0; tid < CJ4_TILE_ID_COUNT; ++tid)
     {
-        const cj4_location *loc = cj4_tile_location_const(state, (cj4_tile_id)tid);
+        const cj4_location *loc = cj4_state_tile_location_const(state, (cj4_tile_id)tid);
         if (cj4_location_is_hand(loc->placement) &&
             cj4_location_placement_player(loc->placement) == player)
         {
@@ -178,9 +179,11 @@ cj4_is_complete_hand(
     }
 
     /* Compute expected number of concealed tiles based on existing melds. */
-    if (cj4_count_melds(state, player) > CJ4_MAX_MELDS)
+    cj4_meld_list meld_list =
+        cj4_location_collect_melds(state->locations, player);
+    if (meld_list.count > CJ4_MAX_MELDS)
         return false; /* sanity */
-    int melds = cj4_count_melds(state, player);
+    int melds = meld_list.count;
     int expected_tiles = (4 - melds) * 3 + 2;
 
     /* For the shape check, only consider concealed tiles (hand placements).
@@ -225,7 +228,7 @@ cj4_find_test_tile(
     for (uint8_t i = 0; i < CJ4_TILE_PER_TYPE; ++i)
     {
         cj4_tile_id tile = cj4_tile_make(type, i);
-        const cj4_location *loc = cj4_tile_location_const(state, tile);
+        const cj4_location *loc = cj4_state_tile_location_const(state, tile);
 
         if (!(cj4_location_is_hand(loc->placement) &&
               cj4_location_placement_player(loc->placement) == player))

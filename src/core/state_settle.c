@@ -1,4 +1,5 @@
 #include "state_settle.h"
+#include "state_internal.h"
 
 #include "state_query.h"
 #include "state_score.h"

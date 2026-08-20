@@ -77,6 +77,7 @@ cj4_rules_default(
 
     rules.kuitan = 1;
     rules.kuikae_forbidden = 1;
+    rules.kan_dora_timing = CJ4_KAN_DORA_EARLY;
     rules.ippatsu = 1;
 
     rules.max_ron_players = 3;
@@ -131,6 +132,7 @@ cj4_rules_tenhou(
     rules.multi_ron_honba_first_only = 1;
     rules.nagashi_dealer_tenpai_renchan = 1;
     rules.target_score_excludes_riichi_sticks = 1;
+    rules.kan_dora_timing = CJ4_KAN_DORA_LATE;
 
     return rules;
 }
@@ -143,6 +145,7 @@ cj4_rules_mjsoul(
 
     rules.triple_ron_abortive_draw = 0;
     rules.pao_liability_only = 0;
+    rules.kan_dora_timing = CJ4_KAN_DORA_LATE;
 
     return rules;
 }
@@ -163,6 +166,12 @@ cj4_rules_validate(
     if (rules->game_type != CJ4_GAME_TONPUU &&
         rules->game_type != CJ4_GAME_HANCHAN &&
         rules->game_type != CJ4_GAME_FULL)
+    {
+        return false;
+    }
+
+    if (rules->kan_dora_timing != CJ4_KAN_DORA_EARLY &&
+        rules->kan_dora_timing != CJ4_KAN_DORA_LATE)
     {
         return false;
     }

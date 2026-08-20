@@ -26,7 +26,13 @@ extern "C"
     cj4_can_minkan_with_tile(const cj4_mahjong *state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3);
 
     cj4_mahjong
-    cj4_do_minkan(const cj4_mahjong state, cj4_player player, cj4_tile_id tile1, cj4_tile_id tile2, cj4_tile_id tile3);
+    cj4_do_minkan(
+        const cj4_mahjong state,
+        const cj4_rules *rules,
+        cj4_player player,
+        cj4_tile_id tile1,
+        cj4_tile_id tile2,
+        cj4_tile_id tile3);
 
     /* Ankan */
     bool
@@ -56,7 +62,7 @@ extern "C"
     bool
     cj4_can_rinshan_draw(const cj4_mahjong *state);
 
-    /* Kan resolution (draw rinshan and add dora) */
+    /* Ankan/kakan resolution after chankan reactions. */
     cj4_mahjong
     cj4_do_rinshan_draw(const cj4_mahjong state, const cj4_rules *rules);
 
