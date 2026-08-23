@@ -193,7 +193,7 @@ cj4_state_draw_dead_wall_tile(
     cj4_player player)
 {
     cj4_tile_id tile;
-    assert(state->dead_wall_draw_count < 4);
+    assert(state->dead_wall_draw_count < CJ4_RINSHAN_TILE_COUNT);
     tile = cj4_get_wall_tile(
         state,
         CJ4_RINSHAN_INDICES[state->dead_wall_draw_count++]);
@@ -214,7 +214,7 @@ void
 cj4_state_clear_all_ippatsu(
     cj4_mahjong *state)
 {
-    state->riichi_ippatsu &= 0x0fu;
+    state->riichi_ippatsu &= CJ4_STATE_PLAYER_FLAGS_MASK;
 }
 
 void
@@ -363,7 +363,7 @@ cj4_state_finish_tsumo(
     cj4_player winner,
     cj4_tile_id winning_tile)
 {
-    state->winner_mask = (uint8_t)(1u << winner);
+    state->winner_mask = (uint8_t)(CJ4_STATE_PLAYER_FLAG << winner);
     state->winning_tile = winning_tile;
     cj4_state_set_round_result(state, CJ4_ROUND_END_TSUMO, CJ4_ABORTIVE_DRAW_NONE);
     cj4_state_clear_round_pending(state);
@@ -381,7 +381,8 @@ cj4_state_finish_multi_ron(
     if (count > CJ4_PLAYER_COUNT)
         count = CJ4_PLAYER_COUNT;
     for (uint8_t i = 0; i < count; ++i)
-        state->winner_mask |= (uint8_t)(1u << players[i]);
+        state->winner_mask |=
+            (uint8_t)(CJ4_STATE_PLAYER_FLAG << players[i]);
     state->winning_tile = winning_tile;
     cj4_state_set_round_result(state, CJ4_ROUND_END_RON, CJ4_ABORTIVE_DRAW_NONE);
     /* Keep the pending kan target for round-end score reconstruction. */

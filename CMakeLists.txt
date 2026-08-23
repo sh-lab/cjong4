@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cjong4 VERSION 3.0.0 LANGUAGES C)
+project(cjong4 VERSION 3.1.0 LANGUAGES C)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -48,14 +48,25 @@ if (BUILD_TESTS)
     enable_testing()
 
     add_executable(cj4_tests
-        tests/core/test_core_rules.c
-        tests/manager/test_manager_flow.c
+        tests/test_main.c
+        tests/test_support.c
+        tests/core/test_location.c
+        tests/core/test_rules.c
+        tests/core/test_riichi_furiten.c
+        tests/core/test_calls_kan.c
+        tests/core/test_round_progression.c
+        tests/core/test_scoring_settlement.c
+        tests/core/test_abortive_draw.c
+        tests/manager/test_player_view.c
+        tests/manager/test_manager_actions.c
+        tests/manager/test_manager_step.c
     )
     target_include_directories(cj4_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/cjong4/core
         ${CMAKE_CURRENT_SOURCE_DIR}/include/cjong4/manager
         ${CMAKE_CURRENT_SOURCE_DIR}/src/core
         ${CMAKE_CURRENT_SOURCE_DIR}/src/manager
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
     target_link_libraries(cj4_tests PRIVATE cj4)
 
