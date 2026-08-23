@@ -43,6 +43,13 @@ extern "C"
         CJ4_TILE_TYPE_COUNT = 34,
         CJ4_TILE_PER_TYPE = 4,
 
+        CJ4_TILE_NUMBERED_SUIT_TYPE_COUNT = 9,
+        CJ4_TILE_TYPE_MANZU_MAX = 8,
+        CJ4_TILE_TYPE_PINZU_MAX = 17,
+        CJ4_TILE_TYPE_SOUZU_MAX = 26,
+        CJ4_TILE_TYPE_HONOR_MIN = 27,
+        CJ4_TILE_NUMBER_MIN = 1,
+
         CJ4_TILE_ID_COUNT = CJ4_TILE_TYPE_COUNT * CJ4_TILE_PER_TYPE,
 
         CJ4_TILE_ID_INVALID = 255
@@ -53,10 +60,10 @@ extern "C"
  * Compile-time validation.
  */
 #if defined(__cplusplus)
-    static_assert(CJ4_TILE_TYPE_COUNT * CJ4_TILE_PER_TYPE == 136,
+    static_assert(CJ4_TILE_ID_COUNT == CJ4_TILE_ID_MAX - CJ4_TILE_ID_MIN + 1,
                   "Tile count must be 136");
 #else
-_Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
+_Static_assert(CJ4_TILE_ID_COUNT == CJ4_TILE_ID_MAX - CJ4_TILE_ID_MIN + 1,
                "Tile count must be 136");
 #endif
 
@@ -118,11 +125,11 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
     {
         assert(cj4_tile_type_is_valid(type));
 
-        if (type <= 8)
+        if (type <= CJ4_TILE_TYPE_MANZU_MAX)
             return CJ4_TILE_SUIT_MANZU;
-        if (type <= 17)
+        if (type <= CJ4_TILE_TYPE_PINZU_MAX)
             return CJ4_TILE_SUIT_PINZU;
-        if (type <= 26)
+        if (type <= CJ4_TILE_TYPE_SOUZU_MAX)
             return CJ4_TILE_SUIT_SOUZU;
         return CJ4_TILE_SUIT_HONOR;
     }
@@ -140,11 +147,11 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
     {
         assert(cj4_tile_type_is_valid(type));
 
-        if (type >= 27)
+        if (type >= CJ4_TILE_TYPE_HONOR_MIN)
             return 1;
 
-        uint8_t n = type % 9;
-        return (n == 0 || n == 8);
+        uint8_t n = type % CJ4_TILE_NUMBERED_SUIT_TYPE_COUNT;
+        return (n == 0 || n == CJ4_TILE_NUMBERED_SUIT_TYPE_COUNT - 1);
     }
 
     static inline uint8_t
@@ -160,9 +167,10 @@ _Static_assert(CJ4_TILE_TYPE_COUNT *CJ4_TILE_PER_TYPE == 136,
     {
         assert(cj4_tile_type_is_valid(type));
 
-        if (type >= 27)
+        if (type >= CJ4_TILE_TYPE_HONOR_MIN)
             return 0;
-        return (uint8_t)(type % 9 + 1);
+        return (uint8_t)(type % CJ4_TILE_NUMBERED_SUIT_TYPE_COUNT +
+                         CJ4_TILE_NUMBER_MIN);
     }
 
     static inline uint8_t

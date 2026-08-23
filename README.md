@@ -73,6 +73,10 @@ cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/prefix
 
 cjong4 は以下の3層構造で設計されています：
 
+詳細な構成、状態モデル、依存方向、不変条件は
+[アーキテクチャ概要](doc/architecture.md)を参照してください。重要な設計判断と
+その背景は[ADR一覧](doc/adr/README.md)に記録しています。
+
 ### core
 
 - ゲーム状態（state）
@@ -295,10 +299,12 @@ cj4_do_discard cj4_can_ron cj4m_step cj4m_collect_actions
 ```
 include/cjong4/core/      core public API
 include/cjong4/manager/   manager public API
-src/core/                 core implementation 
+src/core/                 core implementation
 src/manager/              manager implementation
-tests/core/               core tests 
+tests/test_support.*      shared test support
+tests/core/               core tests
 tests/manager/            manager tests
+doc/                      architecture and ADRs
 cmake/                    CMake package configuration
 .github/workflows/        continuous integration
 ```
@@ -307,8 +313,8 @@ cmake/                    CMake package configuration
 
 ## ステータス / Status
 
-3.0.0<br>
-3.0.0
+3.1.0 リリース
+3.1.0 release
 
 ---
 

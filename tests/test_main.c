@@ -1,0 +1,37 @@
+void
+cj4_test_location(void);
+void
+cj4_test_rules(void);
+void
+cj4_test_riichi_furiten(void);
+void
+cj4_test_calls_kan(void);
+void
+cj4_test_round_progression(void);
+void
+cj4_test_scoring_settlement(void);
+void
+cj4_test_abortive_draw(void);
+void
+cj4_test_player_view(void);
+void
+cj4_test_manager_actions(void);
+void
+cj4_test_manager_step(void);
+
+int
+main(
+    void)
+{
+    cj4_test_location();
+    cj4_test_rules();
+    cj4_test_riichi_furiten();
+    cj4_test_calls_kan();
+    cj4_test_round_progression();
+    cj4_test_scoring_settlement();
+    cj4_test_abortive_draw();
+    cj4_test_player_view();
+    cj4_test_manager_actions();
+    cj4_test_manager_step();
+    return 0;
+}

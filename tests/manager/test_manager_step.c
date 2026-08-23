@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "../../src/core/state_ops.h"
+#include "../test_support.h"
 #include "cjong4/core/action.h"
 #include "cjong4/core/rules.h"
 #include "cjong4/core/state.h"
@@ -11,104 +12,6 @@
 #include "cjong4/core/tile.h"
 #include "cjong4/core/wind.h"
 #include "cjong4/manager/manager.h"
-
-static cj4_tile_id
-tile(
-    cj4_tile_type type,
-    uint8_t index)
-{
-    return cj4_tile_make(type, index);
-}
-
-static cj4_mahjong
-make_empty_state(
-    void)
-{
-    cj4_mahjong state;
-
-    memset(&state, 0, sizeof(state));
-    memset(state.locations, CJ4_LOCATION_NONE, sizeof(state.locations));
-    for (uint16_t i = 0; i < CJ4_TILE_ID_COUNT; ++i)
-        state.locations[i].wall = (uint8_t)i;
-    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
-    state.dealer = CJ4_PLAYER_0;
-    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
-    state.round_wind = CJ4_WIND_EAST;
-    state.draw_tile = CJ4_TILE_ID_INVALID;
-    state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
-    state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
-    for (uint8_t i = 0; i < 4; ++i)
-        state.pending_ankan_tiles[i] = CJ4_TILE_ID_INVALID;
-    cj4_state_clear_pending_riichi_bits(&state);
-    state.last_discard_tile = CJ4_TILE_ID_INVALID;
-    state.winning_tile = CJ4_TILE_ID_INVALID;
-    cj4_state_set_round_result(&state, CJ4_ROUND_END_NONE, CJ4_ABORTIVE_DRAW_NONE);
-
-    for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
-        state.scores[i] = 25000;
-
-    return state;
-}
-
-static void
-set_hand(
-    cj4_mahjong *state,
-    cj4_player player,
-    const cj4_tile_id *tiles,
-    uint8_t count)
-{
-    for (uint8_t i = 0; i < count; ++i)
-    {
-        state->locations[tiles[i]].placement = cj4_location_make_hand(player);
-    }
-}
-
-static void
-set_test_wall(
-    cj4_mahjong *state,
-    uint8_t position,
-    cj4_tile_id tile)
-{
-    for (uint16_t i = 0; i < CJ4_TILE_ID_COUNT; ++i)
-        if (state->locations[i].wall == position)
-            state->locations[i].wall = CJ4_LOCATION_NONE;
-    state->locations[tile].wall = position;
-}
-
-static void
-add_discard(
-    cj4_mahjong *state,
-    cj4_player player,
-    cj4_tile_id discarded)
-{
-    cj4_player current = cj4_state_current_player(state);
-    cj4_state_set_current_player(state, player);
-    cj4_state_record_discard(state, discarded, 0, 0);
-    cj4_state_set_current_player(state, current);
-}
-
-static void
-set_test_meld(
-    cj4_mahjong *state,
-    cj4_player player,
-    uint8_t group,
-    const cj4_meld *meld)
-{
-    for (uint8_t i = 0; i < meld->size; ++i)
-    {
-        cj4_tile_id id = meld->tiles[i];
-        state->locations[id].placement =
-            cj4_location_make_meld(player, group, meld->type);
-        if (i == meld->called_index && meld->from_player != player &&
-            state->locations[id].discard == CJ4_LOCATION_NONE)
-        {
-            state->locations[id].discard =
-                cj4_location_make_discard(meld->from_player, 0, false);
-            state->locations[id].discard_history =
-                cj4_location_make_discard_history(state->discard_count++, false);
-        }
-    }
-}
 
 static uint8_t
 contains_tile(
@@ -330,134 +233,12 @@ make_pending_kan_dora_win_state(
     cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     state.dealer = CJ4_PLAYER_1;
     state.pending_kakan_tile = tile(6, 0);
-    state.dora_indicators_count = 1;
+    state.dora_count = 1;
     set_test_wall(&state, (uint8_t)(130), tile(30, 0));
     set_test_wall(&state, (uint8_t)(128), tile(4, 1));
     set_test_wall(&state, (uint8_t)(134), tile(5, 0));
 
     return cj4_do_rinshan_draw(state, rules);
-}
-
-static void
-test_player_view_hides_hidden_information(
-    void)
-{
-    cj4_mahjong state = make_empty_state();
-    const cj4_tile_id hand0[] = {
-        tile(0, 0),
-        tile(1, 0),
-        tile(2, 0),
-        tile(3, 0)};
-    const cj4_tile_id hand1[] = {
-        tile(10, 0),
-        tile(10, 1),
-        tile(10, 2)};
-    cj4_player_view view;
-
-    set_hand(&state, CJ4_PLAYER_0, hand0, 4);
-    set_hand(&state, CJ4_PLAYER_1, hand1, 3);
-    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
-    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
-    state.draw_tile = hand0[3];
-    cj4_state_set_riichi(&state, CJ4_PLAYER_1, 1);
-    cj4_state_set_temporary_furiten(&state, CJ4_PLAYER_0, 1);
-    state.honba = 2;
-    state.riichi_sticks = 3;
-    state.dora_indicators_count = 2;
-    set_test_wall(&state, (uint8_t)(130), tile(27, 0));
-    set_test_wall(&state, (uint8_t)(128), tile(31, 0));
-    add_discard(&state, CJ4_PLAYER_2, tile(20, 0));
-
-    view = cj4m_make_player_view(&state, CJ4_PLAYER_0);
-    cj4_hand visible_hand =
-        cj4_location_collect_hand(view.locations, CJ4_PLAYER_0);
-    cj4_discard_list visible_discards =
-        cj4_location_collect_discards(view.locations);
-    cj4_dora_indicator_list visible_dora =
-        cj4_location_collect_dora_indicators(view.locations);
-
-    assert(view.player == CJ4_PLAYER_0);
-    assert(visible_hand.count == 4);
-    assert(contains_tile(visible_hand.items, visible_hand.count, hand0[0]));
-    assert(contains_tile(visible_hand.items, visible_hand.count, hand0[3]));
-    assert(!contains_tile(visible_hand.items, visible_hand.count, hand1[0]));
-    assert(cj4_location_is_unknown(&view.locations[hand1[0]]));
-    assert(view.draw_tile == hand0[3]);
-    assert(view.last_discard == tile(20, 0));
-    assert(visible_discards.count == 1);
-    assert(visible_discards.items[0].tile == tile(20, 0));
-    assert(view.is_riichi[CJ4_PLAYER_1] == 1);
-    assert(view.temporary_furiten == 1);
-    assert(view.honba == 2);
-    assert(view.riichi_sticks == 3);
-    assert(visible_dora.count == 2);
-    assert(visible_dora.items[0] == tile(27, 0));
-    assert(visible_dora.items[1] == tile(31, 0));
-
-    state.draw_tile = 200;
-    state.locations[tile(27, 0)].wall = CJ4_LOCATION_NONE;
-    view = cj4m_make_player_view(&state, CJ4_PLAYER_0);
-    visible_dora = cj4_location_collect_dora_indicators(view.locations);
-    assert(view.draw_tile == CJ4_TILE_ID_INVALID);
-    assert(visible_dora.count == 1);
-    assert(visible_dora.items[0] == tile(31, 0));
-}
-
-static void
-test_player_view_exposes_only_kan_target_and_public_meld_location(
-    void)
-{
-    cj4_mahjong state = make_empty_state();
-    cj4_tile_id kakan_tile = tile(6, 3);
-    cj4_tile_id ankan_tiles[] = {
-        tile(7, 0),
-        tile(7, 1),
-        tile(7, 2),
-        tile(7, 3)};
-    cj4_player_view view;
-
-    state.locations[kakan_tile].placement =
-        cj4_location_make_meld(CJ4_PLAYER_1, 0, CJ4_MELD_KAKAN);
-    state.pending_kakan_tile = kakan_tile;
-    cj4_state_set_current_player(&state, CJ4_PLAYER_1);
-    cj4_state_set_phase(&state, CJ4_PHASE_KAKAN_RESOLVE);
-
-    view = cj4m_make_player_view(&state, CJ4_PLAYER_0);
-    assert(view.kan_tile == kakan_tile);
-    assert(cj4_location_is_meld(view.locations[kakan_tile].placement));
-    assert(view.locations[kakan_tile].wall == CJ4_LOCATION_NONE);
-
-    view = cj4m_make_player_view(&state, CJ4_PLAYER_1);
-    assert(view.locations[kakan_tile].wall != CJ4_LOCATION_NONE);
-
-    set_hand(&state, CJ4_PLAYER_1, ankan_tiles, 4);
-    state.pending_kakan_tile = CJ4_TILE_ID_INVALID;
-    state.pending_ankan_tile = ankan_tiles[0];
-    cj4_state_set_phase(&state, CJ4_PHASE_ANKAN_RESOLVE);
-    view = cj4m_make_player_view(&state, CJ4_PLAYER_0);
-    assert(view.kan_tile == ankan_tiles[0]);
-    assert(cj4_location_is_unknown(&view.locations[ankan_tiles[0]]));
-
-    set_test_meld(
-        &state,
-        CJ4_PLAYER_1,
-        1,
-        &(cj4_meld){
-            .tiles = {
-                ankan_tiles[0],
-                ankan_tiles[1],
-                ankan_tiles[2],
-                ankan_tiles[3]},
-            .size = 4,
-            .type = CJ4_MELD_ANKAN,
-            .from_player = CJ4_PLAYER_1,
-            .called_index = CJ4_CALLED_INDEX_NONE});
-    state.pending_ankan_tile = CJ4_TILE_ID_INVALID;
-    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
-    view = cj4m_make_player_view(&state, CJ4_PLAYER_0);
-    assert(view.kan_tile == CJ4_TILE_ID_INVALID);
-    assert(cj4_location_is_meld(view.locations[ankan_tiles[0]].placement));
-    assert(view.locations[ankan_tiles[0]].wall == CJ4_LOCATION_NONE);
 }
 
 static void
@@ -508,7 +289,7 @@ test_step_reveals_pending_kan_dora_after_single_delegate_call(
         .decide = choose_pending_kan_dora_action};
 
     assert(cj4_state_phase(&state) == CJ4_PHASE_DRAW);
-    assert(state.dora_indicators_count == 1);
+    assert(state.dora_count == 1);
     assert(state.pending_kan_dora_count == 1);
     assert(cj4_can_tsumo(&state, &rules));
 
@@ -521,7 +302,7 @@ test_step_reveals_pending_kan_dora_after_single_delegate_call(
     assert(context.dora_count[0] == 1);
     assert(context.dora_indicators[0][0] == tile(30, 0));
     assert(cj4_state_phase(&next) == CJ4_PHASE_DISCARD);
-    assert(next.dora_indicators_count == 2);
+    assert(next.dora_count == 2);
     assert(next.pending_kan_dora_count == 0);
 }
 
@@ -554,7 +335,7 @@ test_step_does_not_reveal_current_kan_dora_on_rinshan_tsumo(
     assert(context.dora_count[0] == 1);
     assert(cj4_state_phase(&next) == CJ4_PHASE_ROUND_END);
     assert(cj4_state_round_end_type(&next) == CJ4_ROUND_END_TSUMO);
-    assert(next.dora_indicators_count == 1);
+    assert(next.dora_count == 1);
     assert(next.pending_kan_dora_count == 0);
 }
 
@@ -601,7 +382,7 @@ test_step_minkan_flow_reveals_dora_after_discard_choice(
         (uint8_t)(sizeof(hand) / sizeof(hand[0])));
     cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
     cj4_state_set_current_player(&state, CJ4_PLAYER_0);
-    state.dora_indicators_count = 1;
+    state.dora_count = 1;
     set_test_wall(&state, (uint8_t)(130), tile(30, 0));
     set_test_wall(&state, (uint8_t)(128), tile(4, 1));
     set_test_wall(&state, (uint8_t)(134), tile(20, 0));
@@ -621,7 +402,7 @@ test_step_minkan_flow_reveals_dora_after_discard_choice(
 
     assert(context.call_count == 1);
     assert(after_minkan.draw_tile == tile(20, 0));
-    assert(after_minkan.dora_indicators_count == 1);
+    assert(after_minkan.dora_count == 1);
     assert(after_minkan.pending_kan_dora_count == 1);
     assert(cj4_can_tsumo(&after_minkan, &rules));
 
@@ -634,47 +415,8 @@ test_step_minkan_flow_reveals_dora_after_discard_choice(
     assert(context.dora_count[1] == 1);
     assert(cj4_state_phase(&after_discard) == CJ4_PHASE_DISCARD);
     assert(cj4_state_current_player(&after_discard) == CJ4_PLAYER_1);
-    assert(after_discard.dora_indicators_count == 2);
+    assert(after_discard.dora_count == 2);
     assert(after_discard.pending_kan_dora_count == 0);
-}
-
-static void
-test_collect_actions_includes_pass_and_claims(
-    void)
-{
-    cj4_mahjong state = make_empty_state();
-    const cj4_tile_id chi_hand[] = {
-        tile(1, 0),
-        tile(2, 0)};
-    const cj4_tile_id pon_hand[] = {
-        tile(3, 1),
-        tile(3, 2)};
-    cj4_action actions[CJ4M_MAX_ACTIONS];
-    uint8_t action_count;
-
-    set_hand(&state, CJ4_PLAYER_1, chi_hand, 2);
-    set_hand(&state, CJ4_PLAYER_2, pon_hand, 2);
-    cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
-    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
-    add_discard(&state, CJ4_PLAYER_0, tile(3, 0));
-
-    action_count = cj4m_collect_actions(
-        &state,
-        NULL,
-        CJ4_PLAYER_1,
-        actions,
-        CJ4M_MAX_ACTIONS);
-    assert(contains_action_type(actions, action_count, CJ4_ACTION_PASS));
-    assert(contains_action_type(actions, action_count, CJ4_ACTION_CHI));
-
-    action_count = cj4m_collect_actions(
-        &state,
-        NULL,
-        CJ4_PLAYER_2,
-        actions,
-        CJ4M_MAX_ACTIONS);
-    assert(contains_action_type(actions, action_count, CJ4_ACTION_PASS));
-    assert(contains_action_type(actions, action_count, CJ4_ACTION_PON));
 }
 
 static void
@@ -728,75 +470,6 @@ test_step_uses_delegate_for_draw_phase(
     assert(!cj4_state_has_pending_riichi(&next));
     assert(next.scores[CJ4_PLAYER_0] == 24000);
     assert(next.riichi_sticks == 1);
-}
-
-static void
-test_collect_actions_respects_riichi_restrictions(
-    void)
-{
-    cj4_mahjong state = make_empty_state();
-    cj4_action actions[CJ4M_MAX_ACTIONS];
-    uint8_t action_count;
-    cj4_tile_id draw = tile(4, 3);
-    const cj4_tile_id hand[] = {
-        tile(4, 3),
-        tile(9, 0),
-        tile(10, 0),
-        tile(11, 0),
-        tile(18, 0),
-        tile(19, 0),
-        tile(20, 0),
-        tile(12, 0),
-        tile(13, 0),
-        tile(14, 0),
-        tile(21, 0),
-        tile(22, 0),
-        tile(23, 0),
-        tile(24, 0)};
-
-    set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
-    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
-    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
-    state.draw_tile = draw;
-    cj4_state_set_riichi(&state, CJ4_PLAYER_0, 1);
-    set_test_meld(&state, CJ4_PLAYER_0, 0, &(cj4_meld){.tiles = {tile(4, 0), tile(4, 1), tile(4, 2)}, .size = 3, .type = CJ4_MELD_PON, .from_player = CJ4_PLAYER_1, .called_index = 0});
-
-    action_count = cj4m_collect_actions(
-        &state,
-        NULL,
-        CJ4_PLAYER_0,
-        actions,
-        CJ4M_MAX_ACTIONS);
-
-    assert(contains_action(actions, action_count, CJ4_ACTION_DISCARD, draw));
-    assert(!contains_action(actions, action_count, CJ4_ACTION_DISCARD, tile(9, 0)));
-    assert(!contains_action_type(actions, action_count, CJ4_ACTION_KAKAN));
-}
-
-static void
-test_collect_actions_filters_kuikae_discards(
-    void)
-{
-    cj4_rules rules = cj4_rules_default();
-    cj4_mahjong state = make_empty_state();
-    cj4_action actions[CJ4M_MAX_ACTIONS];
-    uint8_t action_count;
-
-    cj4_state_set_phase(&state, CJ4_PHASE_AFTER_CALL);
-    cj4_state_set_current_player(&state, CJ4_PLAYER_1);
-    set_test_meld(&state, CJ4_PLAYER_1, 0, &(cj4_meld){.tiles = {tile(2, 0), tile(3, 0), tile(4, 0)}, .size = 3, .type = CJ4_MELD_CHI, .from_player = CJ4_PLAYER_0, .called_index = 0});
-    set_hand(&state, CJ4_PLAYER_1, (const cj4_tile_id[]){tile(2, 1), tile(5, 0), tile(6, 0)}, 3);
-
-    action_count = cj4m_collect_actions(
-        &state,
-        &rules,
-        CJ4_PLAYER_1,
-        actions,
-        CJ4M_MAX_ACTIONS);
-
-    assert(!contains_action(actions, action_count, CJ4_ACTION_DISCARD, tile(2, 1)));
-    assert(!contains_action(actions, action_count, CJ4_ACTION_DISCARD, tile(5, 0)));
-    assert(contains_action(actions, action_count, CJ4_ACTION_DISCARD, tile(6, 0)));
 }
 
 static void
@@ -1037,77 +710,18 @@ test_step_allows_kokushi_ron_on_ankan(
     assert(cj4_get_winner(&next, 0) == CJ4_PLAYER_1);
 }
 
-static void
-test_collect_actions_hides_ankan_ron_when_rule_disabled(
+void
+cj4_test_manager_step(
     void)
 {
-    cj4_rules rules = cj4_rules_tenhou();
-    cj4_mahjong state = make_empty_state();
-    cj4_mahjong ankan;
-    cj4_action actions[CJ4M_MAX_ACTIONS];
-    uint8_t action_count;
-    const cj4_tile_id ankan_tiles[] = {
-        tile(0, 0),
-        tile(0, 1),
-        tile(0, 2),
-        tile(0, 3)};
-    const cj4_tile_id kokushi[] = {
-        tile(8, 0),
-        tile(8, 1),
-        tile(9, 0),
-        tile(17, 0),
-        tile(18, 0),
-        tile(26, 0),
-        tile(27, 0),
-        tile(28, 0),
-        tile(29, 0),
-        tile(30, 0),
-        tile(31, 0),
-        tile(32, 0),
-        tile(33, 0)};
-
-    set_hand(&state, CJ4_PLAYER_0, ankan_tiles, 4);
-    set_hand(&state, CJ4_PLAYER_1, kokushi, (uint8_t)(sizeof(kokushi) / sizeof(kokushi[0])));
-    cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
-    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
-    state.draw_tile = ankan_tiles[3];
-
-    ankan = cj4_do_ankan(
-        state,
-        ankan_tiles[0],
-        ankan_tiles[1],
-        ankan_tiles[2],
-        ankan_tiles[3]);
-    action_count = cj4m_collect_actions(
-        &ankan,
-        &rules,
-        CJ4_PLAYER_1,
-        actions,
-        CJ4M_MAX_ACTIONS);
-
-    assert(contains_action_type(actions, action_count, CJ4_ACTION_PASS));
-    assert(!contains_action_type(actions, action_count, CJ4_ACTION_RON));
-}
-
-int
-manager_tests_main(
-    void)
-{
-    test_player_view_hides_hidden_information();
-    test_player_view_exposes_only_kan_target_and_public_meld_location();
     test_step_replaces_invalid_delegate_action();
     test_step_reveals_pending_kan_dora_after_single_delegate_call();
     test_step_does_not_reveal_current_kan_dora_on_rinshan_tsumo();
     test_step_minkan_flow_reveals_dora_after_discard_choice();
-    test_collect_actions_includes_pass_and_claims();
     test_step_uses_delegate_for_draw_phase();
-    test_collect_actions_respects_riichi_restrictions();
-    test_collect_actions_filters_kuikae_discards();
     test_step_can_choose_kyuushu_kyuuhai();
     test_step_prioritizes_pon_over_chi();
     test_step_prioritizes_ron_and_respects_limit();
     test_step_advances_after_all_pass();
     test_step_allows_kokushi_ron_on_ankan();
-    test_collect_actions_hides_ankan_ron_when_rule_disabled();
-    return 0;
 }

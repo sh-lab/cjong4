@@ -1388,7 +1388,7 @@ cj4_yaku_count_indicator_dora(
     uint8_t riichi_only)
 {
     uint8_t count = 0;
-    uint8_t indicator_count = state->dora_indicators_count;
+    uint8_t indicator_count = state->dora_count;
     const uint8_t *indices = riichi_only ? CJ4_URA_DORA_INDICES : CJ4_DORA_INDICES;
 
     for (uint8_t i = 0; i < indicator_count && i < CJ4_MAX_DORA; ++i)
@@ -1418,7 +1418,7 @@ cj4_yaku_copy_indicator_tiles(
     if (!out_count)
         return;
 
-    indicator_count = state->dora_indicators_count;
+    indicator_count = state->dora_count;
 
     if (indicator_count > CJ4_MAX_DORA)
         indicator_count = CJ4_MAX_DORA;
