@@ -53,4 +53,9 @@ set_test_kan(
     cj4_meld_type type,
     cj4_tile_id first);
 
+uint8_t
+contains_win_yaku(
+    const cj4_win_result *result,
+    cj4_win_yaku yaku);
+
 #endif /* CJ4_TEST_SUPPORT_H */

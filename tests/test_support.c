@@ -143,3 +143,17 @@ set_test_kan(
             .from_player = player,
             .called_index = CJ4_CALLED_INDEX_NONE});
 }
+
+uint8_t
+contains_win_yaku(
+    const cj4_win_result *result,
+    cj4_win_yaku yaku)
+{
+    for (uint8_t i = 0; i < result->yaku_count; ++i)
+    {
+        if (result->yaku[i] == yaku)
+            return 1;
+    }
+
+    return 0;
+}

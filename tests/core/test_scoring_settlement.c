@@ -22,20 +22,6 @@
 #include "cjong4/core/state_tsumo.h"
 #include "cjong4/manager/manager.h"
 
-static uint8_t
-contains_win_yaku(
-    const cj4_win_result *result,
-    cj4_win_yaku yaku)
-{
-    for (uint8_t i = 0; i < result->yaku_count; ++i)
-    {
-        if (result->yaku[i] == yaku)
-            return 1;
-    }
-
-    return 0;
-}
-
 static void
 test_collect_winning_results_returns_tsumo_details(
     void)
