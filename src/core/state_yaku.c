@@ -1041,10 +1041,10 @@ cj4_yaku_evaluate_decomposition(
 
         if (all_yaochu && cj4_tile_type_is_yaochu(decomp->pair_type))
         {
-            *flags |= CJ4_YAKU_CHANTA;
-
             if (!ctx->has_honor)
                 *flags |= CJ4_YAKU_JUNCHAN;
+            else
+                *flags |= CJ4_YAKU_CHANTA;
         }
     }
 
@@ -1569,10 +1569,10 @@ cj4_yaku_count_han(
         han += ctx->has_open_meld ? 1 : 2;
     if (flags & CJ4_YAKU_ITTSUU)
         han += ctx->has_open_meld ? 1 : 2;
-    if (flags & CJ4_YAKU_CHANTA)
-        han += ctx->has_open_meld ? 1 : 2;
     if (flags & CJ4_YAKU_JUNCHAN)
         han += ctx->has_open_meld ? 2 : 3;
+    else if (flags & CJ4_YAKU_CHANTA)
+        han += ctx->has_open_meld ? 1 : 2;
     if (flags & CJ4_YAKU_SANANKOU)
         han += 2;
     if (flags & CJ4_YAKU_SHOUSANGEN)
@@ -2130,10 +2130,11 @@ cj4_yaku_collect_best_result(
     if (flags & (CJ4_YAKU_CHIITOI | CJ4_YAKU_KOKUSHI | CJ4_YAKU_KOKUSHI_13))
         cj4_yaku_consider_score(state, player, rules, &ctx, NULL, flags, &best);
 
-    if (!(flags & CJ4_YAKU_CHIITOI) &&
-        !(flags & CJ4_YAKU_KOKUSHI) &&
+    if (!(flags & CJ4_YAKU_KOKUSHI) &&
         !(flags & CJ4_YAKU_KOKUSHI_13))
     {
+        cj4_yaku_flags standard_flags = flags & ~CJ4_YAKU_CHIITOI;
+
         memcpy(counts, ctx.concealed_counts, sizeof(counts));
         cj4_yaku_init_decomposition(state, player, &decomp);
         cj4_yaku_search_best_standard(
@@ -2144,7 +2145,7 @@ cj4_yaku_collect_best_result(
             counts,
             (uint8_t)ctx.has_winning_tile,
             &decomp,
-            flags,
+            standard_flags,
             &best);
     }
 
@@ -2266,10 +2267,10 @@ cj4_yaku_append_public_standard(
         cj4_yaku_append_public_yaku(result, CJ4_WIN_YAKU_SANSHOKU_DOUJUN);
     if (flags & CJ4_YAKU_ITTSUU)
         cj4_yaku_append_public_yaku(result, CJ4_WIN_YAKU_ITTSUU);
-    if (flags & CJ4_YAKU_CHANTA)
-        cj4_yaku_append_public_yaku(result, CJ4_WIN_YAKU_CHANTA);
     if (flags & CJ4_YAKU_JUNCHAN)
         cj4_yaku_append_public_yaku(result, CJ4_WIN_YAKU_JUNCHAN);
+    else if (flags & CJ4_YAKU_CHANTA)
+        cj4_yaku_append_public_yaku(result, CJ4_WIN_YAKU_CHANTA);
     if (flags & CJ4_YAKU_SANANKOU)
         cj4_yaku_append_public_yaku(result, CJ4_WIN_YAKU_SANANKOU);
     if (flags & CJ4_YAKU_SHOUSANGEN)
