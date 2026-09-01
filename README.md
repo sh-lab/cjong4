@@ -313,8 +313,8 @@ cmake/                    CMake package configuration
 
 ## ステータス / Status
 
-3.1.0 リリース
-3.1.0 release
+3.2.0 リリース
+3.2.0 release
 
 ---
 
