@@ -28,7 +28,7 @@ collect_single_ron_result(
     uint8_t hand_count,
     cj4_tile_id winning_tile)
 {
-    cj4_rules rules = {0};
+    cj4_rules rules = cj4_rules_tenhou();
     cj4_mahjong state = make_empty_state();
     cj4_mahjong won;
     cj4_win_result results[CJ4_PLAYER_COUNT];
@@ -63,11 +63,11 @@ test_best_score_prefers_ryanpeikou_over_chiitoi(
         tile(9, 0), tile(9, 1),
         tile(10, 0), tile(10, 1),
         tile(11, 0), tile(11, 1),
-        tile(22, 0)};
+        tile(22, 2)};
     cj4_win_result result = collect_single_ron_result(
         hand,
         (uint8_t)(sizeof(hand) / sizeof(hand[0])),
-        tile(22, 1));
+        tile(22, 3));
 
     assert(result.han == 3);
     assert(result.fu == 40);
@@ -81,12 +81,12 @@ static void
 test_best_tsumo_score_prefers_ryanpeikou_over_chiitoi(
     void)
 {
-    cj4_rules rules = {0};
+    cj4_rules rules = cj4_rules_tenhou();
     cj4_mahjong state = make_empty_state();
     cj4_mahjong won;
     cj4_win_result results[CJ4_PLAYER_COUNT];
     uint8_t result_count = 0;
-    cj4_tile_id draw = tile(22, 1);
+    cj4_tile_id draw = tile(22, 3);
     const cj4_tile_id hand[] = {
         tile(0, 0), tile(0, 1),
         tile(1, 0), tile(1, 1),
@@ -94,8 +94,9 @@ test_best_tsumo_score_prefers_ryanpeikou_over_chiitoi(
         tile(9, 0), tile(9, 1),
         tile(10, 0), tile(10, 1),
         tile(11, 0), tile(11, 1),
-        tile(22, 0), draw};
+        tile(22, 2), draw};
 
+    assert(rules.kiriage_mangan == 0);
     set_hand(
         &state,
         CJ4_PLAYER_2,
@@ -118,8 +119,27 @@ test_best_tsumo_score_prefers_ryanpeikou_over_chiitoi(
     assert(results[0].ron_points == 0);
     assert(results[0].tsumo_dealer_payment == 3900);
     assert(results[0].tsumo_non_dealer_payment == 2000);
+    assert(results[0].aka_dora_count == 0);
     assert(results[0].yaku_count == 2);
     assert(contains_win_yaku(&results[0], CJ4_WIN_YAKU_MENZEN_TSUMO));
+    assert(contains_win_yaku(&results[0], CJ4_WIN_YAKU_RYANPEIKOU));
+    assert(!contains_win_yaku(&results[0], CJ4_WIN_YAKU_CHIITOI));
+
+    rules = cj4_rules_default();
+    assert(rules.kiriage_mangan == 1);
+    result_count = 0;
+    assert(cj4_collect_winning_results(
+        &won,
+        &rules,
+        results,
+        CJ4_PLAYER_COUNT,
+        &result_count));
+    assert(result_count == 1);
+    assert(results[0].han == 4);
+    assert(results[0].fu == 30);
+    assert(results[0].tsumo_dealer_payment == 4000);
+    assert(results[0].tsumo_non_dealer_payment == 2000);
+    assert(results[0].aka_dora_count == 0);
     assert(contains_win_yaku(&results[0], CJ4_WIN_YAKU_RYANPEIKOU));
     assert(!contains_win_yaku(&results[0], CJ4_WIN_YAKU_CHIITOI));
 }
@@ -130,10 +150,10 @@ test_pure_chiitoi_remains_chiitoi(
 {
     const cj4_tile_id hand[] = {
         tile(0, 0), tile(0, 1),
-        tile(4, 0), tile(4, 1),
+        tile(4, 1), tile(4, 2),
         tile(8, 0), tile(8, 1),
         tile(9, 0), tile(9, 1),
-        tile(13, 0), tile(13, 1),
+        tile(13, 1), tile(13, 2),
         tile(17, 0), tile(17, 1),
         tile(27, 0)};
     cj4_win_result result = collect_single_ron_result(
@@ -158,11 +178,11 @@ test_non_chiitoi_ryanpeikou_remains_ryanpeikou(
         tile(1, 0), tile(1, 1), tile(1, 2), tile(1, 3),
         tile(2, 0), tile(2, 1), tile(2, 2), tile(2, 3),
         tile(3, 0), tile(3, 1),
-        tile(13, 0)};
+        tile(13, 2)};
     cj4_win_result result = collect_single_ron_result(
         hand,
         (uint8_t)(sizeof(hand) / sizeof(hand[0])),
-        tile(13, 1));
+        tile(13, 3));
 
     assert(result.han == 3);
     assert(result.fu == 40);
