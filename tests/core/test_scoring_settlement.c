@@ -116,7 +116,7 @@ test_best_tsumo_score_prefers_ryanpeikou_over_chiitoi(
     assert(results[0].han == 4);
     assert(results[0].fu == 30);
     assert(results[0].ron_points == 0);
-    assert(results[0].tsumo_dealer_payment == 4000);
+    assert(results[0].tsumo_dealer_payment == 3900);
     assert(results[0].tsumo_non_dealer_payment == 2000);
     assert(results[0].yaku_count == 2);
     assert(contains_win_yaku(&results[0], CJ4_WIN_YAKU_MENZEN_TSUMO));
