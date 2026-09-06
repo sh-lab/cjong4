@@ -60,6 +60,8 @@ test_rules_default_and_validate(
     rules = cj4_rules_mjsoul();
     assert(cj4_rules_validate(&rules));
     assert(rules.kan_dora_timing == CJ4_KAN_DORA_LATE);
+    assert(rules.four_kans_abort_timing ==
+           CJ4_FOUR_KANS_ABORT_AFTER_DISCARD);
 }
 
 static void
@@ -71,6 +73,8 @@ test_tenhou_preset_fields(
     assert(cj4_rules_validate(&rules));
     assert(rules.version == CJ4_RULES_VERSION);
     assert(rules.kan_dora_timing == CJ4_KAN_DORA_LATE);
+    assert(rules.four_kans_abort_timing ==
+           CJ4_FOUR_KANS_ABORT_AFTER_DISCARD);
     assert(rules.triple_ron_abortive_draw == 1);
     assert(rules.pao_liability_only == 0);
     assert(rules.kiriage_mangan == 0);

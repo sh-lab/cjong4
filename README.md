@@ -113,6 +113,19 @@ cj4_action (*decide)(
 - `ctx` と `decide` を `cj4m_player_delegate` に束ねて `cj4m_step` に渡す
 - 嶺上牌ツモ後も、通常のツモ後と同様にツモ和了・打牌・連続槓候補が一度に渡される
 
+### 手牌解析 / Hand analysis
+
+完全状態から解析する場合は `cjong4/core/hand_analysis.h` の `cj4_*` APIを、
+プレイヤーデリゲートから解析する場合は `cjong4/player/hand_analysis.h` の
+`cj4p_*` APIを使用します。プレイヤー実装が `manager.h` を読み込む必要はありません。
+
+- `cj4_shanten_result` は通常形、七対子、国士無双のシャンテン数を個別に返す
+- 13枚相当は現在の手牌、14枚相当は任意の1枚を切った後の最小値を各形式別に返す
+- 副露時の七対子と国士無双は `CJ4_SHANTEN_NOT_APPLICABLE`
+- 待ち判定は形テンとし、役と振り聴は考慮しない
+- 待ちの `count[type]` は、自分の手牌、全員の捨牌・面子、公開済みドラ表示牌を除いた見えていない枚数
+- `cj4_live_wall_remaining()` と `cj4_player_view.live_wall_remaining` は、嶺上牌を除く通常ツモの残数を返す
+
 ---
 
 ## 設計思想 / Design Philosophy
@@ -257,9 +270,9 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 
 | プリセット | 差分 |
 | --- | --- |
-| `cj4_rules_default()` | 標準設定。槓ドラは先めくり、三家和は流局せず3人ロン、責任払いは和了全体対象 |
-| `cj4_rules_tenhou()` | 槓ドラは後めくり。三家和流局、本場・供託の上家取り、流し満貫時の親聴牌連荘、供託を除く終局判定を有効化。切り上げ満貫、暗槓国士槍槓、特殊形ダブル役満を無効化。責任払いは大三元・大四喜のみ、複合役満を含む和了全体対象 |
-| `cj4_rules_mjsoul()` | 槓ドラは後めくり。三家和は3人ロン、責任払いは和了全体対象 |
+| `cj4_rules_default()` | 標準設定。4槓目は嶺上牌の打牌後に流局。槓ドラは先めくり、三家和は流局せず3人ロン、責任払いは和了全体対象 |
+| `cj4_rules_tenhou()` | 4槓目は嶺上牌の打牌後に流局。槓ドラは後めくり。三家和流局、本場・供託の上家取り、流し満貫時の親聴牌連荘、供託を除く終局判定を有効化。切り上げ満貫、暗槓国士槍槓、特殊形ダブル役満を無効化。責任払いは大三元・大四喜のみ、複合役満を含む和了全体対象 |
+| `cj4_rules_mjsoul()` | 4槓目は嶺上牌の打牌後に流局。槓ドラは後めくり。三家和は3人ロン、責任払いは和了全体対象 |
 
 非対応：
 
@@ -290,10 +303,11 @@ v3 は破壊的変更です。位置情報の収集APIは `locations` を受け�
 
 - core API: `cj4_*`
 - manager API: `cj4m_*`
+- player API: `cj4p_*`
 
 例:
 
-cj4_do_discard cj4_can_ron cj4m_step cj4m_collect_actions
+cj4_do_discard cj4_can_ron cj4m_step cj4m_collect_actions cj4p_calculate_shanten
 
 ---
 
@@ -302,8 +316,10 @@ cj4_do_discard cj4_can_ron cj4m_step cj4m_collect_actions
 ```
 include/cjong4/core/      core public API
 include/cjong4/manager/   manager public API
+include/cjong4/player/    player-facing public API
 src/core/                 core implementation
 src/manager/              manager implementation
+src/player/               player-facing implementation
 tests/test_support.*      shared test support
 tests/core/               core tests
 tests/manager/            manager tests
@@ -316,8 +332,8 @@ cmake/                    CMake package configuration
 
 ## ステータス / Status
 
-3.3.0 開発中
-3.3.0 in development
+3.3.0 リリース
+3.3.0 released
 
 ---
 

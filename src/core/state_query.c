@@ -1,5 +1,6 @@
 #include "state_query.h"
 #include "state_internal.h"
+#include "state_ops.h"
 
 #include <string.h>
 
@@ -51,6 +52,15 @@ cj4_get_wall_tile(
             return (cj4_tile_id)tile;
     }
     return CJ4_TILE_ID_INVALID;
+}
+
+uint8_t
+cj4_live_wall_remaining(
+    const cj4_mahjong *state)
+{
+    if (!state)
+        return 0;
+    return cj4_state_live_wall_remaining(state);
 }
 
 cj4_hand

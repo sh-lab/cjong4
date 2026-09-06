@@ -136,7 +136,7 @@ cj4_can_ankan_after_riichi(
     before.locations[state->draw_tile].placement = CJ4_LOCATION_NONE;
     before.draw_tile = CJ4_TILE_ID_INVALID;
 
-    if (cj4_collect_waiting_tile_types(&before, player, waits_before) == 0)
+    if (cj4_collect_shape_wait_flags(&before, player, waits_before) == 0)
         return 0;
 
     after = before;
@@ -149,7 +149,7 @@ cj4_can_ankan_after_riichi(
         player,
         CJ4_CALLED_INDEX_NONE);
 
-    if (cj4_collect_waiting_tile_types(&after, player, waits_after) == 0)
+    if (cj4_collect_shape_wait_flags(&after, player, waits_after) == 0)
         return 0;
 
     return cj4_wait_sets_equal(waits_before, waits_after);

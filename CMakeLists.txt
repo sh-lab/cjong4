@@ -15,6 +15,7 @@ option(BUILD_TESTS "Build tests" OFF)
 file(GLOB_RECURSE CJ4_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/manager/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/player/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/util/*.c"
 )
 
@@ -30,6 +31,7 @@ target_include_directories(cj4
         ${CMAKE_CURRENT_SOURCE_DIR}/include/cjong4/manager
         ${CMAKE_CURRENT_SOURCE_DIR}/src/core
         ${CMAKE_CURRENT_SOURCE_DIR}/src/manager
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/player
         ${CMAKE_CURRENT_SOURCE_DIR}/src/util
 )
 
@@ -57,6 +59,7 @@ if (BUILD_TESTS)
         tests/core/test_round_progression.c
         tests/core/test_scoring_settlement.c
         tests/core/test_abortive_draw.c
+        tests/core/test_hand_analysis.c
         tests/manager/test_player_view.c
         tests/manager/test_manager_actions.c
         tests/manager/test_manager_step.c

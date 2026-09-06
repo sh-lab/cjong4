@@ -106,6 +106,10 @@ extern "C"
     cj4_tile_id
     cj4_get_wall_tile(const cj4_mahjong *state, uint8_t wall_position);
 
+    /* Normal live-wall draws remaining; rinshan draws are excluded. */
+    uint8_t
+    cj4_live_wall_remaining(const cj4_mahjong *state);
+
     cj4_hand
     cj4_location_collect_hand(
         const cj4_location locations[CJ4_TILE_ID_COUNT],

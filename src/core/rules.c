@@ -134,6 +134,7 @@ cj4_rules_tenhou(
     rules.nagashi_dealer_tenpai_renchan = 1;
     rules.target_score_excludes_riichi_sticks = 1;
     rules.kan_dora_timing = CJ4_KAN_DORA_LATE;
+    rules.four_kans_abort_timing = CJ4_FOUR_KANS_ABORT_AFTER_DISCARD;
 
     return rules;
 }
@@ -147,6 +148,7 @@ cj4_rules_mjsoul(
     rules.triple_ron_abortive_draw = 0;
     rules.pao_liability_only = 0;
     rules.kan_dora_timing = CJ4_KAN_DORA_LATE;
+    rules.four_kans_abort_timing = CJ4_FOUR_KANS_ABORT_AFTER_DISCARD;
 
     return rules;
 }

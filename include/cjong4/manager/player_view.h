@@ -29,6 +29,7 @@ extern "C"
         uint8_t temporary_furiten;
         uint8_t riichi_furiten;
         uint8_t first_turn_uninterrupted;
+        uint8_t live_wall_remaining;
 
         cj4_tile_id draw_tile;
         cj4_tile_id last_discard;
