@@ -12,17 +12,34 @@ static uint8_t
 cj4_state_can_declare_more_kans(
     const cj4_mahjong *state)
 {
-    return cj4_state_count_total_kans(state) < 4 &&
-           state->dead_wall_draw_count < 4 &&
+    uint8_t total = cj4_state_count_total_kans(state);
+
+    if (total >= 5)
+        return 0;
+
+    /* The fifth declaration ends the round and needs no rinshan tile. */
+    if (total == 4)
+        return 1;
+
+    return state->dead_wall_draw_count < 4 &&
            cj4_state_live_wall_remaining(state) > 0;
 }
 
 static uint8_t
 cj4_state_should_abort_on_four_kans(
-    const cj4_mahjong *state)
+    const cj4_mahjong *state,
+    const cj4_rules *rules)
 {
-    return cj4_state_count_total_kans(state) >= 4 &&
-           !cj4_state_all_kans_by_one_player(state);
+    uint8_t total = cj4_state_count_total_kans(state);
+
+    if (total >= 5)
+        return 1;
+
+    if (total < 4 || cj4_state_all_kans_by_one_player(state))
+        return 0;
+
+    return !rules ||
+           rules->four_kans_abort_timing == CJ4_FOUR_KANS_ABORT_IMMEDIATE;
 }
 
 static uint8_t
@@ -119,7 +136,7 @@ cj4_can_ankan_after_riichi(
     before.locations[state->draw_tile].placement = CJ4_LOCATION_NONE;
     before.draw_tile = CJ4_TILE_ID_INVALID;
 
-    if (cj4_collect_waiting_tile_types(&before, player, waits_before) == 0)
+    if (cj4_collect_shape_wait_flags(&before, player, waits_before) == 0)
         return 0;
 
     after = before;
@@ -132,7 +149,7 @@ cj4_can_ankan_after_riichi(
         player,
         CJ4_CALLED_INDEX_NONE);
 
-    if (cj4_collect_waiting_tile_types(&after, player, waits_after) == 0)
+    if (cj4_collect_shape_wait_flags(&after, player, waits_after) == 0)
         return 0;
 
     return cj4_wait_sets_equal(waits_before, waits_after);
@@ -144,6 +161,9 @@ cj4_can_minkan(
     const cj4_mahjong *state,
     cj4_player player)
 {
+    if (cj4_state_four_kans_abort_is_pending(state))
+        return false;
+
     if (!cj4_state_can_declare_more_kans(state))
         return false;
 
@@ -224,7 +244,7 @@ cj4_do_minkan(
     else if (next.pending_kan_dora_count < CJ4_MAX_DORA)
         next.pending_kan_dora_count++;
 
-    if (cj4_state_should_abort_on_four_kans(&next))
+    if (cj4_state_should_abort_on_four_kans(&next, rules))
     {
         cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_FOUR_KANS);
         return next;
@@ -324,6 +344,14 @@ cj4_do_ankan(
     next.pending_ankan_tiles[3] = tile4;
 
     cj4_state_set_phase(&next, CJ4_PHASE_ANKAN_RESOLVE);
+
+    if (cj4_state_count_total_kans(&state) == 4)
+    {
+        cj4_state_commit_pending_ankan(&next);
+        cj4_state_clear_draw_tile(&next);
+        cj4_state_clear_all_ippatsu(&next);
+        cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_FOUR_KANS);
+    }
 
     return next;
 }
@@ -437,6 +465,9 @@ cj4_do_kakan(
     next.pending_ankan_tile = CJ4_TILE_ID_INVALID;
     cj4_state_set_phase(&next, CJ4_PHASE_KAKAN_RESOLVE);
 
+    if (cj4_state_count_total_kans(&state) == 4)
+        cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_FOUR_KANS);
+
     return next;
 }
 
@@ -481,7 +512,7 @@ cj4_do_rinshan_draw(
         }
     }
 
-    if (cj4_state_should_abort_on_four_kans(&state))
+    if (cj4_state_should_abort_on_four_kans(&state, rules))
     {
         next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
         cj4_state_set_chankan(&next, 0);
@@ -497,7 +528,7 @@ cj4_do_rinshan_draw(
         cj4_state_clear_all_ippatsu(&next);
     }
 
-    if (cj4_state_should_abort_on_four_kans(&next))
+    if (cj4_state_should_abort_on_four_kans(&next, rules))
     {
         next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
         cj4_state_set_chankan(&next, 0);

@@ -75,7 +75,7 @@ cj4_state_player_has_permanent_furiten(
 {
     uint8_t waits[CJ4_TILE_TYPE_COUNT];
 
-    if (cj4_collect_waiting_tile_types(state, player, waits) == 0)
+    if (cj4_collect_shape_wait_flags(state, player, waits) == 0)
         return 0;
 
     cj4_discard_list discards =

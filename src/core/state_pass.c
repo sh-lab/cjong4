@@ -102,6 +102,14 @@ cj4_do_pass(
     cj4_state_establish_pending_riichi(&next);
 
     if (rules &&
+        rules->four_kans_abort_timing == CJ4_FOUR_KANS_ABORT_AFTER_DISCARD &&
+        cj4_state_four_kans_abort_is_pending(&next))
+    {
+        cj4_state_finish_abortive_draw(&next, CJ4_ABORTIVE_DRAW_FOUR_KANS);
+        return next;
+    }
+
+    if (rules &&
         rules->abortive_suufon_renda &&
         cj4_is_suufon_renda(&next))
     {

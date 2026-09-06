@@ -11,5 +11,5 @@ cj4_player_is_shape_tenpai(
 {
     uint8_t waits[CJ4_TILE_TYPE_COUNT];
 
-    return cj4_collect_waiting_tile_types(state, player, waits) > 0;
+    return cj4_collect_shape_wait_flags(state, player, waits) > 0;
 }

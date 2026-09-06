@@ -1,4 +1,5 @@
 #include "hand_check.h"
+#include "cjong4/core/hand_analysis.h"
 #include "state_internal.h"
 #include "state_query.h"
 #include "tile.h"
@@ -219,53 +220,24 @@ cj4_is_complete_hand(
     return false;
 }
 
-static cj4_tile_id
-cj4_find_test_tile(
-    const cj4_mahjong *state,
-    cj4_player player,
-    cj4_tile_type type)
-{
-    for (uint8_t i = 0; i < CJ4_TILE_PER_TYPE; ++i)
-    {
-        cj4_tile_id tile = cj4_tile_make(type, i);
-        const cj4_location *loc = cj4_state_tile_location_const(state, tile);
-
-        if (!(cj4_location_is_hand(loc->placement) &&
-              cj4_location_placement_player(loc->placement) == player))
-            return tile;
-    }
-
-    return CJ4_TILE_ID_INVALID;
-}
-
 uint8_t
-cj4_collect_waiting_tile_types(
+cj4_collect_shape_wait_flags(
     const cj4_mahjong *state,
     cj4_player player,
     uint8_t waits[CJ4_TILE_TYPE_COUNT])
 {
+    cj4_waiting_tile_types result;
     uint8_t count = 0;
 
     memset(waits, 0, CJ4_TILE_TYPE_COUNT);
+    if (!cj4_collect_waiting_tile_types(state, player, &result))
+        return 0;
 
+    memcpy(waits, result.types, CJ4_TILE_TYPE_COUNT);
     for (cj4_tile_type type = CJ4_TILE_TYPE_MIN;
          type <= CJ4_TILE_TYPE_MAX;
          ++type)
-    {
-        cj4_tile_id tile = cj4_find_test_tile(state, player, type);
-
-        if (tile == CJ4_TILE_ID_INVALID)
-            continue;
-
-        cj4_mahjong tmp = *state;
-        tmp.locations[tile].placement = cj4_location_make_hand(player);
-
-        if (!cj4_is_complete_hand(&tmp, player))
-            continue;
-
-        waits[type] = 1;
-        count++;
-    }
+        count = (uint8_t)(count + waits[type]);
 
     return count;
 }

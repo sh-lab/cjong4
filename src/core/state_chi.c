@@ -9,6 +9,9 @@ cj4_can_chi(
 {
     cj4_player next_player = cj4_next_player(state);
 
+    if (cj4_state_four_kans_abort_is_pending(state))
+        return false;
+
     if (cj4_state_live_wall_remaining(state) == 0)
         return false;
 

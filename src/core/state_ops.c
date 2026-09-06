@@ -105,6 +105,22 @@ cj4_state_all_kans_by_one_player(
     return 1;
 }
 
+uint8_t
+cj4_state_has_four_kans_by_multiple_players(
+    const cj4_mahjong *state)
+{
+    return cj4_state_count_total_kans(state) >= 4 &&
+           !cj4_state_all_kans_by_one_player(state);
+}
+
+uint8_t
+cj4_state_four_kans_abort_is_pending(
+    const cj4_mahjong *state)
+{
+    return cj4_state_phase(state) == CJ4_PHASE_DISCARD &&
+           cj4_state_has_four_kans_by_multiple_players(state);
+}
+
 static uint8_t
 cj4_state_count_meld_triplets_in_range(
     const cj4_mahjong *state,

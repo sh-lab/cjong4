@@ -25,6 +25,7 @@ cj4m_make_player_view(
     view.temporary_furiten = (uint8_t)cj4_state_temporary_furiten(state, player);
     view.riichi_furiten = (uint8_t)cj4_state_riichi_furiten(state, player);
     view.first_turn_uninterrupted = (uint8_t)cj4_state_first_turn(state);
+    view.live_wall_remaining = cj4_live_wall_remaining(state);
     view.draw_tile = CJ4_TILE_ID_INVALID;
     view.last_discard = cj4_get_last_discard_tile(state);
     view.kan_tile = CJ4_TILE_ID_INVALID;

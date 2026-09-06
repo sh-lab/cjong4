@@ -12,6 +12,9 @@ void
 cj4_test_scoring_settlement(void);
 void
 cj4_test_abortive_draw(void);
+
+void
+cj4_test_hand_analysis(void);
 void
 cj4_test_player_view(void);
 void
@@ -30,6 +33,7 @@ main(
     cj4_test_round_progression();
     cj4_test_scoring_settlement();
     cj4_test_abortive_draw();
+    cj4_test_hand_analysis();
     cj4_test_player_view();
     cj4_test_manager_actions();
     cj4_test_manager_step();
