@@ -7,6 +7,9 @@ cj4_can_pon(
     const cj4_mahjong *state,
     cj4_player player)
 {
+    if (cj4_state_four_kans_abort_is_pending(state))
+        return false;
+
     if (cj4_state_live_wall_remaining(state) == 0)
         return false;
 

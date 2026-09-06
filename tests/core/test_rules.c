@@ -40,6 +40,7 @@ test_rules_default_and_validate(
     assert(rules.nagashi_dealer_tenpai_renchan == 0);
     assert(rules.target_score_excludes_riichi_sticks == 0);
     assert(rules.kan_dora_timing == CJ4_KAN_DORA_EARLY);
+    assert(rules.four_kans_abort_timing == CJ4_FOUR_KANS_ABORT_AFTER_DISCARD);
 
     rules.target_score_excludes_riichi_sticks = 2;
     assert(!cj4_rules_validate(&rules));
@@ -50,6 +51,10 @@ test_rules_default_and_validate(
     rules.max_ron_players = 3;
 
     rules.kan_dora_timing = (cj4_kan_dora_timing)2;
+    assert(!cj4_rules_validate(&rules));
+
+    rules = cj4_rules_default();
+    rules.four_kans_abort_timing = (cj4_four_kans_abort_timing)2;
     assert(!cj4_rules_validate(&rules));
 
     rules = cj4_rules_mjsoul();

@@ -40,6 +40,12 @@ cj4_state_count_total_kans(const cj4_mahjong *state);
 uint8_t
 cj4_state_all_kans_by_one_player(const cj4_mahjong *state);
 
+uint8_t
+cj4_state_has_four_kans_by_multiple_players(const cj4_mahjong *state);
+
+uint8_t
+cj4_state_four_kans_abort_is_pending(const cj4_mahjong *state);
+
 void
 cj4_state_set_hand_location(
     cj4_mahjong *state,

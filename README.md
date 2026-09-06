@@ -222,6 +222,7 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 | `kuitan` | 1 | 喰い断を有効化 |
 | `kuikae_forbidden` | 1 | 鳴き直後1打の喰い替え禁止 |
 | `kan_dora_timing` | `CJ4_KAN_DORA_EARLY` | 大明槓・加槓の槓ドラ表示タイミング |
+| `four_kans_abort_timing` | `CJ4_FOUR_KANS_ABORT_AFTER_DISCARD` | 複数人による4槓時に即時流局するか、4槓目の嶺上牌を打牌してロンがなかった後に流局するかを選択 |
 | `ippatsu` | 1 | 一発役を有効化 |
 | `max_ron_players` | 3 | 同一打牌へのロン最大人数（1=頭ハネ、2=二家和、3=三家和まで） |
 | `kokushi_ron_on_ankan` | 1 | 国士無双に限り暗槓へのロンを許可 |
@@ -249,6 +250,8 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 | `aka_tiles` | 5m/5p/5s 各1枚 | 赤牌IDを指定 |
 
 `cj4_rules_default()` は一般的な4人打ちリーチ麻雀としてそのまま対局できる値を返し、`version = CJ4_RULES_VERSION` を設定します。`{0}` 初期化された `cj4_rules` は v1.0 互換ルールとして扱われ、国士無双十三面待ち・四暗刻単騎・純正九蓮宝燈・大四喜のダブル役満、および13翻以上の数え役満は従来どおり有効です。新規コードでこれらを明示的に無効化する場合は、`cj4_rules_default()` などのプリセットから該当フラグを0にしてください。
+
+`four_kans_abort_timing` が `CJ4_FOUR_KANS_ABORT_AFTER_DISCARD` の場合、4槓目の嶺上牌によるツモ和了と、その後の打牌へのロン和了が優先されます。ロンがなければ四槓散了となり、チー・ポン・大明槓はできません。四槓子成立後に行われる5回目の槓宣言は、設定にかかわらず宣言時に四槓散了となります。
 
 ### プリセット差分
 
@@ -313,8 +316,8 @@ cmake/                    CMake package configuration
 
 ## ステータス / Status
 
-3.2.0 リリース
-3.2.0 release
+3.3.0 開発中
+3.3.0 in development
 
 ---
 

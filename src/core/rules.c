@@ -78,6 +78,7 @@ cj4_rules_default(
     rules.kuitan = 1;
     rules.kuikae_forbidden = 1;
     rules.kan_dora_timing = CJ4_KAN_DORA_EARLY;
+    rules.four_kans_abort_timing = CJ4_FOUR_KANS_ABORT_AFTER_DISCARD;
     rules.ippatsu = 1;
 
     rules.max_ron_players = 3;
@@ -172,6 +173,12 @@ cj4_rules_validate(
 
     if (rules->kan_dora_timing != CJ4_KAN_DORA_EARLY &&
         rules->kan_dora_timing != CJ4_KAN_DORA_LATE)
+    {
+        return false;
+    }
+
+    if (rules->four_kans_abort_timing != CJ4_FOUR_KANS_ABORT_IMMEDIATE &&
+        rules->four_kans_abort_timing != CJ4_FOUR_KANS_ABORT_AFTER_DISCARD)
     {
         return false;
     }

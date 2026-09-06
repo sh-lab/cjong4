@@ -10,7 +10,7 @@ extern "C"
 {
 #endif
 
-#define CJ4_RULES_VERSION 2u
+#define CJ4_RULES_VERSION 3u
 
     typedef enum
     {
@@ -24,6 +24,12 @@ extern "C"
         CJ4_KAN_DORA_EARLY,
         CJ4_KAN_DORA_LATE
     } cj4_kan_dora_timing;
+
+    typedef enum
+    {
+        CJ4_FOUR_KANS_ABORT_IMMEDIATE,
+        CJ4_FOUR_KANS_ABORT_AFTER_DISCARD
+    } cj4_four_kans_abort_timing;
 
     typedef struct
     {
@@ -39,6 +45,7 @@ extern "C"
         uint8_t kuitan;
         uint8_t kuikae_forbidden;
         cj4_kan_dora_timing kan_dora_timing;
+        cj4_four_kans_abort_timing four_kans_abort_timing;
 
         /* riichi */
         uint8_t ippatsu;
