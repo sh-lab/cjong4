@@ -286,7 +286,7 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 
 ## 互換性 / Compatibility
 
-v4はチー／ポンの判定・実行APIに第2引数 `rules` を追加します。ルールなしの `cj4_can_discard()`／`cj4_do_discard()` は削除し、既存の `_with_rules()` を使用します。旧シグネチャの互換APIはありません。詳しくは[v4.0.0の変更点と移行手順](doc/releases/v4.0.0.md)を参照してください。
+v4はチー／ポンの判定・実行APIに第2引数 `rules` を追加します。打牌の `cj4_can_discard()`／`cj4_do_discard()` も第2引数に `rules` を受け取ります。旧シグネチャの互換APIはありません。詳しくは[v4.0.0の変更点と移行手順](doc/releases/v4.0.0.md)を参照してください。
 
 v3で導入した状態モデルを引き続き使用します。位置情報の収集APIは `locations` を受け取り、配列と件数をまとめた値を返します。`cj4_player_view` もマスク済みの `locations` を保持する形式へ変更しています。旧収集API、`cj4_make_player_state()`、状態変更用アクセサーとのソース互換・バイナリABI互換は保証しません。
 
@@ -310,7 +310,7 @@ v3で導入した状態モデルを引き続き使用します。位置情報の
 
 例:
 
-cj4_do_discard_with_rules cj4_can_ron cj4m_step cj4m_collect_actions cj4p_calculate_shanten
+cj4_do_discard cj4_can_ron cj4m_step cj4m_collect_actions cj4p_calculate_shanten
 
 ---
 

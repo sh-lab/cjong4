@@ -99,7 +99,7 @@ cj4m_apply_single_action(
     switch (action->type)
     {
     case CJ4_ACTION_DISCARD:
-        return cj4_do_discard_with_rules(*state, rules, action->tile);
+        return cj4_do_discard(*state, rules, action->tile);
     case CJ4_ACTION_CHI:
         return cj4_do_chi(*state, rules, action->tiles[0], action->tiles[1]);
     case CJ4_ACTION_PON:

@@ -112,10 +112,10 @@ test_kuikae_forbidden_after_pon_and_chi(
     set_test_meld(&pon_state, CJ4_PLAYER_1, 0, &(cj4_meld){.tiles = {tile(3, 0), tile(3, 1), tile(3, 2)}, .size = 3, .type = CJ4_MELD_PON, .from_player = CJ4_PLAYER_0, .called_index = 0});
     set_hand(&pon_state, CJ4_PLAYER_1, (const cj4_tile_id[]){tile(3, 3), tile(4, 0)}, 2);
 
-    assert(!cj4_can_discard_with_rules(pon_state, &rules, tile(3, 3)));
-    assert(cj4_can_discard_with_rules(pon_state, &rules, tile(4, 0)));
+    assert(!cj4_can_discard(pon_state, &rules, tile(3, 3)));
+    assert(cj4_can_discard(pon_state, &rules, tile(4, 0)));
     rules.kuikae_forbidden = 0;
-    assert(cj4_can_discard_with_rules(pon_state, &rules, tile(3, 3)));
+    assert(cj4_can_discard(pon_state, &rules, tile(3, 3)));
 
     rules.kuikae_forbidden = 1;
     cj4_state_set_phase(&chi_state, CJ4_PHASE_AFTER_CALL);
@@ -123,9 +123,9 @@ test_kuikae_forbidden_after_pon_and_chi(
     set_test_meld(&chi_state, CJ4_PLAYER_1, 0, &(cj4_meld){.tiles = {tile(2, 0), tile(3, 0), tile(4, 0)}, .size = 3, .type = CJ4_MELD_CHI, .from_player = CJ4_PLAYER_0, .called_index = 0});
     set_hand(&chi_state, CJ4_PLAYER_1, (const cj4_tile_id[]){tile(2, 1), tile(5, 0), tile(6, 0)}, 3);
 
-    assert(!cj4_can_discard_with_rules(chi_state, &rules, tile(2, 1)));
-    assert(!cj4_can_discard_with_rules(chi_state, &rules, tile(5, 0)));
-    assert(cj4_can_discard_with_rules(chi_state, &rules, tile(6, 0)));
+    assert(!cj4_can_discard(chi_state, &rules, tile(2, 1)));
+    assert(!cj4_can_discard(chi_state, &rules, tile(5, 0)));
+    assert(cj4_can_discard(chi_state, &rules, tile(6, 0)));
 }
 
 static void
@@ -237,7 +237,7 @@ test_kan_dora_timing_for_ankan_and_kakan(
     assert(after_kakan_draw.dora_count == 1);
     assert(after_kakan_draw.pending_kan_dora_count == 1);
 
-    after_discard = cj4_do_discard_with_rules(after_kakan_draw, NULL, after_kakan_draw.draw_tile);
+    after_discard = cj4_do_discard(after_kakan_draw, NULL, after_kakan_draw.draw_tile);
     assert(after_discard.dora_count == 2);
     assert(after_discard.pending_kan_dora_count == 0);
 }
@@ -300,7 +300,7 @@ test_consecutive_kakan_reveals_previous_dora_before_rinshan(
     assert(after_rinshan.pending_kan_dora_count == 1);
     assert(after_rinshan.dora_count == 2);
 
-    after_discard = cj4_do_discard_with_rules(after_rinshan, NULL, after_rinshan.draw_tile);
+    after_discard = cj4_do_discard(after_rinshan, NULL, after_rinshan.draw_tile);
     assert(after_discard.pending_kan_dora_count == 0);
     assert(after_discard.dora_count == 3);
 }
@@ -340,7 +340,7 @@ test_minkan_then_ankan_preserves_pending_dora(
     assert(after_ankan_draw.pending_kan_dora_count == 0);
     assert(after_ankan_draw.dora_count == 3);
 
-    after_discard = cj4_do_discard_with_rules(after_ankan_draw, NULL, after_ankan_draw.draw_tile);
+    after_discard = cj4_do_discard(after_ankan_draw, NULL, after_ankan_draw.draw_tile);
     assert(after_discard.pending_kan_dora_count == 0);
     assert(after_discard.dora_count == 3);
 }
@@ -444,7 +444,7 @@ test_pending_kan_dora_is_discarded_on_win_and_capped(
     state.pending_kan_dora_count = 4;
     state.dora_count = 4;
 
-    discarded = cj4_do_discard_with_rules(state, NULL, state.draw_tile);
+    discarded = cj4_do_discard(state, NULL, state.draw_tile);
     assert(discarded.pending_kan_dora_count == 0);
     assert(discarded.dora_count == 5);
 }

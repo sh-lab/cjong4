@@ -79,7 +79,7 @@ cj4_kuikae_is_forbidden(
 }
 
 bool
-cj4_can_discard_with_rules(
+cj4_can_discard(
     const cj4_mahjong state,
     const cj4_rules *rules,
     cj4_tile_id tile)
@@ -113,12 +113,12 @@ cj4_can_discard_with_rules(
 }
 
 cj4_mahjong
-cj4_do_discard_with_rules(
+cj4_do_discard(
     const cj4_mahjong state,
     const cj4_rules *rules,
     cj4_tile_id tile)
 {
-    if (!cj4_can_discard_with_rules(state, rules, tile))
+    if (!cj4_can_discard(state, rules, tile))
         return state;
 
     cj4_mahjong next = state;

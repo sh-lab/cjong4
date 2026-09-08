@@ -82,7 +82,7 @@ cj4m_collect_turn_actions(
         if (!cj4_state_tile_is_in_hand(state, player, tile))
             continue;
 
-        if (!cj4_can_discard_with_rules(*state, rules, tile))
+        if (!cj4_can_discard(*state, rules, tile))
             continue;
 
         action = cj4m_make_action(CJ4_ACTION_DISCARD, player);

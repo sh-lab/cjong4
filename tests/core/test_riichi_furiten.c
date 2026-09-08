@@ -133,7 +133,7 @@ test_riichi_establishes_after_pass(
     assert(cj4_state_double_riichi(&established, CJ4_PLAYER_0) == 1);
     assert(established.scores[CJ4_PLAYER_0] == 24000);
     assert(established.riichi_sticks == 1);
-    assert(!cj4_can_discard_with_rules(established, NULL, tile(0, 0)));
+    assert(!cj4_can_discard(established, NULL, tile(0, 0)));
 }
 
 static void
@@ -397,8 +397,8 @@ test_riichi_restricts_actions(
     discard_state.draw_tile = draw;
     cj4_state_set_riichi(&discard_state, CJ4_PLAYER_0, 1);
 
-    assert(cj4_can_discard_with_rules(discard_state, NULL, draw));
-    assert(!cj4_can_discard_with_rules(discard_state, NULL, tile(0, 0)));
+    assert(cj4_can_discard(discard_state, NULL, draw));
+    assert(!cj4_can_discard(discard_state, NULL, tile(0, 0)));
 
     set_hand(&chi_state, CJ4_PLAYER_1, chi_hand, (uint8_t)(sizeof(chi_hand) / sizeof(chi_hand[0])));
     cj4_state_set_phase(&chi_state, CJ4_PHASE_DISCARD);

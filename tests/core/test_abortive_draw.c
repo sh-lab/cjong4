@@ -176,7 +176,7 @@ test_fourth_kan_can_abort_after_rinshan_discard_and_ron(
     assert(after_rinshan.draw_tile == rinshan);
     assert(after_rinshan.dead_wall_draw_count == 4);
 
-    after_discard = cj4_do_discard_with_rules(after_rinshan, &rules, rinshan);
+    after_discard = cj4_do_discard(after_rinshan, &rules, rinshan);
 
     assert(cj4_state_phase(&after_discard) == CJ4_PHASE_DISCARD);
     assert(cj4_can_ron(&after_discard, winner, &rules));

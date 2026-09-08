@@ -84,11 +84,11 @@ test_chi_rules_and_suit_edges(
                             assert(cj4_state_phase(&next) == CJ4_PHASE_AFTER_CALL);
                             assert(cj4_state_current_player(&next) == caller);
                             assert(cj4_location_collect_melds(next.locations, caller).count == 4);
-                            assert(cj4_can_discard_with_rules(next, active, hand[2]) ||
-                                   cj4_can_discard_with_rules(next, active, hand[3]));
+                            assert(cj4_can_discard(next, active, hand[2]) ||
+                                   cj4_can_discard(next, active, hand[3]));
                             if (mode == 0)
                             {
-                                cj4_mahjong rejected = cj4_do_discard_with_rules(next, active, hand[2]);
+                                cj4_mahjong rejected = cj4_do_discard(next, active, hand[2]);
                                 assert(memcmp(&rejected, &next, sizeof(next)) == 0);
                             }
                         }
@@ -121,7 +121,7 @@ test_pon_discard_requirement(
                 {
                     assert(cj4_state_current_player(&next) == player);
                     assert(cj4_state_phase(&next) == CJ4_PHASE_AFTER_CALL);
-                    assert(cj4_can_discard_with_rules(next, active, hand[count - 1]));
+                    assert(cj4_can_discard(next, active, hand[count - 1]));
                 }
             }
 }

@@ -46,7 +46,7 @@ cj4_state_call_has_legal_discard(
         cj4_state_current_player(called));
 
     for (uint8_t i = 0; i < hand.count; ++i)
-        if (cj4_can_discard_with_rules(*called, rules, hand.items[i]))
+        if (cj4_can_discard(*called, rules, hand.items[i]))
             return true;
     return false;
 }
