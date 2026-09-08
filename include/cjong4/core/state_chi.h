@@ -10,14 +10,18 @@ extern "C"
 {
 #endif
 
+    /* Use the same rules for calls and their following discard.
+     * NULL explicitly allows kuikae; it is not cj4_rules_default(). */
+    /* Checks the complete call, including at least one legal following discard. */
     bool
-    cj4_can_chi(const cj4_mahjong *state);
+    cj4_can_chi(const cj4_mahjong *state, const cj4_rules *rules);
 
     bool
-    cj4_can_chi_with_tile(const cj4_mahjong *state, cj4_tile_id tile1, cj4_tile_id tile2);
+    cj4_can_chi_with_tile(const cj4_mahjong *state, const cj4_rules *rules, cj4_tile_id tile1, cj4_tile_id tile2);
 
+    /* An illegal call returns the input unchanged, in every build configuration. */
     cj4_mahjong
-    cj4_do_chi(const cj4_mahjong state, cj4_tile_id tile1, cj4_tile_id tile2);
+    cj4_do_chi(const cj4_mahjong state, const cj4_rules *rules, cj4_tile_id tile1, cj4_tile_id tile2);
 
 #ifdef __cplusplus
 }

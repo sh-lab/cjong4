@@ -1,3 +1,7 @@
+#ifdef NDEBUG
+#error "cj4_tests requires assertions in every build configuration"
+#endif
+
 void
 cj4_test_location(void);
 void
@@ -6,6 +10,8 @@ void
 cj4_test_riichi_furiten(void);
 void
 cj4_test_calls_kan(void);
+void
+cj4_test_call_legality(void);
 void
 cj4_test_round_progression(void);
 void
@@ -30,6 +36,7 @@ main(
     cj4_test_rules();
     cj4_test_riichi_furiten();
     cj4_test_calls_kan();
+    cj4_test_call_legality();
     cj4_test_round_progression();
     cj4_test_scoring_settlement();
     cj4_test_abortive_draw();

@@ -248,15 +248,25 @@ test_collect_actions_includes_pass_and_claims(
     cj4_mahjong state = make_empty_state();
     const cj4_tile_id chi_hand[] = {
         tile(1, 0),
-        tile(2, 0)};
+        tile(2, 0),
+        tile(5, 0)};
     const cj4_tile_id pon_hand[] = {
         tile(3, 1),
-        tile(3, 2)};
+        tile(3, 2),
+        tile(6, 0)};
     cj4_action actions[CJ4M_MAX_ACTIONS];
     uint8_t action_count;
 
-    set_hand(&state, CJ4_PLAYER_1, chi_hand, 2);
-    set_hand(&state, CJ4_PLAYER_2, pon_hand, 2);
+    set_hand(
+        &state,
+        CJ4_PLAYER_1,
+        chi_hand,
+        (uint8_t)(sizeof(chi_hand) / sizeof(chi_hand[0])));
+    set_hand(
+        &state,
+        CJ4_PLAYER_2,
+        pon_hand,
+        (uint8_t)(sizeof(pon_hand) / sizeof(pon_hand[0])));
     cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
     cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     add_discard(&state, CJ4_PLAYER_0, tile(3, 0));
@@ -350,6 +360,47 @@ test_collect_actions_filters_kuikae_discards(
 }
 
 static void
+test_collect_actions_filters_calls_without_legal_discard(
+    void)
+{
+    cj4_rules rules = cj4_rules_default();
+    cj4_mahjong state = make_empty_state();
+    cj4_action actions[CJ4M_MAX_ACTIONS];
+    const cj4_tile_id hand[] = {
+        tile(3, 0),
+        tile(4, 0),
+        tile(2, 1),
+        tile(5, 0)};
+    uint8_t action_count;
+
+    set_hand(
+        &state,
+        CJ4_PLAYER_1,
+        hand,
+        (uint8_t)(sizeof(hand) / sizeof(hand[0])));
+    cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
+    cj4_state_set_current_player(&state, CJ4_PLAYER_0);
+    add_discard(&state, CJ4_PLAYER_0, tile(2, 0));
+
+    action_count = cj4m_collect_actions(
+        &state,
+        NULL,
+        CJ4_PLAYER_1,
+        actions,
+        CJ4M_MAX_ACTIONS);
+    assert(contains_action_type(actions, action_count, CJ4_ACTION_CHI));
+
+    action_count = cj4m_collect_actions(
+        &state,
+        &rules,
+        CJ4_PLAYER_1,
+        actions,
+        CJ4M_MAX_ACTIONS);
+    assert(contains_action_type(actions, action_count, CJ4_ACTION_PASS));
+    assert(!contains_action_type(actions, action_count, CJ4_ACTION_CHI));
+}
+
+static void
 test_collect_actions_hides_ankan_ron_when_rule_disabled(
     void)
 {
@@ -408,5 +459,6 @@ cj4_test_manager_actions(
     test_collect_actions_includes_pass_and_claims();
     test_collect_actions_respects_riichi_restrictions();
     test_collect_actions_filters_kuikae_discards();
+    test_collect_actions_filters_calls_without_legal_discard();
     test_collect_actions_hides_ankan_ron_when_rule_disabled();
 }

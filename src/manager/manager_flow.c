@@ -101,9 +101,9 @@ cj4m_apply_single_action(
     case CJ4_ACTION_DISCARD:
         return cj4_do_discard_with_rules(*state, rules, action->tile);
     case CJ4_ACTION_CHI:
-        return cj4_do_chi(*state, action->tiles[0], action->tiles[1]);
+        return cj4_do_chi(*state, rules, action->tiles[0], action->tiles[1]);
     case CJ4_ACTION_PON:
-        return cj4_do_pon(*state, action->player, action->tiles[0], action->tiles[1]);
+        return cj4_do_pon(*state, rules, action->player, action->tiles[0], action->tiles[1]);
     case CJ4_ACTION_ANKAN:
         return cj4_do_ankan(
             *state,

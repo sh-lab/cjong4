@@ -88,7 +88,7 @@ test_exhaustive_draw_uses_live_wall_not_discard_count(
     assert(drawn.draw_tile == last_draw);
     assert(drawn.wall_pos == 121);
 
-    discarded = cj4_do_discard(drawn, last_draw);
+    discarded = cj4_do_discard_with_rules(drawn, NULL, last_draw);
     round_end = cj4_do_pass(discarded, NULL);
 
     assert(cj4_state_phase(&round_end) == CJ4_PHASE_ROUND_END);

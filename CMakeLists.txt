@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cjong4 VERSION 3.3.0 LANGUAGES C)
+project(cjong4 VERSION 4.0.0 LANGUAGES C)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -56,6 +56,7 @@ if (BUILD_TESTS)
         tests/core/test_rules.c
         tests/core/test_riichi_furiten.c
         tests/core/test_calls_kan.c
+        tests/core/test_call_legality.c
         tests/core/test_round_progression.c
         tests/core/test_scoring_settlement.c
         tests/core/test_abortive_draw.c
@@ -71,6 +72,12 @@ if (BUILD_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/manager
         ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
+    # Tests use assert for verification, also against a Release-built library.
+    if (MSVC)
+        target_compile_options(cj4_tests PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(cj4_tests PRIVATE -UNDEBUG)
+    endif()
     target_link_libraries(cj4_tests PRIVATE cj4)
 
     add_test(NAME cj4_tests COMMAND cj4_tests)

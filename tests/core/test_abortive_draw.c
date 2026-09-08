@@ -180,8 +180,8 @@ test_fourth_kan_can_abort_after_rinshan_discard_and_ron(
 
     assert(cj4_state_phase(&after_discard) == CJ4_PHASE_DISCARD);
     assert(cj4_can_ron(&after_discard, winner, &rules));
-    assert(!cj4_can_chi(&after_discard));
-    assert(!cj4_can_pon(&after_discard, CJ4_PLAYER_2));
+    assert(!cj4_can_chi(&after_discard, NULL));
+    assert(!cj4_can_pon(&after_discard, NULL, CJ4_PLAYER_2));
     assert(!cj4_can_minkan(&after_discard, CJ4_PLAYER_2));
 
     won = cj4_do_ron_multi(after_discard, &winner, 1, &rules);
