@@ -50,7 +50,7 @@ cj4_can_riichi(
     if (!cj4_state_is_closed_for_riichi(state, player))
         return false;
 
-    if (!cj4_can_discard(*state, tile))
+    if (!cj4_can_discard(*state, NULL, tile))
         return false;
 
     tmp = *state;

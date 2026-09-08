@@ -57,7 +57,7 @@ cmake --install build --config Release --prefix /path/to/prefix
 CMakeプロジェクトから利用する場合：
 
 ```cmake
-find_package(cjong4 3 CONFIG REQUIRED)
+find_package(cjong4 4 CONFIG REQUIRED)
 target_link_libraries(your_target PRIVATE cjong4::cj4)
 ```
 
@@ -205,7 +205,7 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 - 流し満貫
 - 責任払い（大三元・大四喜・四槓子）
 
-### v3 対応ルール
+### 対応ルール
 
 - 立直宣言は「宣言中」と「成立済み」を分離
   - 宣言牌へのロンがなければ、鳴かれた場合も立直成立
@@ -213,6 +213,7 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
   - 四家立直は成立済み立直のみを数える
 - 喰い替え禁止
   - ポン/チー直後の1打だけ、同種牌と両面チー外側の筋喰い替えを禁止可能
+  - coreが鳴いた後の打牌可能性まで確認し、打牌不能になるポン/チーを拒否
 - 槓ドラ表示タイミング
   - 暗槓は常に成立時に表示
   - 大明槓・加槓は先めくり／後めくりを選択可能
@@ -285,7 +286,9 @@ while (cj4_state_phase(&state) != CJ4_PHASE_GAME_END)
 
 ## 互換性 / Compatibility
 
-v3 は破壊的変更です。位置情報の収集APIは `locations` を受け取り、配列と件数をまとめた値を返します。`cj4_player_view` もマスク済みの `locations` を保持する形式へ変更しています。旧収集API、`cj4_make_player_state()`、状態変更用アクセサーとのソース互換・バイナリABI互換は保証しません。
+v4はチー／ポンの判定・実行APIに第2引数 `rules` を追加します。打牌の `cj4_can_discard()`／`cj4_do_discard()` も第2引数に `rules` を受け取ります。旧シグネチャの互換APIはありません。詳しくは[v4.0.0の変更点と移行手順](doc/releases/v4.0.0.md)を参照してください。
+
+v3で導入した状態モデルを引き続き使用します。位置情報の収集APIは `locations` を受け取り、配列と件数をまとめた値を返します。`cj4_player_view` もマスク済みの `locations` を保持する形式へ変更しています。旧収集API、`cj4_make_player_state()`、状態変更用アクセサーとのソース互換・バイナリABI互換は保証しません。
 
 ## C言語仕様 / Language Standard
 
@@ -332,8 +335,8 @@ cmake/                    CMake package configuration
 
 ## ステータス / Status
 
-3.3.0 リリース
-3.3.0 released
+4.0.0 リリース
+4.0.0 released
 
 ---
 

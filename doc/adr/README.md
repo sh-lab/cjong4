@@ -10,6 +10,7 @@
 | [0001](0001-use-locations-as-canonical-tile-state.md) | locationsを牌配置の正規状態にする | 採用 |
 | [0002](0002-use-value-based-pure-state-transitions.md) | 値ベースの純粋な状態遷移を使用する | 採用 |
 | [0003](0003-provide-masked-player-views.md) | プレイヤーごとにマスク済みビューを提供する | 採用 |
+| [0004](0004-validate-call-legality-in-core.md) | 鳴き後の打牌可能性をcoreで検証する | 採用 |
 
 ## 追加方法
 

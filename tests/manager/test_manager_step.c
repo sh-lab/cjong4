@@ -520,6 +520,54 @@ test_step_can_choose_kyuushu_kyuuhai(
 }
 
 static void
+test_step_calls_always_leave_a_discard(
+    void)
+{
+    for (uint8_t allow_kuikae = 0; allow_kuikae < 2; ++allow_kuikae)
+        for (uint8_t escape = 0; escape < 2; ++escape)
+        {
+            cj4_rules rules = cj4_rules_default();
+            cj4_mahjong state = make_empty_state();
+            chooser_ctx contexts[CJ4_PLAYER_COUNT];
+            cj4m_player_delegate delegates[CJ4_PLAYER_COUNT];
+            cj4_tile_id hand[] = {tile(2, 1), tile(3, 0), tile(4, 0), tile(5, 0)};
+            rules.kuikae_forbidden = !allow_kuikae;
+            if (escape)
+                hand[3] = tile(32, 0);
+            for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
+                delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
+            delegates[CJ4_PLAYER_1] = make_delegate(&contexts[CJ4_PLAYER_1], CJ4_ACTION_CHI);
+            for (uint8_t group = 0; group < 3; ++group)
+                set_test_meld(&state, CJ4_PLAYER_1, group, &(cj4_meld){.tiles = {tile((cj4_tile_type)(27 + group), 0), tile((cj4_tile_type)(27 + group), 1), tile((cj4_tile_type)(27 + group), 2)}, .size = 3, .type = CJ4_MELD_PON, .from_player = CJ4_PLAYER_0, .called_index = 0});
+            set_hand(&state, CJ4_PLAYER_1, hand, 4);
+            cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
+            cj4_state_set_current_player(&state, CJ4_PLAYER_0);
+            add_discard(&state, CJ4_PLAYER_0, tile(2, 0));
+
+            cj4_mahjong next = cj4m_step(&state, &rules, delegates);
+            if (!escape && !allow_kuikae)
+            {
+                assert(cj4_state_phase(&next) == CJ4_PHASE_DRAW);
+                assert(cj4_location_collect_melds(next.locations, CJ4_PLAYER_1).count == 3);
+            }
+            else
+            {
+                assert(cj4_state_phase(&next) == CJ4_PHASE_AFTER_CALL);
+                assert(cj4_state_current_player(&next) == CJ4_PLAYER_1);
+                cj4_action actions[CJ4M_MAX_ACTIONS];
+                uint8_t count = cj4m_collect_actions(&next, &rules, CJ4_PLAYER_1, actions, CJ4M_MAX_ACTIONS);
+                assert(count == (allow_kuikae ? 2 : 1));
+                for (uint8_t i = 0; i < count; ++i)
+                    assert(actions[i].type == CJ4_ACTION_DISCARD);
+                if (!allow_kuikae)
+                    assert(actions[0].tile == hand[3]);
+                cj4_mahjong discarded = cj4m_step(&next, &rules, delegates);
+                assert(cj4_state_phase(&discarded) == CJ4_PHASE_DISCARD);
+            }
+        }
+}
+
+static void
 test_step_prioritizes_pon_over_chi(
     void)
 {
@@ -529,10 +577,12 @@ test_step_prioritizes_pon_over_chi(
     cj4_mahjong next;
     const cj4_tile_id chi_hand[] = {
         tile(1, 0),
-        tile(2, 0)};
+        tile(2, 0),
+        tile(5, 0)};
     const cj4_tile_id pon_hand[] = {
         tile(3, 1),
-        tile(3, 2)};
+        tile(3, 2),
+        tile(6, 0)};
 
     for (uint8_t i = 0; i < CJ4_PLAYER_COUNT; ++i)
         delegates[i] = make_delegate(&contexts[i], CJ4_ACTION_PASS);
@@ -540,8 +590,8 @@ test_step_prioritizes_pon_over_chi(
     delegates[CJ4_PLAYER_1] = make_delegate(&contexts[CJ4_PLAYER_1], CJ4_ACTION_CHI);
     delegates[CJ4_PLAYER_2] = make_delegate(&contexts[CJ4_PLAYER_2], CJ4_ACTION_PON);
 
-    set_hand(&state, CJ4_PLAYER_1, chi_hand, 2);
-    set_hand(&state, CJ4_PLAYER_2, pon_hand, 2);
+    set_hand(&state, CJ4_PLAYER_1, chi_hand, (uint8_t)(sizeof(chi_hand) / sizeof(chi_hand[0])));
+    set_hand(&state, CJ4_PLAYER_2, pon_hand, (uint8_t)(sizeof(pon_hand) / sizeof(pon_hand[0])));
     cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
     cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     add_discard(&state, CJ4_PLAYER_0, tile(3, 0));
@@ -569,7 +619,8 @@ test_step_prioritizes_ron_and_respects_limit(
     cj4_mahjong next;
     const cj4_tile_id chi_hand[] = {
         tile(4, 0),
-        tile(5, 0)};
+        tile(5, 0),
+        tile(8, 0)};
     const cj4_tile_id ron_hand[] = {
         tile(1, 0),
         tile(2, 0),
@@ -609,7 +660,7 @@ test_step_prioritizes_ron_and_respects_limit(
     rules.kuitan = 1;
     rules.max_ron_players = 1;
 
-    set_hand(&state, CJ4_PLAYER_1, chi_hand, 2);
+    set_hand(&state, CJ4_PLAYER_1, chi_hand, (uint8_t)(sizeof(chi_hand) / sizeof(chi_hand[0])));
     set_hand(&state, CJ4_PLAYER_2, ron_hand, (uint8_t)(sizeof(ron_hand) / sizeof(ron_hand[0])));
     set_hand(&state, CJ4_PLAYER_3, ron_hand_alt, (uint8_t)(sizeof(ron_hand_alt) / sizeof(ron_hand_alt[0])));
     cj4_state_set_phase(&state, CJ4_PHASE_DISCARD);
@@ -720,6 +771,7 @@ cj4_test_manager_step(
     test_step_minkan_flow_reveals_dora_after_discard_choice();
     test_step_uses_delegate_for_draw_phase();
     test_step_can_choose_kyuushu_kyuuhai();
+    test_step_calls_always_leave_a_discard();
     test_step_prioritizes_pon_over_chi();
     test_step_prioritizes_ron_and_respects_limit();
     test_step_advances_after_all_pass();

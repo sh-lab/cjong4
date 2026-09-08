@@ -133,7 +133,7 @@ test_riichi_establishes_after_pass(
     assert(cj4_state_double_riichi(&established, CJ4_PLAYER_0) == 1);
     assert(established.scores[CJ4_PLAYER_0] == 24000);
     assert(established.riichi_sticks == 1);
-    assert(!cj4_can_discard(established, tile(0, 0)));
+    assert(!cj4_can_discard(established, NULL, tile(0, 0)));
 }
 
 static void
@@ -199,16 +199,16 @@ test_riichi_called_discard_still_establishes(
         tile(15, 0),
         tile(15, 1),
         draw};
-    const cj4_tile_id pon_tiles[] = {tile(26, 1), tile(26, 2)};
+    const cj4_tile_id pon_tiles[] = {tile(26, 1), tile(26, 2), tile(25, 0)};
 
     set_hand(&state, CJ4_PLAYER_0, hand, (uint8_t)(sizeof(hand) / sizeof(hand[0])));
-    set_hand(&state, CJ4_PLAYER_2, pon_tiles, 2);
+    set_hand(&state, CJ4_PLAYER_2, pon_tiles, 3);
     cj4_state_set_current_player(&state, CJ4_PLAYER_0);
     cj4_state_set_phase(&state, CJ4_PHASE_DRAW);
     state.draw_tile = draw;
 
     declared = cj4_do_riichi(state, draw);
-    called = cj4_do_pon(declared, CJ4_PLAYER_2, pon_tiles[0], pon_tiles[1]);
+    called = cj4_do_pon(declared, NULL, CJ4_PLAYER_2, pon_tiles[0], pon_tiles[1]);
 
     assert(cj4_state_is_riichi(&called, CJ4_PLAYER_0) == 1);
     assert(!cj4_state_has_pending_riichi(&called));
@@ -397,8 +397,8 @@ test_riichi_restricts_actions(
     discard_state.draw_tile = draw;
     cj4_state_set_riichi(&discard_state, CJ4_PLAYER_0, 1);
 
-    assert(cj4_can_discard(discard_state, draw));
-    assert(!cj4_can_discard(discard_state, tile(0, 0)));
+    assert(cj4_can_discard(discard_state, NULL, draw));
+    assert(!cj4_can_discard(discard_state, NULL, tile(0, 0)));
 
     set_hand(&chi_state, CJ4_PLAYER_1, chi_hand, (uint8_t)(sizeof(chi_hand) / sizeof(chi_hand[0])));
     cj4_state_set_phase(&chi_state, CJ4_PHASE_DISCARD);
@@ -406,8 +406,8 @@ test_riichi_restricts_actions(
     cj4_state_set_riichi(&chi_state, CJ4_PLAYER_1, 1);
     add_discard(&chi_state, CJ4_PLAYER_0, tile(3, 0));
 
-    assert(!cj4_can_chi(&chi_state));
-    assert(!cj4_can_chi_with_tile(&chi_state, chi_hand[0], chi_hand[1]));
+    assert(!cj4_can_chi(&chi_state, NULL));
+    assert(!cj4_can_chi_with_tile(&chi_state, NULL, chi_hand[0], chi_hand[1]));
 
     set_hand(&pon_state, CJ4_PLAYER_2, pon_hand, (uint8_t)(sizeof(pon_hand) / sizeof(pon_hand[0])));
     cj4_state_set_phase(&pon_state, CJ4_PHASE_DISCARD);
@@ -415,8 +415,8 @@ test_riichi_restricts_actions(
     cj4_state_set_riichi(&pon_state, CJ4_PLAYER_2, 1);
     add_discard(&pon_state, CJ4_PLAYER_0, tile(3, 0));
 
-    assert(!cj4_can_pon(&pon_state, CJ4_PLAYER_2));
-    assert(!cj4_can_pon_with_tile(&pon_state, CJ4_PLAYER_2, pon_hand[0], pon_hand[1]));
+    assert(!cj4_can_pon(&pon_state, NULL, CJ4_PLAYER_2));
+    assert(!cj4_can_pon_with_tile(&pon_state, NULL, CJ4_PLAYER_2, pon_hand[0], pon_hand[1]));
 
     set_hand(&minkan_state, CJ4_PLAYER_2, minkan_hand, (uint8_t)(sizeof(minkan_hand) / sizeof(minkan_hand[0])));
     cj4_state_set_phase(&minkan_state, CJ4_PHASE_DISCARD);

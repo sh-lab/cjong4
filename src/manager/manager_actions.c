@@ -82,7 +82,7 @@ cj4m_collect_turn_actions(
         if (!cj4_state_tile_is_in_hand(state, player, tile))
             continue;
 
-        if (!cj4_can_discard_with_rules(*state, rules, tile))
+        if (!cj4_can_discard(*state, rules, tile))
             continue;
 
         action = cj4m_make_action(CJ4_ACTION_DISCARD, player);
@@ -188,7 +188,7 @@ cj4m_collect_discard_reaction_actions(
         return;
     type = cj4_tile_get_type(last);
 
-    if (cj4_can_pon(state, player))
+    if (cj4_can_pon(state, rules, player))
     {
         hand_count = cj4m_collect_hand_tiles_of_type(state, player, type, hand_tiles);
         for (uint8_t i = 0; i < hand_count; ++i)
@@ -197,7 +197,7 @@ cj4m_collect_discard_reaction_actions(
             {
                 cj4_action action;
 
-                if (!cj4_can_pon_with_tile(state, player, hand_tiles[i], hand_tiles[j]))
+                if (!cj4_can_pon_with_tile(state, rules, player, hand_tiles[i], hand_tiles[j]))
                     continue;
 
                 action = cj4m_make_action(CJ4_ACTION_PON, player);
@@ -226,7 +226,7 @@ cj4m_collect_discard_reaction_actions(
         cj4m_push_action(actions, capacity, count, &action);
     }
 
-    if (player == cj4_next_player(state) && cj4_can_chi(state))
+    if (player == cj4_next_player(state) && cj4_can_chi(state, rules))
     {
         for (cj4_tile_id tile1 = CJ4_TILE_ID_MIN; tile1 <= CJ4_TILE_ID_MAX; ++tile1)
         {
@@ -242,7 +242,7 @@ cj4m_collect_discard_reaction_actions(
                 if (!cj4_state_tile_is_in_hand(state, player, tile2))
                     continue;
 
-                if (!cj4_can_chi_with_tile(state, tile1, tile2))
+                if (!cj4_can_chi_with_tile(state, rules, tile1, tile2))
                     continue;
 
                 action = cj4m_make_action(CJ4_ACTION_CHI, player);

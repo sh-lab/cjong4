@@ -10,24 +10,16 @@ extern "C"
 {
 #endif
 
+    /* Use the same rules for calls and their following discard.
+     * NULL explicitly allows kuikae; it is not cj4_rules_default(). */
     bool
     cj4_can_discard(
-        const cj4_mahjong state,
-        cj4_tile_id tile);
-
-    bool
-    cj4_can_discard_with_rules(
         const cj4_mahjong state,
         const cj4_rules *rules,
         cj4_tile_id tile);
 
     cj4_mahjong
     cj4_do_discard(
-        const cj4_mahjong state,
-        cj4_tile_id tile);
-
-    cj4_mahjong
-    cj4_do_discard_with_rules(
         const cj4_mahjong state,
         const cj4_rules *rules,
         cj4_tile_id tile);

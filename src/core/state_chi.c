@@ -1,184 +1,98 @@
 #include "state_chi.h"
+
+#include "state_call.h"
 #include "state_ops.h"
 #include "state_query.h"
-#include <assert.h>
+
+static bool
+cj4_can_start_chi(
+    const cj4_mahjong *state)
+{
+    if (!state)
+        return false;
+
+    cj4_player player = cj4_next_player(state);
+    return cj4_state_can_claim_discard(state, player) &&
+           !cj4_state_four_kans_abort_is_pending(state) &&
+           cj4_state_live_wall_remaining(state) > 0 &&
+           !cj4_state_is_riichi(state, player) &&
+           cj4_location_collect_melds(state->locations, player).count < CJ4_MAX_MELDS &&
+           cj4_tile_get_suit(cj4_get_last_discard_tile(state)) != CJ4_TILE_SUIT_HONOR;
+}
 
 bool
 cj4_can_chi(
-    const cj4_mahjong *state)
+    const cj4_mahjong *state,
+    const cj4_rules *rules)
 {
-    cj4_player next_player = cj4_next_player(state);
-
-    if (cj4_state_four_kans_abort_is_pending(state))
+    if (!cj4_can_start_chi(state))
         return false;
 
-    if (cj4_state_live_wall_remaining(state) == 0)
-        return false;
-
-    if (cj4_state_is_riichi(state, next_player))
-    {
-        return false;
-    }
-
-    if (!cj4_state_can_claim_discard(state, next_player))
-    {
-        return false;
-    }
-
-    cj4_tile_id last = cj4_get_last_discard_tile(state);
-    cj4_tile_type last_type = cj4_tile_get_type(last);
-
-    /* Cannot chi honor tiles */
-    if (cj4_tile_get_suit(last) == CJ4_TILE_SUIT_HONOR)
-    {
-        return false;
-    }
-
-    /* Check for any sequence (x, x+1, x+2) that includes last_type
-       and whether the player has the other two tiles in hand. */
-    for (int offset = -2; offset <= 0; ++offset)
-    {
-        int t0 = (int)last_type + offset;
-        int t1 = t0 + 1;
-        int t2 = t0 + 2;
-
-        /* ensure types are within number tile range (0..26) */
-        if (t0 < 0 || t2 > 26)
-            continue;
-
-        /* ensure suit matches (safety) */
-        if (cj4_tile_type_get_suit((cj4_tile_type)t0) != cj4_tile_get_suit(last))
-            continue;
-
-        /* last_type must be within t0..t2 (always true by construction) */
-
-        /* compute both other types explicitly */
-        cj4_tile_type other_a, other_b;
-        if (last_type == (cj4_tile_type)t0)
-        {
-            other_a = (cj4_tile_type)(t0 + 1);
-            other_b = (cj4_tile_type)(t0 + 2);
-        }
-        else if (last_type == (cj4_tile_type)t1)
-        {
-            other_a = (cj4_tile_type)(t0 + 0);
-            other_b = (cj4_tile_type)(t0 + 2);
-        }
-        else
-        {
-            other_a = (cj4_tile_type)(t0 + 0);
-            other_b = (cj4_tile_type)(t0 + 1);
-        }
-
-        if (cj4_count_hand(state, next_player, other_a) >= 1 &&
-            cj4_count_hand(state, next_player, other_b) >= 1)
-        {
-            return true;
-        }
-    }
-
+    cj4_hand hand = cj4_location_collect_hand(state->locations, cj4_next_player(state));
+    for (uint8_t i = 0; i < hand.count; ++i)
+        for (uint8_t j = (uint8_t)(i + 1); j < hand.count; ++j)
+            if (cj4_can_chi_with_tile(state, rules, hand.items[i], hand.items[j]))
+                return true;
     return false;
 }
 
 bool
 cj4_can_chi_with_tile(
     const cj4_mahjong *state,
+    const cj4_rules *rules,
     cj4_tile_id tile1,
     cj4_tile_id tile2)
 {
-    if (!cj4_can_chi(state))
-    {
+    if (!cj4_can_start_chi(state) || tile1 == tile2)
         return false;
-    }
 
-    cj4_player next_player = cj4_next_player(state);
+    cj4_player player = cj4_next_player(state);
+    if (!cj4_state_tile_is_in_hand(state, player, tile1) ||
+        !cj4_state_tile_is_in_hand(state, player, tile2))
+        return false;
 
     cj4_tile_id last = cj4_get_last_discard_tile(state);
-
-    /* Cannot chi honors */
-    if (cj4_tile_get_suit(last) == CJ4_TILE_SUIT_HONOR)
+    if (cj4_tile_get_suit(tile1) != cj4_tile_get_suit(last) ||
+        cj4_tile_get_suit(tile2) != cj4_tile_get_suit(last))
         return false;
 
-    cj4_tile_type t_last = cj4_tile_get_type(last);
-    cj4_tile_type t1 = cj4_tile_get_type(tile1);
-    cj4_tile_type t2 = cj4_tile_get_type(tile2);
-
-    /* All tiles must be same suit */
-    if (cj4_tile_type_get_suit(t1) != cj4_tile_type_get_suit(t_last) ||
-        cj4_tile_type_get_suit(t2) != cj4_tile_type_get_suit(t_last))
-    {
-        return false;
-    }
-
-    /* Numbers must form consecutive sequence */
-    uint8_t n_last = cj4_tile_type_get_number(t_last);
-    uint8_t n1 = cj4_tile_type_get_number(t1);
-    uint8_t n2 = cj4_tile_type_get_number(t2);
-
-    /* Collect numbers into array and sort */
-    uint8_t nums[3] = {n_last, n1, n2};
-    cj4_tile_id tiles[3] = {last, tile1, tile2};
-
-    /* Simple sort (ascending) for three elements */
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = i + 1; j < 3; ++j)
-        {
-            if (nums[i] > nums[j])
+    cj4_tile_type types[3] = {
+        cj4_tile_get_type(last),
+        cj4_tile_get_type(tile1),
+        cj4_tile_get_type(tile2)};
+    for (uint8_t i = 0; i < 3; ++i)
+        for (uint8_t j = (uint8_t)(i + 1); j < 3; ++j)
+            if (types[i] > types[j])
             {
-                uint8_t tmpn = nums[i];
-                nums[i] = nums[j];
-                nums[j] = tmpn;
-                cj4_tile_id tmpt = tiles[i];
-                tiles[i] = tiles[j];
-                tiles[j] = tmpt;
+                cj4_tile_type tmp = types[i];
+                types[i] = types[j];
+                types[j] = tmp;
             }
-        }
-    }
-
-    if (!(nums[0] + 1 == nums[1] && nums[1] + 1 == nums[2]))
-    {
+    if (types[0] + 1 != types[1] || types[1] + 1 != types[2])
         return false;
-    }
 
-    /* Ensure tile1 and tile2 are indeed in the player's hand */
-    if (!cj4_state_tile_is_in_hand(state, next_player, tile1) ||
-        !cj4_state_tile_is_in_hand(state, next_player, tile2))
-    {
-        return false;
-    }
-
-    return true;
+    cj4_mahjong called = cj4_state_apply_chi_or_pon(
+        *state,
+        player,
+        CJ4_MELD_CHI,
+        tile1,
+        tile2);
+    return cj4_state_call_has_legal_discard(&called, rules);
 }
 
 cj4_mahjong
 cj4_do_chi(
     const cj4_mahjong state,
+    const cj4_rules *rules,
     cj4_tile_id tile1,
     cj4_tile_id tile2)
 {
-    assert(cj4_can_chi_with_tile(&state, tile1, tile2));
-
-    cj4_mahjong next = state;
-
-    cj4_player next_player = cj4_next_player(&state);
-
-    cj4_tile_id last = cj4_get_last_discard_tile(&state);
-    const cj4_tile_id meld_tiles[3] = {last, tile1, tile2};
-
-    cj4_state_add_meld(
-        &next,
-        next_player,
+    if (!cj4_can_chi_with_tile(&state, rules, tile1, tile2))
+        return state;
+    return cj4_state_apply_chi_or_pon(
+        state,
+        cj4_next_player(&state),
         CJ4_MELD_CHI,
-        meld_tiles,
-        3,
-        cj4_state_current_player(&state),
-        0);
-    cj4_state_establish_pending_riichi(&next);
-    cj4_state_finish_open_call(&next, next_player, CJ4_PHASE_AFTER_CALL);
-    cj4_state_set_first_turn(&next, 0);
-    cj4_state_set_chankan(&next, 0);
-    next.pending_kakan_tile = CJ4_TILE_ID_INVALID;
-
-    return next;
+        tile1,
+        tile2);
 }
